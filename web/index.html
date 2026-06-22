@@ -1,0 +1,936 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="description" content="KnowledgeAI - 基于RAG的智能知识问答系统，支持PDF/文档导入和精准知识检索">
+  <title>KnowledgeAI - 智能知识问答系统</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --bg-primary: #0a0a0f;
+      --bg-secondary: #12121a;
+      --bg-card: #1a1a26;
+      --bg-card-hover: #20202e;
+      --border: #2a2a40;
+      --border-light: #33334d;
+      --accent: #6c63ff;
+      --accent-light: #8b84ff;
+      --accent-glow: rgba(108, 99, 255, 0.3);
+      --green: #22c55e;
+      --green-light: rgba(34, 197, 94, 0.15);
+      --red: #ef4444;
+      --red-light: rgba(239, 68, 68, 0.15);
+      --yellow: #eab308;
+      --yellow-light: rgba(234, 179, 8, 0.15);
+      --text-primary: #f1f0ff;
+      --text-secondary: #9090b0;
+      --text-muted: #5a5a7a;
+      --radius: 12px;
+      --radius-lg: 16px;
+      --shadow: 0 8px 32px rgba(0, 0, 0, 0.4);
+      --glow: 0 0 40px rgba(108, 99, 255, 0.15);
+    }
+
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      font-family: 'Inter', -apple-system, sans-serif;
+      background: var(--bg-primary);
+      color: var(--text-primary);
+      min-height: 100vh;
+      display: flex;
+      overflow: hidden;
+    }
+
+    /* ── Sidebar ── */
+    .sidebar {
+      width: 260px;
+      min-width: 260px;
+      background: var(--bg-secondary);
+      border-right: 1px solid var(--border);
+      display: flex;
+      flex-direction: column;
+      padding: 24px 0;
+      position: relative;
+      z-index: 10;
+    }
+
+    .logo {
+      padding: 0 24px 28px;
+      border-bottom: 1px solid var(--border);
+    }
+    .logo h1 {
+      font-size: 20px;
+      font-weight: 700;
+      background: linear-gradient(135deg, #6c63ff, #a78bfa);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      letter-spacing: -0.3px;
+    }
+    .logo p { font-size: 12px; color: var(--text-muted); margin-top: 2px; }
+
+    .nav { flex: 1; padding: 16px 12px; display: flex; flex-direction: column; gap: 4px; }
+    .nav-item {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      padding: 10px 14px;
+      border-radius: var(--radius);
+      cursor: pointer;
+      transition: all 0.2s;
+      font-size: 14px;
+      font-weight: 500;
+      color: var(--text-secondary);
+      border: 1px solid transparent;
+    }
+    .nav-item:hover { background: var(--bg-card); color: var(--text-primary); }
+    .nav-item.active { background: var(--accent-glow); color: var(--accent-light); border-color: rgba(108,99,255,0.2); }
+    .nav-item svg { width: 18px; height: 18px; flex-shrink: 0; }
+
+    .sidebar-footer { padding: 16px 12px 0; border-top: 1px solid var(--border); }
+
+    /* ── Main ── */
+    .main {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+      background: var(--bg-primary);
+    }
+
+    .topbar {
+      height: 64px;
+      border-bottom: 1px solid var(--border);
+      display: flex;
+      align-items: center;
+      padding: 0 28px;
+      gap: 16px;
+      background: var(--bg-secondary);
+      flex-shrink: 0;
+    }
+    .topbar-title { font-size: 17px; font-weight: 600; flex: 1; }
+    .status-badge {
+      display: flex; align-items: center; gap: 6px;
+      padding: 5px 12px; border-radius: 20px; font-size: 12px; font-weight: 500;
+    }
+    .status-badge.ready { background: var(--green-light); color: var(--green); }
+    .status-badge.warning { background: var(--yellow-light); color: var(--yellow); }
+    .status-dot { width: 6px; height: 6px; border-radius: 50%; background: currentColor; }
+
+    .page { flex: 1; overflow-y: auto; padding: 28px; display: none; }
+    .page.active { display: flex; flex-direction: column; gap: 24px; }
+
+    /* ── Cards ── */
+    .card {
+      background: var(--bg-card);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-lg);
+      padding: 24px;
+      transition: border-color 0.2s;
+    }
+    .card:hover { border-color: var(--border-light); }
+    .card-title { font-size: 15px; font-weight: 600; margin-bottom: 16px; color: var(--text-primary); }
+
+    /* ── Buttons ── */
+    .btn {
+      display: inline-flex; align-items: center; gap: 7px;
+      padding: 9px 18px; border-radius: 8px; font-size: 14px;
+      font-weight: 500; cursor: pointer; transition: all 0.2s;
+      border: none; font-family: inherit;
+    }
+    .btn-primary {
+      background: var(--accent); color: #fff;
+    }
+    .btn-primary:hover { background: var(--accent-light); box-shadow: 0 0 20px var(--accent-glow); transform: translateY(-1px); }
+    .btn-danger { background: var(--red-light); color: var(--red); border: 1px solid rgba(239,68,68,0.2); }
+    .btn-danger:hover { background: rgba(239,68,68,0.25); }
+    .btn-ghost { background: transparent; color: var(--text-secondary); border: 1px solid var(--border); }
+    .btn-ghost:hover { border-color: var(--border-light); color: var(--text-primary); }
+    .btn:disabled { opacity: 0.5; cursor: not-allowed; transform: none !important; }
+
+    /* ── Upload Zone ── */
+    .upload-zone {
+      border: 2px dashed var(--border-light);
+      border-radius: var(--radius-lg);
+      padding: 40px 24px;
+      text-align: center;
+      cursor: pointer;
+      transition: all 0.25s;
+      position: relative;
+    }
+    .upload-zone:hover, .upload-zone.drag-over {
+      border-color: var(--accent);
+      background: rgba(108, 99, 255, 0.06);
+    }
+    .upload-zone .icon { font-size: 36px; margin-bottom: 12px; }
+    .upload-zone h3 { font-size: 16px; font-weight: 600; margin-bottom: 6px; }
+    .upload-zone p { font-size: 13px; color: var(--text-muted); }
+    .upload-zone input { position: absolute; inset: 0; opacity: 0; cursor: pointer; width: 100%; height: 100%; }
+
+    /* ── Book List ── */
+    .book-list { display: flex; flex-direction: column; gap: 10px; }
+    .book-item {
+      display: flex; align-items: center; gap: 14px;
+      padding: 14px 18px; border-radius: var(--radius);
+      background: var(--bg-secondary); border: 1px solid var(--border);
+      transition: all 0.2s;
+    }
+    .book-item:hover { border-color: var(--border-light); background: var(--bg-card-hover); }
+    .book-icon {
+      width: 40px; height: 40px; border-radius: 10px;
+      background: linear-gradient(135deg, #6c63ff22, #a78bfa22);
+      display: flex; align-items: center; justify-content: center;
+      font-size: 18px; flex-shrink: 0;
+    }
+    .book-info { flex: 1; min-width: 0; }
+    .book-title { font-weight: 600; font-size: 14px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .book-meta { font-size: 12px; color: var(--text-muted); margin-top: 3px; }
+    .book-status {
+      padding: 3px 10px; border-radius: 12px; font-size: 11px; font-weight: 600;
+      text-transform: uppercase; letter-spacing: 0.5px;
+    }
+    .book-status.ready { background: var(--green-light); color: var(--green); }
+    .book-status.processing { background: var(--yellow-light); color: var(--yellow); animation: pulse 1.5s infinite; }
+    .book-status.error { background: var(--red-light); color: var(--red); }
+    @keyframes pulse { 0%,100%{opacity:1} 50%{opacity:0.6} }
+
+    /* ── Chat ── */
+    .chat-container { flex: 1; display: flex; flex-direction: column; gap: 0; min-height: 0; }
+    .chat-messages {
+      flex: 1; overflow-y: auto; padding: 8px 0 16px;
+      display: flex; flex-direction: column; gap: 16px;
+      min-height: 0;
+    }
+
+    .message { display: flex; gap: 12px; max-width: 860px; }
+    .message.user { flex-direction: row-reverse; align-self: flex-end; }
+    .message.assistant { align-self: flex-start; }
+
+    .avatar {
+      width: 36px; height: 36px; border-radius: 50%; flex-shrink: 0;
+      display: flex; align-items: center; justify-content: center; font-size: 16px;
+    }
+    .message.user .avatar { background: linear-gradient(135deg, #6c63ff, #a78bfa); }
+    .message.assistant .avatar { background: linear-gradient(135deg, #1a1a26, #2a2a3e); border: 1px solid var(--border); }
+
+    .bubble {
+      padding: 13px 17px; border-radius: 14px;
+      font-size: 14px; line-height: 1.65;
+      max-width: calc(100% - 50px);
+    }
+    .message.user .bubble {
+      background: linear-gradient(135deg, #6c63ff, #7c73ff);
+      color: #fff; border-bottom-right-radius: 4px;
+    }
+    .message.assistant .bubble {
+      background: var(--bg-card); border: 1px solid var(--border);
+      color: var(--text-primary); border-bottom-left-radius: 4px;
+    }
+
+    .sources-tag {
+      display: flex; flex-wrap: wrap; gap: 6px; margin-top: 10px;
+    }
+    .source-chip {
+      padding: 3px 10px; background: rgba(108,99,255,0.15);
+      border: 1px solid rgba(108,99,255,0.3); border-radius: 20px;
+      font-size: 11px; color: var(--accent-light); font-weight: 500;
+    }
+    .source-chip::before { content: "📚 "; }
+
+    .not-found-bubble {
+      border-color: rgba(234,179,8,0.3) !important;
+      background: rgba(234,179,8,0.05) !important;
+    }
+
+    .chat-input-area {
+      display: flex; gap: 10px; padding-top: 16px;
+      border-top: 1px solid var(--border);
+    }
+    .chat-input {
+      flex: 1; background: var(--bg-card); border: 1px solid var(--border);
+      border-radius: var(--radius); padding: 13px 16px; color: var(--text-primary);
+      font-family: inherit; font-size: 14px; resize: none; outline: none;
+      transition: border-color 0.2s; min-height: 48px; max-height: 140px;
+    }
+    .chat-input:focus { border-color: var(--accent); box-shadow: 0 0 0 3px var(--accent-glow); }
+    .chat-input::placeholder { color: var(--text-muted); }
+
+    .send-btn {
+      width: 48px; height: 48px; border-radius: var(--radius); background: var(--accent);
+      border: none; cursor: pointer; display: flex; align-items: center; justify-content: center;
+      transition: all 0.2s; flex-shrink: 0; align-self: flex-end;
+    }
+    .send-btn:hover { background: var(--accent-light); box-shadow: 0 0 20px var(--accent-glow); }
+    .send-btn:disabled { opacity: 0.5; cursor: not-allowed; }
+    .send-btn svg { width: 20px; height: 20px; fill: #fff; }
+
+    /* ── Settings Form ── */
+    .settings-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+    .form-group { display: flex; flex-direction: column; gap: 7px; }
+    .form-group.full { grid-column: 1 / -1; }
+    .form-label { font-size: 13px; font-weight: 500; color: var(--text-secondary); }
+    .form-input, .form-select {
+      background: var(--bg-secondary); border: 1px solid var(--border);
+      border-radius: 8px; padding: 10px 14px; color: var(--text-primary);
+      font-family: inherit; font-size: 14px; outline: none; transition: border-color 0.2s;
+    }
+    .form-input:focus, .form-select:focus { border-color: var(--accent); box-shadow: 0 0 0 3px var(--accent-glow); }
+    .form-select option { background: var(--bg-card); }
+    .form-hint { font-size: 11px; color: var(--text-muted); }
+
+    /* ── Stats ── */
+    .stats-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px; }
+    .stat-card {
+      background: var(--bg-card); border: 1px solid var(--border); border-radius: var(--radius-lg);
+      padding: 20px; display: flex; flex-direction: column; gap: 8px; transition: all 0.2s;
+    }
+    .stat-card:hover { border-color: var(--border-light); box-shadow: var(--glow); }
+    .stat-value { font-size: 32px; font-weight: 700; background: linear-gradient(135deg, #6c63ff, #a78bfa); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
+    .stat-label { font-size: 13px; color: var(--text-muted); }
+
+    /* ── Spinner ── */
+    .spinner {
+      width: 18px; height: 18px; border: 2px solid rgba(255,255,255,0.2);
+      border-top-color: #fff; border-radius: 50%; animation: spin 0.7s linear infinite;
+    }
+    @keyframes spin { to { transform: rotate(360deg); } }
+
+    /* ── Toast ── */
+    .toast-container { position: fixed; top: 20px; right: 20px; z-index: 9999; display: flex; flex-direction: column; gap: 8px; }
+    .toast {
+      padding: 12px 18px; border-radius: var(--radius); font-size: 14px; font-weight: 500;
+      box-shadow: var(--shadow); display: flex; align-items: center; gap: 8px;
+      animation: slideIn 0.3s ease; max-width: 340px;
+    }
+    .toast.success { background: var(--green-light); color: var(--green); border: 1px solid rgba(34,197,94,0.3); }
+    .toast.error { background: var(--red-light); color: var(--red); border: 1px solid rgba(239,68,68,0.3); }
+    .toast.info { background: var(--accent-glow); color: var(--accent-light); border: 1px solid rgba(108,99,255,0.3); }
+    @keyframes slideIn { from { transform: translateX(20px); opacity:0; } to { transform: translateX(0); opacity:1; } }
+
+    .empty-state {
+      display: flex; flex-direction: column; align-items: center; justify-content: center;
+      padding: 48px; text-align: center; gap: 12px; color: var(--text-muted);
+    }
+    .empty-state .icon { font-size: 40px; }
+    .empty-state p { font-size: 14px; max-width: 280px; line-height: 1.5; }
+
+    /* Typing indicator */
+    .typing { display: flex; gap: 5px; padding: 4px 0; }
+    .typing span { width: 7px; height: 7px; border-radius: 50%; background: var(--text-muted); animation: bounce 1.2s infinite; }
+    .typing span:nth-child(2) { animation-delay: 0.2s; }
+    .typing span:nth-child(3) { animation-delay: 0.4s; }
+    @keyframes bounce { 0%,60%,100%{transform:translateY(0)} 30%{transform:translateY(-6px)} }
+
+    ::-webkit-scrollbar { width: 6px; }
+    ::-webkit-scrollbar-track { background: transparent; }
+    ::-webkit-scrollbar-thumb { background: var(--border); border-radius: 3px; }
+
+    @media (max-width: 768px) {
+      .sidebar { display: none; }
+      .stats-grid { grid-template-columns: 1fr; }
+      .settings-grid { grid-template-columns: 1fr; }
+    }
+  </style>
+</head>
+<body>
+
+<!-- Sidebar -->
+<aside class="sidebar">
+  <div class="logo">
+    <h1>🧠 KnowledgeAI</h1>
+    <p>基于RAG的知识问答系统</p>
+  </div>
+  <nav class="nav">
+    <div class="nav-item active" data-page="chat" onclick="navigate('chat')">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
+      智能问答
+    </div>
+    <div class="nav-item" data-page="books" onclick="navigate('books')">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"/></svg>
+      知识库管理
+    </div>
+    <div class="nav-item" data-page="settings" onclick="navigate('settings')">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
+      配置中心
+    </div>
+  </nav>
+  <div class="sidebar-footer">
+    <div class="nav-item" onclick="navigate('overview')">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/></svg>
+      系统概览
+    </div>
+  </div>
+</aside>
+
+<!-- Main Content -->
+<main class="main">
+  <!-- Topbar -->
+  <div class="topbar">
+    <span class="topbar-title" id="page-title">智能问答</span>
+    <div class="status-badge warning" id="config-status">
+      <span class="status-dot"></span>
+      需要配置API
+    </div>
+    <div class="status-badge ready" id="kb-status" style="display:none">
+      <span class="status-dot"></span>
+      知识库就绪
+    </div>
+    <button class="btn btn-ghost" onclick="navigate('settings')" style="font-size:13px">⚙️ 设置</button>
+  </div>
+
+  <!-- Chat Page -->
+  <div class="page active" id="page-chat" style="padding:20px 28px 0">
+    <div class="chat-container">
+      <div class="chat-messages" id="chat-messages">
+        <div class="empty-state" id="chat-empty">
+          <div class="icon">🔍</div>
+          <strong style="font-size:16px;color:var(--text-primary)">开始提问</strong>
+          <p>导入书籍/文档后，我将基于这些知识来回答您的问题。所有答案均来自您的知识库，不会凭空捏造。</p>
+        </div>
+      </div>
+      <div class="chat-input-area">
+        <textarea class="chat-input" id="chat-input" placeholder="输入您的问题... (Enter 发送, Shift+Enter 换行)" rows="1"></textarea>
+        <div style="display:flex;flex-direction:column;gap:8px;align-self:flex-end">
+          <button class="send-btn" id="send-btn" onclick="sendMessage()" title="发送">
+            <svg viewBox="0 0 24 24"><path d="M22 2L11 13M22 2l-7 20-4-9-9-4 20-7z"/></svg>
+          </button>
+        </div>
+      </div>
+      <div style="display:flex;justify-content:flex-end;padding:8px 0 4px">
+        <button class="btn btn-ghost" onclick="clearHistory()" style="font-size:12px;padding:5px 12px">🗑 清除对话</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Books Page -->
+  <div class="page" id="page-books">
+    <div class="upload-zone" id="upload-zone">
+      <input type="file" id="file-input" accept=".pdf,.txt,.md,.markdown" multiple onchange="handleFiles(this.files)">
+      <div class="icon">📂</div>
+      <h3>上传知识文档</h3>
+      <p>支持 PDF、TXT、Markdown 格式 · 点击或拖拽文件到此处</p>
+    </div>
+
+    <div class="card">
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:16px">
+        <div class="card-title" style="margin:0">📚 知识库文档</div>
+        <button class="btn btn-ghost" onclick="loadBooks()" style="font-size:13px">🔄 刷新</button>
+      </div>
+      <div class="book-list" id="book-list">
+        <div class="empty-state">
+          <div class="icon">📚</div>
+          <p>暂无文档，上传文件开始构建您的知识库</p>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Settings Page -->
+  <div class="page" id="page-settings">
+    <div class="card">
+      <div class="card-title">🤖 LLM 配置</div>
+      <div class="settings-grid">
+        <div class="form-group">
+          <label class="form-label">AI 提供商</label>
+          <select class="form-select" id="s-provider" onchange="updateProviderDefaults()">
+            <optgroup label="🌍 国际">
+              <option value="openai">OpenAI（GPT系列）</option>
+              <option value="gemini">Google Gemini</option>
+            </optgroup>
+            <optgroup label="🇨🇳 国产">
+              <option value="zhipu">智谱 AI（GLM系列）</option>
+              <option value="volcengine">火山引擎·豆包（ARK）</option>
+              <option value="deepseek">DeepSeek</option>
+              <option value="qwen">阿里通义千问（Qwen）</option>
+              <option value="moonshot">月之暗面（Moonshot）</option>
+            </optgroup>
+            <optgroup label="⚙️ 其他">
+              <option value="custom">自定义（兼容OpenAI格式）</option>
+            </optgroup>
+          </select>
+        </div>
+        <div class="form-group">
+          <label class="form-label">API Key</label>
+          <input class="form-input" id="s-apikey" type="password" placeholder="sk-... 或 AIza...">
+        </div>
+        <div class="form-group">
+          <label class="form-label">对话模型</label>
+          <input class="form-input" id="s-chat-model" placeholder="gpt-4o-mini">
+        </div>
+        <div class="form-group">
+          <label class="form-label">Embedding 模型</label>
+          <input class="form-input" id="s-embed-model" placeholder="text-embedding-3-small">
+        </div>
+        <div class="form-group" id="embed-apikey-group" style="display:none">
+          <label class="form-label">Embedding 专用 API Key <span class="form-hint">（当对话和embedding使用不同提供商时填写）</span></label>
+          <input class="form-input" id="s-embed-apikey" type="password" placeholder="留空表示与对话使用同一个 Key">
+        </div>
+        <div class="form-group full" id="base-url-group">
+          <label class="form-label">Base URL <span class="form-hint" id="base-url-hint">（留空使用提供商默认地址）</span></label>
+          <input class="form-input" id="s-base-url" placeholder="留空使用默认">
+        </div>
+        <div class="form-group full" id="provider-tip-box" style="display:none">
+          <div style="background:rgba(108,99,255,0.08);border:1px solid rgba(108,99,255,0.2);border-radius:8px;padding:12px 14px;font-size:13px;line-height:1.7;color:var(--text-secondary)">
+            <div id="provider-tip-content"></div>
+          </div>
+        </div>
+        <div class="form-group">
+          <label class="form-label">检索数量 (Top-K)</label>
+          <input class="form-input" id="s-topk" type="number" min="1" max="20" value="5">
+          <span class="form-hint">每次从知识库检索的最相关片段数量</span>
+        </div>
+        <div class="form-group">
+          <label class="form-label">相似度阈值</label>
+          <input class="form-input" id="s-thresh" type="number" min="0" max="1" step="0.05" value="0.3">
+          <span class="form-hint">低于此相似度的片段不会用于回答 (0~1)</span>
+        </div>
+      </div>
+      <div style="margin-top:20px;display:flex;gap:10px">
+        <button class="btn btn-primary" onclick="saveConfig()">💾 保存配置</button>
+        <button class="btn btn-ghost" onclick="testConfig()">🔬 测试连接</button>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-title">💡 使用指南</div>
+      <div style="display:flex;flex-direction:column;gap:12px;font-size:14px;line-height:1.6;color:var(--text-secondary)">
+        <p>1. 在上方填写您的 <strong style="color:var(--text-primary)">API Key</strong> 并保存</p>
+        <p>2. 前往 <strong style="color:var(--text-primary)">知识库管理</strong> 上传书籍或文档（PDF/TXT/MD）</p>
+        <p>3. 等待文档索引完成（状态变为 <span style="color:var(--green);font-weight:600">就绪</span>）</p>
+        <p>4. 在 <strong style="color:var(--text-primary)">智能问答</strong> 页面提问，系统将基于您的文档精准回答</p>
+        <p style="background:rgba(234,179,8,0.08);border:1px solid rgba(234,179,8,0.2);padding:10px 14px;border-radius:8px;color:var(--yellow)">
+          ⚠️ 本系统严格基于知识库内容回答，无法回答的问题将明确告知，不会凭空捏造答案。
+        </p>
+      </div>
+    </div>
+  </div>
+
+  <!-- Overview Page -->
+  <div class="page" id="page-overview">
+    <div class="stats-grid" id="stats-grid">
+      <div class="stat-card">
+        <div class="stat-value" id="stat-books">-</div>
+        <div class="stat-label">📚 已索引文档</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-value" id="stat-chunks">-</div>
+        <div class="stat-label">🧩 知识片段数</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-value" id="stat-chats">-</div>
+        <div class="stat-label">💬 问答次数</div>
+      </div>
+    </div>
+    <div class="card">
+      <div class="card-title">🏗 系统架构</div>
+      <div style="font-size:14px;line-height:1.8;color:var(--text-secondary)">
+        <p>📄 <strong style="color:var(--text-primary)">文档处理</strong>：上传 → 文本提取 → 智能分块（800字符/块，100字符重叠）</p>
+        <p>🧮 <strong style="color:var(--text-primary)">向量索引</strong>：分块文本 → Embedding API → 向量存储（本地SQLite）</p>
+        <p>🔍 <strong style="color:var(--text-primary)">语义检索</strong>：用户问题 → Embedding → 余弦相似度匹配 → Top-K 结果</p>
+        <p>🤖 <strong style="color:var(--text-primary)">约束回答</strong>：检索结果 + 问题 → LLM（严格指令限制） → 精准答案</p>
+        <p style="margin-top:8px;padding:10px 14px;background:rgba(108,99,255,0.08);border:1px solid rgba(108,99,255,0.2);border-radius:8px;color:var(--accent-light)">
+          🛡 若检索结果相似度低于阈值，直接返回"无相关信息"，LLM 不参与，彻底杜绝幻觉。
+        </p>
+      </div>
+    </div>
+  </div>
+</main>
+
+<!-- Toast Container -->
+<div class="toast-container" id="toast-container"></div>
+
+<script>
+// ── State ──
+let currentPage = 'chat';
+let isLoading = false;
+let pollingInterval = null;
+
+// ── Navigation ──
+function navigate(page) {
+  document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+  document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
+  document.getElementById('page-' + page).classList.add('active');
+  document.querySelector(`[data-page="${page}"]`)?.classList.add('active');
+  currentPage = page;
+
+  const titles = { chat: '智能问答', books: '知识库管理', settings: '配置中心', overview: '系统概览' };
+  document.getElementById('page-title').textContent = titles[page] || page;
+
+  if (page === 'books') loadBooks();
+  if (page === 'settings') loadConfig();
+  if (page === 'overview') loadOverview();
+}
+
+// ── Toast ──
+function toast(msg, type = 'info') {
+  const el = document.createElement('div');
+  el.className = `toast ${type}`;
+  const icons = { success: '✅', error: '❌', info: 'ℹ️' };
+  el.innerHTML = `<span>${icons[type]||''}</span> ${msg}`;
+  document.getElementById('toast-container').appendChild(el);
+  setTimeout(() => { el.style.opacity = '0'; el.style.transition = 'opacity 0.3s'; setTimeout(() => el.remove(), 300); }, 3000);
+}
+
+// ── Config ──
+async function loadConfig() {
+  try {
+    const r = await fetch('/api/config');
+    const cfg = await r.json();
+    document.getElementById('s-provider').value = cfg.provider || 'openai';
+    document.getElementById('s-apikey').value = cfg.api_key || '';
+    document.getElementById('s-chat-model').value = cfg.chat_model || '';
+    document.getElementById('s-embed-model').value = cfg.embed_model || '';
+    document.getElementById('s-base-url').value = cfg.base_url || '';
+    document.getElementById('s-embed-apikey').value = cfg.embed_api_key || '';
+    document.getElementById('s-topk').value = cfg.top_k || 5;
+    document.getElementById('s-thresh').value = cfg.score_thresh || 0.3;
+
+    const hasKey = cfg.api_key && cfg.api_key.length > 0;
+    const statusEl = document.getElementById('config-status');
+    statusEl.className = 'status-badge ' + (hasKey ? 'ready' : 'warning');
+    statusEl.innerHTML = `<span class="status-dot"></span> ${hasKey ? 'API已配置' : '需要配置API'}`;
+
+    // Show provider tip
+    showProviderTip(cfg.provider || 'openai');
+    toggleEmbedAPIKey(cfg.provider || 'openai');
+  } catch(e) { toast('加载配置失败', 'error'); }
+}
+
+// Provider presets: baseURL, chatModel, embedModel, keyPlaceholder, tip
+const PROVIDERS = {
+  openai:     { baseURL:'https://api.openai.com/v1', chat:'gpt-4o-mini', embed:'text-embedding-3-small', keyHint:'sk-...', tip:'<strong>OpenAI</strong>：支持 gpt-4o, gpt-4o-mini, gpt-3.5-turbo 等对话模型，embedding 使用 text-embedding-3-small / text-embedding-3-large。<br>🔗 控制台：<a href="https://platform.openai.com/api-keys" target="_blank" style="color:var(--accent-light)">platform.openai.com</a>' },
+  gemini:     { baseURL:'https://generativelanguage.googleapis.com/v1beta/openai/', chat:'gemini-3.5-flash', embed:'gemini-embedding-2', keyHint:'AIza...', tip:'<strong>Google Gemini</strong>：使用 OpenAI 兼容端点。对话模型推荐最新版 gemini-3.5-flash（免费额度大），embedding 使用最新且兼容的 gemini-embedding-2。<br>⚠️ Embedding Base URL 与对话相同。<br>🔗 控制台：<a href="https://aistudio.google.com/app/apikey" target="_blank" style="color:var(--accent-light)">aistudio.google.com</a>' },
+  zhipu:      { baseURL:'https://open.bigmodel.cn/api/paas/v4/', chat:'glm-4-flash', embed:'embedding-3', keyHint:'your_zhipu_api_key', tip:'<strong>智谱AI（GLM）</strong>：对话模型推荐 glm-4-flash（免费）、glm-4-plus、glm-4-long，embedding 使用 embedding-3（支持2048维）。<br>🔗 控制台：<a href="https://open.bigmodel.cn/" target="_blank" style="color:var(--accent-light)">open.bigmodel.cn</a>' },
+  volcengine: { baseURL:'https://ark.cn-beijing.volces.com/api/v3/', chat:'doubao-1-5-pro-32k-250115', embed:'doubao-embedding-large-text-240915', keyHint:'your_ark_api_key', tip:'<strong>火山引擎·豆包（ARK）</strong>：对话模型填写接入点ID（如 doubao-1-5-pro-32k-250115），embedding 填写 doubao-embedding-large-text-240915。<br>⚠️ 需在火山控制台创建接入点后获取模型ID。<br>🔗 控制台：<a href="https://console.volcengine.com/ark" target="_blank" style="color:var(--accent-light)">console.volcengine.com/ark</a>' },
+  deepseek:   { baseURL:'https://api.deepseek.com', chat:'deepseek-chat', embed:'', keyHint:'sk-...', tip:'<strong>DeepSeek</strong>：支持 deepseek-chat（DeepSeek-V3）、deepseek-reasoner（R1推理）。<br>⚠️ DeepSeek <strong>暂不提供 Embedding API</strong>，请将 Embedding 模型留空，同时配置另一个支持 Embedding 的提供商（如OpenAI/智谱），并手动填写其 API Key 和 Embed Model 字段。<br>🔗 控制台：<a href="https://platform.deepseek.com/" target="_blank" style="color:var(--accent-light)">platform.deepseek.com</a>' },
+  qwen:       { baseURL:'https://dashscope.aliyuncs.com/compatible-mode/v1', chat:'qwen-plus', embed:'text-embedding-v3', keyHint:'sk-...', tip:'<strong>阿里通义千问（Qwen）</strong>：对话模型推荐 qwen-plus / qwen-max / qwen-turbo，embedding 使用 text-embedding-v3。<br>🔗 控制台：<a href="https://dashscope.console.aliyun.com/" target="_blank" style="color:var(--accent-light)">dashscope.console.aliyun.com</a>' },
+  moonshot:   { baseURL:'https://api.moonshot.cn/v1', chat:'moonshot-v1-8k', embed:'', keyHint:'sk-...', tip:'<strong>月之暗面（Kimi）</strong>：支持 moonshot-v1-8k / moonshot-v1-32k / moonshot-v1-128k。<br>⚠️ Moonshot <strong>暂不提供 Embedding API</strong>，请配合 OpenAI 或智谱的 Embedding 使用（同 DeepSeek 做法）。<br>🔗 控制台：<a href="https://platform.moonshot.cn/" target="_blank" style="color:var(--accent-light)">platform.moonshot.cn</a>' },
+  custom:     { baseURL:'', chat:'', embed:'', keyHint:'your_api_key', tip:'<strong>自定义兼容API</strong>：任何兼容 OpenAI 格式的接口都可使用，填写您的 Base URL、模型名称和 API Key 即可。' },
+};
+
+function updateProviderDefaults() {
+  const p = document.getElementById('s-provider').value;
+  const preset = PROVIDERS[p] || PROVIDERS['custom'];
+  
+  const chatEl = document.getElementById('s-chat-model');
+  const embedEl = document.getElementById('s-embed-model');
+  const baseURLEl = document.getElementById('s-base-url');
+  const keyEl = document.getElementById('s-apikey');
+  
+  chatEl.value = preset.chat;
+  embedEl.value = preset.embed;
+  baseURLEl.placeholder = preset.baseURL || '请填写您的 API 地址';
+  baseURLEl.value = '';
+  keyEl.placeholder = preset.keyHint;
+  
+  showProviderTip(p);
+  toggleEmbedAPIKey(p);
+}
+
+function showProviderTip(p) {
+  const preset = PROVIDERS[p] || PROVIDERS['custom'];
+  const tipBox = document.getElementById('provider-tip-box');
+  const tipContent = document.getElementById('provider-tip-content');
+  if (preset && preset.tip) {
+    tipContent.innerHTML = preset.tip;
+    tipBox.style.display = 'block';
+  } else {
+    tipBox.style.display = 'none';
+  }
+}
+
+// Show/hide embed API key for providers without native embedding
+function toggleEmbedAPIKey(p) {
+  const noEmbedProviders = ['deepseek', 'moonshot'];
+  const group = document.getElementById('embed-apikey-group');
+  if (noEmbedProviders.includes(p)) {
+    group.style.display = 'flex';
+  } else {
+    group.style.display = 'none';
+  }
+}
+
+async function saveConfig() {
+  const cfg = {
+    provider: document.getElementById('s-provider').value,
+    api_key: document.getElementById('s-apikey').value,
+    chat_model: document.getElementById('s-chat-model').value,
+    embed_model: document.getElementById('s-embed-model').value,
+    embed_api_key: document.getElementById('s-embed-apikey').value,
+    base_url: document.getElementById('s-base-url').value,
+    top_k: parseInt(document.getElementById('s-topk').value),
+    score_thresh: parseFloat(document.getElementById('s-thresh').value),
+  };
+  try {
+    const r = await fetch('/api/config', { method: 'POST', headers: {'Content-Type':'application/json'}, body: JSON.stringify(cfg) });
+    const data = await r.json();
+    if (r.ok) { toast('配置已保存', 'success'); loadConfig(); } 
+    else { toast(data.error || '保存失败', 'error'); }
+  } catch(e) { toast('网络错误', 'error'); }
+}
+
+async function testConfig() {
+  toast('正在测试连接...', 'info');
+  try {
+    const r = await fetch('/api/chat', {
+      method: 'POST',
+      headers: {'Content-Type':'application/json'},
+      body: JSON.stringify({ question: '__test__' })
+    });
+    const d = await r.json();
+    if (r.status === 400 && d.error && d.error.includes('knowledge')) {
+      toast('API连接成功！（知识库暂无内容）', 'success');
+    } else if (r.ok || d.answer) {
+      toast('API连接测试成功', 'success');
+    } else if (d.error && (d.error.includes('API key') || d.error.includes('key'))) {
+      toast('API Key 无效或未配置', 'error');
+    } else {
+      toast('连接测试完成', 'info');
+    }
+  } catch(e) { toast('连接失败: ' + e.message, 'error'); }
+}
+
+// ── Books ──
+async function loadBooks() {
+  try {
+    const r = await fetch('/api/books');
+    const { books } = await r.json();
+    renderBooks(books || []);
+
+    const ready = (books || []).filter(b => b.status === 'ready');
+    const kbEl = document.getElementById('kb-status');
+    if (ready.length > 0) {
+      kbEl.style.display = 'flex';
+      kbEl.innerHTML = `<span class="status-dot"></span> ${ready.length} 本文档就绪`;
+    } else {
+      kbEl.style.display = 'none';
+    }
+    // Update stats
+    document.getElementById('stat-books').textContent = ready.length;
+    const totalChunks = (books||[]).reduce((s,b) => s + (b.chunk_count||0), 0);
+    document.getElementById('stat-chunks').textContent = totalChunks;
+
+    // Schedule poll if any processing
+    const processing = (books||[]).some(b => b.status === 'processing');
+    if (processing && !pollingInterval) {
+      pollingInterval = setInterval(loadBooks, 2500);
+    } else if (!processing && pollingInterval) {
+      clearInterval(pollingInterval);
+      pollingInterval = null;
+    }
+  } catch(e) { toast('加载书籍失败', 'error'); }
+}
+
+function renderBooks(books) {
+  const el = document.getElementById('book-list');
+  if (books.length === 0) {
+    el.innerHTML = `<div class="empty-state"><div class="icon">📚</div><p>暂无文档，上传文件开始构建您的知识库</p></div>`;
+    return;
+  }
+  const icons = { '.pdf': '📕', '.md': '📗', '.txt': '📄' };
+  el.innerHTML = books.map(b => `
+    <div class="book-item" id="book-${b.id}">
+      <div class="book-icon">${icons[b.file_type]||'📄'}</div>
+      <div class="book-info">
+        <div class="book-title" title="${b.title}">${b.title}</div>
+        <div class="book-meta">${b.file_name} · ${formatSize(b.file_size)} · ${b.chunk_count||0} 个知识片段</div>
+      </div>
+      <span class="book-status ${b.status}">${statusLabel(b.status)}</span>
+      <button class="btn btn-danger" onclick="deleteBook('${b.id}','${escapeHtml(b.title)}')" style="padding:6px 12px;font-size:12px">🗑</button>
+    </div>
+  `).join('');
+}
+
+function statusLabel(s) {
+  return { ready:'就绪', processing:'索引中...', error:'错误' }[s] || s;
+}
+
+function formatSize(bytes) {
+  if (bytes < 1024) return bytes + 'B';
+  if (bytes < 1024*1024) return (bytes/1024).toFixed(1)+'KB';
+  return (bytes/1024/1024).toFixed(1)+'MB';
+}
+
+function escapeHtml(s) { return s.replace(/['"&<>]/g, c => ({'\'':'&#39;','"':'&quot;','&':'&amp;','<':'&lt;','>':'&gt;'}[c]||c)); }
+
+async function deleteBook(id, title) {
+  if (!confirm(`确定要删除《${title}》吗？\n\n相关的知识片段也将被删除。`)) return;
+  try {
+    const r = await fetch('/api/books/' + id, { method: 'DELETE' });
+    const d = await r.json();
+    if (r.ok) { toast('文档已删除', 'success'); loadBooks(); }
+    else { toast(d.error || '删除失败', 'error'); }
+  } catch(e) { toast('网络错误', 'error'); }
+}
+
+// ── Upload ──
+const uploadZone = document.getElementById('upload-zone');
+uploadZone.addEventListener('dragover', e => { e.preventDefault(); uploadZone.classList.add('drag-over'); });
+uploadZone.addEventListener('dragleave', () => uploadZone.classList.remove('drag-over'));
+uploadZone.addEventListener('drop', e => { e.preventDefault(); uploadZone.classList.remove('drag-over'); handleFiles(e.dataTransfer.files); });
+
+async function handleFiles(files) {
+  for (const file of files) {
+    await uploadFile(file);
+  }
+  loadBooks();
+}
+
+async function uploadFile(file) {
+  const fd = new FormData();
+  fd.append('file', file);
+  fd.append('title', file.name.replace(/\.[^.]+$/, ''));
+  toast(`正在上传：${file.name}`, 'info');
+  try {
+    const r = await fetch('/api/books/upload', { method: 'POST', body: fd });
+    const d = await r.json();
+    if (r.ok) { toast(`${file.name} 上传成功，正在索引...`, 'success'); }
+    else { toast(d.error || '上传失败', 'error'); }
+  } catch(e) { toast('上传失败: ' + e.message, 'error'); }
+}
+
+// ── Chat ──
+async function loadHistory() {
+  try {
+    const r = await fetch('/api/chat/history');
+    const { messages } = await r.json();
+    const container = document.getElementById('chat-messages');
+    const empty = document.getElementById('chat-empty');
+    if (messages && messages.length > 0) {
+      empty.style.display = 'none';
+      messages.forEach(m => appendMessage(m.role, m.content, m.sources ? JSON.parse(m.sources) : []));
+    }
+  } catch(e) {}
+}
+
+function appendMessage(role, content, sources = []) {
+  const empty = document.getElementById('chat-empty');
+  if (empty) empty.style.display = 'none';
+
+  const el = document.createElement('div');
+  el.className = `message ${role}`;
+
+  const avatar = role === 'user' ? '👤' : '🧠';
+  const isNotFound = content.includes("I'm sorry, I cannot find") || content.includes("无相关信息");
+  const bubbleClass = role === 'assistant' && isNotFound ? 'bubble not-found-bubble' : 'bubble';
+
+  const sourcesHtml = (sources && sources.length > 0)
+    ? `<div class="sources-tag">${sources.map(s => `<span class="source-chip">${s}</span>`).join('')}</div>`
+    : '';
+
+  el.innerHTML = `
+    <div class="avatar">${avatar}</div>
+    <div class="${bubbleClass}">
+      ${formatContent(content)}
+      ${sourcesHtml}
+    </div>
+  `;
+
+  const container = document.getElementById('chat-messages');
+  container.appendChild(el);
+  container.scrollTop = container.scrollHeight;
+  return el;
+}
+
+function formatContent(text) {
+  return text
+    .replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;')
+    .replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>')
+    .replace(/`([^`]+)`/g, '<code style="background:rgba(108,99,255,0.15);padding:1px 5px;border-radius:4px;font-family:monospace;font-size:13px">$1</code>')
+    .replace(/\n/g, '<br>');
+}
+
+function showTyping() {
+  const el = document.createElement('div');
+  el.className = 'message assistant';
+  el.id = 'typing-indicator';
+  el.innerHTML = `<div class="avatar">🧠</div><div class="bubble"><div class="typing"><span></span><span></span><span></span></div></div>`;
+  document.getElementById('chat-messages').appendChild(el);
+  document.getElementById('chat-messages').scrollTop = 9999;
+  return el;
+}
+
+async function sendMessage() {
+  if (isLoading) return;
+  const input = document.getElementById('chat-input');
+  const question = input.value.trim();
+  if (!question) return;
+
+  isLoading = true;
+  input.value = '';
+  input.style.height = '48px';
+  document.getElementById('send-btn').disabled = true;
+
+  appendMessage('user', question);
+  const typing = showTyping();
+
+  try {
+    const r = await fetch('/api/chat', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ question })
+    });
+    const d = await r.json();
+    typing.remove();
+
+    if (r.ok) {
+      appendMessage('assistant', d.answer, d.sources || []);
+    } else {
+      appendMessage('assistant', `❌ 错误：${d.error || '服务器错误'}`);
+    }
+  } catch(e) {
+    typing.remove();
+    appendMessage('assistant', `❌ 网络错误：${e.message}`);
+  } finally {
+    isLoading = false;
+    document.getElementById('send-btn').disabled = false;
+    input.focus();
+  }
+}
+
+async function clearHistory() {
+  if (!confirm('确定要清除所有对话记录吗？')) return;
+  await fetch('/api/chat/history', { method: 'DELETE' });
+  document.getElementById('chat-messages').innerHTML = `
+    <div class="empty-state" id="chat-empty">
+      <div class="icon">🔍</div>
+      <strong style="font-size:16px;color:var(--text-primary)">开始提问</strong>
+      <p>导入书籍/文档后，我将基于这些知识来回答您的问题。所有答案均来自您的知识库，不会凭空捏造。</p>
+    </div>`;
+  toast('对话已清除', 'success');
+}
+
+// ── Overview ──
+async function loadOverview() {
+  await loadBooks();
+  try {
+    const r = await fetch('/api/chat/history');
+    const { messages } = await r.json();
+    const chats = (messages||[]).filter(m => m.role === 'user').length;
+    document.getElementById('stat-chats').textContent = chats;
+  } catch(e) {}
+}
+
+// ── Keyboard ──
+document.getElementById('chat-input').addEventListener('keydown', e => {
+  if (e.key === 'Enter' && !e.shiftKey) {
+    e.preventDefault();
+    sendMessage();
+  }
+});
+
+// Auto-resize textarea
+document.getElementById('chat-input').addEventListener('input', function() {
+  this.style.height = 'auto';
+  this.style.height = Math.min(this.scrollHeight, 140) + 'px';
+});
+
+// ── Init ──
+loadConfig();
+loadHistory();
+loadBooks();
+</script>
+</body>
+</html>
