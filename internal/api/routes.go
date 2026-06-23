@@ -16,8 +16,6 @@ func RegisterRoutes(r *gin.Engine, h *Handler) {
 
 		// Chat
 		api.POST("/chat", h.Chat)
-		api.GET("/chat/history", h.GetHistory)
-		api.DELETE("/chat/history", h.ClearHistory)
 
 		// Config
 		api.GET("/config", h.GetConfig)

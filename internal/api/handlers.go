@@ -2,7 +2,6 @@ package api
 
 import (
 	"context"
-	"encoding/json"
 	"fmt"
 	"io"
 	"net/http"
@@ -233,41 +232,10 @@ func (h *Handler) Chat(c *gin.Context) {
 		return
 	}
 
-	// Save messages
-	userMsg := &models.ChatMessage{
-		ID:      uuid.New().String(),
-		Role:    "user",
-		Content: req.Question,
-	}
-	store.DB.Create(userMsg)
-
-	sourcesJSON, _ := json.Marshal(sources)
-	assistantMsg := &models.ChatMessage{
-		ID:      uuid.New().String(),
-		Role:    "assistant",
-		Content: answer,
-		Sources: string(sourcesJSON),
-	}
-	store.DB.Create(assistantMsg)
-
 	c.JSON(http.StatusOK, gin.H{
 		"answer":  answer,
 		"sources": sources,
-		"found":   len(results) > 0,
 	})
-}
-
-// GetHistory returns recent chat history
-func (h *Handler) GetHistory(c *gin.Context) {
-	var messages []models.ChatMessage
-	store.DB.Order("created_at asc").Limit(200).Find(&messages)
-	c.JSON(http.StatusOK, gin.H{"messages": messages})
-}
-
-// ClearHistory deletes all chat messages
-func (h *Handler) ClearHistory(c *gin.Context) {
-	store.DB.Where("1 = 1").Delete(&models.ChatMessage{})
-	c.JSON(http.StatusOK, gin.H{"message": "History cleared"})
 }
 
 // ---- Configuration ----

@@ -798,18 +798,21 @@ async function uploadFile(file) {
 // ── Chat ──
 async function loadHistory() {
   try {
-    const r = await fetch('/api/chat/history');
-    const { messages } = await r.json();
-    const container = document.getElementById('chat-messages');
-    const empty = document.getElementById('chat-empty');
-    if (messages && messages.length > 0) {
-      empty.style.display = 'none';
-      messages.forEach(m => appendMessage(m.role, m.content, m.sources ? JSON.parse(m.sources) : []));
+    const historyStr = localStorage.getItem('knowledgeAI_chat_history');
+    if (historyStr) {
+      const messages = JSON.parse(historyStr);
+      const empty = document.getElementById('chat-empty');
+      if (messages && messages.length > 0) {
+        if (empty) empty.style.display = 'none';
+        messages.forEach(m => appendMessage(m.role, m.content, m.sources, false));
+      }
     }
-  } catch(e) {}
+  } catch(e) {
+    console.error("Failed to load history from localStorage:", e);
+  }
 }
 
-function appendMessage(role, content, sources = []) {
+function appendMessage(role, content, sources = [], save = true) {
   const empty = document.getElementById('chat-empty');
   if (empty) empty.style.display = 'none';
 
@@ -835,7 +838,26 @@ function appendMessage(role, content, sources = []) {
   const container = document.getElementById('chat-messages');
   container.appendChild(el);
   container.scrollTop = container.scrollHeight;
+
+  // Save to localStorage
+  if (save !== false) {
+    saveToLocalStorage(role, content, sources);
+  }
   return el;
+}
+
+function saveToLocalStorage(role, content, sources) {
+  try {
+    let history = [];
+    const historyStr = localStorage.getItem('knowledgeAI_chat_history');
+    if (historyStr) {
+      history = JSON.parse(historyStr);
+    }
+    history.push({ role, content, sources });
+    localStorage.setItem('knowledgeAI_chat_history', JSON.stringify(history));
+  } catch(e) {
+    console.error("Failed to save to localStorage:", e);
+  }
 }
 
 function formatContent(text) {

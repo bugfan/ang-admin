@@ -32,14 +32,6 @@ type Chunk struct {
 	DeletedAt gorm.DeletedAt `gorm:"index" json:"-"`
 }
 
-// ChatMessage represents a Q&A conversation message
-type ChatMessage struct {
-	ID        string    `gorm:"primaryKey" json:"id"`
-	Role      string    `json:"role"` // user, assistant
-	Content   string    `json:"content"`
-	Sources   string    `json:"sources,omitempty"` // JSON list of source book titles
-	CreatedAt time.Time `json:"created_at"`
-}
 
 // Config stores LLM and embedding configuration
 type Config struct {

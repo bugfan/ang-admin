@@ -23,7 +23,6 @@ func Init(dbPath string) error {
 	return DB.AutoMigrate(
 		&models.Book{},
 		&models.Chunk{},
-		&models.ChatMessage{},
 		&models.Config{},
 	)
 }
