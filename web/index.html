@@ -558,6 +558,7 @@ function navigate(page) {
   document.getElementById('page-' + page).classList.add('active');
   document.querySelector(`[data-page="${page}"]`)?.classList.add('active');
   currentPage = page;
+  localStorage.setItem('knowledgeAI_current_page', page);
 
   const titles = { chat: '智能问答', books: '知识库管理', settings: '配置中心', overview: '系统概览' };
   document.getElementById('page-title').textContent = titles[page] || page;
@@ -957,6 +958,8 @@ document.getElementById('chat-input').addEventListener('input', function() {
 loadConfig();
 loadHistory();
 loadBooks();
+const savedPage = localStorage.getItem('knowledgeAI_current_page') || 'chat';
+navigate(savedPage);
 </script>
 </body>
 </html>
