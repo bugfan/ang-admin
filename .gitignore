@@ -1,0 +1,23 @@
+# Binaries
+ang-admin
+
+# Database
+*.db
+*.db-shm
+*.db-wal
+
+# OS specific
+.DS_Store
+
+# Go
+vendor/
+go.work
+go.work.sum
+
+# IDE
+.idea/
+.vscode/
+
+# Frontend is ignored in web/.gitignore, but let's make sure
+web/node_modules/
+web/dist/
