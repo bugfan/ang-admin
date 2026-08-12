@@ -25,10 +25,10 @@ func ListUsers(username string, page, pageSize int) ([]models.User, int64, error
 	return users, total, err
 }
 
-func Register(username, password string) error {
+func Register(user *models.User) error {
 	engine := models.GetEngine()
 
-	has, err := engine.Where("username = ?", username).Exist(&models.User{})
+	has, err := engine.Where("username = ?", user.Username).Exist(&models.User{})
 	if err != nil {
 		return err
 	}
@@ -36,19 +36,37 @@ func Register(username, password string) error {
 		return errors.New("user already exists")
 	}
 
-	hashedPassword, err := bcrypt.GenerateFromPassword([]byte(password), bcrypt.DefaultCost)
+	hashedPassword, err := bcrypt.GenerateFromPassword([]byte(user.Password), bcrypt.DefaultCost)
 	if err != nil {
 		return err
 	}
 
-	user := &models.User{
-		Username: username,
-		Password: string(hashedPassword),
-		Nickname: username,
-		Roles:    []string{"common"},
-	}
+	user.Password = string(hashedPassword)
+	user.Roles = []string{"common"}
 
 	_, err = engine.Insert(user)
+	return err
+}
+
+func UpdateUser(user *models.User) error {
+	engine := models.GetEngine()
+	existing := new(models.User)
+	has, err := engine.Where("username = ?", user.Username).Get(existing)
+	if err != nil {
+		return err
+	}
+	if !has {
+		return errors.New("user not found")
+	}
+
+	existing.Description = user.Description
+
+	if user.Password != "" {
+		hashedPassword, _ := bcrypt.GenerateFromPassword([]byte(user.Password), bcrypt.DefaultCost)
+		existing.Password = string(hashedPassword)
+	}
+
+	_, err = engine.ID(existing.Id).Cols("description", "password").Update(existing)
 	return err
 }
 
@@ -69,9 +87,8 @@ func Login(username, password string) (map[string]interface{}, error) {
 
 	return map[string]interface{}{
 		"id":           user.Id,
-		"avatar":       user.Avatar,
+		"avatar":       "/api/avatar.png?username=" + user.Username,
 		"username":     user.Username,
-		"nickname":     user.Nickname,
 		"roles":        []string{"admin"}, // For now, hardcode admin role
 		"permissions":  []string{"*:*:*"},
 		"accessToken":  "eyJhbGciOiJIUzUxMiJ9." + user.Username,
@@ -82,9 +99,8 @@ func Login(username, password string) (map[string]interface{}, error) {
 
 func GetUserInfo() (map[string]interface{}, error) {
 	return map[string]interface{}{
-		"avatar":      "",
+		"avatar":      "/api/avatar.png?username=admin",
 		"username":    "admin",
-		"nickname":    "admin",
 		"email":       "",
 		"phone":       "",
 		"description": "",

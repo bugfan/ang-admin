@@ -31,10 +31,13 @@ func SetupRouter() *gin.Engine {
 		})
 		api.POST("/login", LoginHandler)
 		api.POST("/register", RegisterHandler)
+		api.POST("/updateUser", UpdateUserHandler)
+		api.POST("/deleteUser", DeleteUserHandler)
 		api.GET("/captcha", CaptchaHandler)
 		api.POST("/users", ListUsersHandler)
 		api.GET("/mine", MineHandler)
 		api.POST("/refresh-token", RefreshTokenHandler)
+		api.GET("/avatar.png", AvatarHandler)
 	}
 
 	// Register RESTful APIs using bugfan/rest

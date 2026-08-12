@@ -32,7 +32,6 @@ func InitDB(dsn string) {
 	if !has {
 		hashedPassword, _ := bcrypt.GenerateFromPassword([]byte("admin@9527"), bcrypt.DefaultCost)
 		admin.Password = string(hashedPassword)
-		admin.Nickname = "Admin"
 		_, err = engine.Insert(admin)
 		if err != nil {
 			log.Fatalf("Failed to insert default admin: %v", err)

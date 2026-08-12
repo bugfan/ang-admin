@@ -15,4 +15,5 @@ ang-admin是ang全协议代理网关的管理端，包含管理后台接口和�
 基于xorm数据库框架
 暂时基于sqlite3本地数据库
 管理端web页面要始终支持中英双语
+管理端web页面要始终支持手机/PC双端响应式布局
 管理端web原地址仓库 https://github.com/pure-admin/vue-pure-admin 

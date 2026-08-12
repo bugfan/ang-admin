@@ -25,3 +25,18 @@ type ResultTable = {
 export const getUserList = (data?: object) => {
   return http.request<ResultTable>("post", "/api/users", { data });
 };
+
+/** 注册用户 */
+export const registerUser = (data?: object) => {
+  return http.request<Result>("post", "/api/register", { data });
+};
+
+/** 修改用户 */
+export const updateUser = (data?: object) => {
+  return http.request<Result>("post", "/api/updateUser", { data });
+};
+
+/** 删除用户 */
+export const deleteUser = (data?: object) => {
+  return http.request<Result>("post", "/api/deleteUser", { data });
+};

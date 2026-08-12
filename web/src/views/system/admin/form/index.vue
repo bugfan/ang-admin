@@ -1,18 +1,22 @@
 <script setup lang="ts">
 import { ref } from "vue";
 import ReCol from "@/components/ReCol";
+import { formRules } from "../utils/rule";
+import { useI18n } from "vue-i18n";
 
 const props = withDefaults(defineProps<{ formInline: any }>(), {
   formInline: () => ({
     title: "新增",
-    nickname: "",
     username: "",
-    password: ""
+    password: "",
+    repeatPassword: "",
+    description: ""
   })
 });
 
 const ruleFormRef = ref();
 const newFormInline = ref(props.formInline);
+const { t } = useI18n();
 
 function getRef() {
   return ruleFormRef.value;
@@ -25,39 +29,44 @@ defineExpose({ getRef });
   <el-form
     ref="ruleFormRef"
     :model="newFormInline"
-    label-width="82px"
+    :rules="formRules"
+    label-width="auto"
   >
     <el-row :gutter="30">
-      <re-col :value="12" :xs="24" :sm="24">
-        <el-form-item label="Nickname" prop="nickname">
-          <el-input
-            v-model="newFormInline.nickname"
-            clearable
-            placeholder="Please enter nickname"
-          />
-        </el-form-item>
-      </re-col>
-      <re-col :value="12" :xs="24" :sm="24">
-        <el-form-item label="Username" prop="username">
+      <re-col :value="24" :xs="24" :sm="24">
+        <el-form-item :label="t('admin.username')" prop="username">
           <el-input
             v-model="newFormInline.username"
             clearable
-            placeholder="Please enter username"
           />
         </el-form-item>
       </re-col>
 
-      <re-col
-        v-if="newFormInline.title === '新增'"
-        :value="12"
-        :xs="24"
-        :sm="24"
-      >
-        <el-form-item label="Password" prop="password">
+      <re-col :value="24" :xs="24" :sm="24">
+        <el-form-item :label="t('admin.password')" prop="password">
           <el-input
             v-model="newFormInline.password"
             clearable
-            placeholder="Please enter password"
+            type="password"
+          />
+        </el-form-item>
+      </re-col>
+
+      <re-col :value="24" :xs="24" :sm="24">
+        <el-form-item :label="t('admin.repeatPassword')" prop="repeatPassword">
+          <el-input
+            v-model="newFormInline.repeatPassword"
+            clearable
+            type="password"
+          />
+        </el-form-item>
+      </re-col>
+      <re-col :value="24" :xs="24" :sm="24">
+        <el-form-item :label="t('admin.description')" prop="description">
+          <el-input
+            v-model="newFormInline.description"
+            type="textarea"
+            clearable
           />
         </el-form-item>
       </re-col>

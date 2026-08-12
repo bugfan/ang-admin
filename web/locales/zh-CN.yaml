@@ -250,7 +250,10 @@ login:
   pureLoginExpired: 登录已过期，请重新登录
 admin:
   searchPlaceholder: "请输入管理员名称"
-  username: "管理员名称："
+  username: "管理员名称"
+  password: "密码"
+  repeatPassword: "确认密码"
+  description: "描述"
   id: "ID"
   nickname: "昵称"
   createTime: "创建时间"

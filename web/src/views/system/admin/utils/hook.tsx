@@ -5,7 +5,7 @@ import { message } from "@/utils/message";
 import { addDialog } from "@/components/ReDialog";
 import type { PaginationProps } from "@pureadmin/table";
 import { getKeyList, deviceDetection } from "@pureadmin/utils";
-import { getUserList } from "@/api/system";
+import { getUserList, registerUser, updateUser, deleteUser } from "@/api/system";
 import { ElMessageBox } from "element-plus";
 import { type Ref, h, ref, toRaw, computed, reactive, onMounted } from "vue";
 import { useRenderIcon } from "@/components/ReIcon/src/hooks";
@@ -47,16 +47,11 @@ export function useAdmin(t: any, tableRef: Ref) {
       minWidth: 130
     },
     {
-      label: t('admin.nickname'),
-      prop: "nickname",
-      minWidth: 130
-    },
-    {
       label: t('admin.createTime'),
       minWidth: 90,
-      prop: "createTime",
-      formatter: ({ createTime }) =>
-        dayjs(createTime).format("YYYY-MM-DD HH:mm:ss")
+      prop: "created_at",
+      formatter: ({ created_at }) =>
+        dayjs(created_at).format("YYYY-MM-DD HH:mm:ss")
     },
     {
       label: t('admin.operation'),
@@ -66,9 +61,14 @@ export function useAdmin(t: any, tableRef: Ref) {
     }
   ];
 
-  function handleDelete(row) {
-    message(`${t('admin.delete')} ID: ${row.id}`, { type: "success" });
-    onSearch();
+  async function handleDelete(row) {
+    const { code, message: msg } = await deleteUser({ id: row.id });
+    if (code === 0) {
+      message(`${t('admin.delete')} ID: ${row.id} success`, { type: "success" });
+      onSearch();
+    } else {
+      message(msg, { type: "error" });
+    }
   }
 
   function handleSizeChange(val: number) {
@@ -89,13 +89,19 @@ export function useAdmin(t: any, tableRef: Ref) {
     tableRef.value.getTableRef().clearSelection();
   }
 
-  function onbatchDel() {
+  async function onbatchDel() {
     const curSelected = tableRef.value.getTableRef().getSelectionRows();
-    message(`${t('admin.batchDelete')} ID: ${getKeyList(curSelected, "id")}`, {
-      type: "success"
-    });
-    tableRef.value.getTableRef().clearSelection();
-    onSearch();
+    const ids = getKeyList(curSelected, "id");
+    const { code, message: msg } = await deleteUser({ ids });
+    if (code === 0) {
+      message(`${t('admin.batchDelete')} ID: ${ids} success`, {
+        type: "success"
+      });
+      tableRef.value.getTableRef().clearSelection();
+      onSearch();
+    } else {
+      message(msg, { type: "error" });
+    }
   }
 
   async function onSearch() {
@@ -125,9 +131,10 @@ export function useAdmin(t: any, tableRef: Ref) {
       props: {
         formInline: {
           title,
-          nickname: row?.nickname ?? "",
           username: row?.username ?? "",
-          password: row?.password ?? ""
+          password: row?.password ?? "",
+          repeatPassword: "",
+          description: row?.description ?? ""
         }
       },
       width: "46%",
@@ -139,8 +146,21 @@ export function useAdmin(t: any, tableRef: Ref) {
       beforeSure: (done, { options }) => {
         const FormRef = formRef.value.getRef();
         const curData = options.props.formInline;
-        FormRef.validate(valid => {
+        FormRef.validate(async valid => {
           if (valid) {
+            if (title === '新增') {
+              const { code, message: msg } = await registerUser(curData);
+              if (code !== 0) {
+                message(msg, { type: "error" });
+                return;
+              }
+            } else {
+              const { code, message: msg } = await updateUser(curData);
+              if (code !== 0) {
+                message(msg, { type: "error" });
+                return;
+              }
+            }
             message(`${title} ${curData.username} success`, {
               type: "success"
             });

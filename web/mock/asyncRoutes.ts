@@ -9,16 +9,17 @@ import { system, monitor, permission, frame, tabs } from "@/router/enums";
  */
 
 const accountManagementRouter = {
-  path: "/system",
+  path: "/admin",
   meta: {
-    icon: "ri:group-line",
-    title: "menus.pureAccountManagement",
+    icon: "ri:admin-line",
+    title: "menus.pureAdminManagement",
     rank: system
   },
   children: [
     {
-      path: "/system/admin/index",
+      path: "/admin/index",
       name: "SystemAdmin",
+      component: "system/admin/index",
       meta: {
         icon: "ri:admin-line",
         title: "menus.pureAdminManagement",

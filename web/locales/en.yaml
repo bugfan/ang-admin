@@ -249,8 +249,11 @@ login:
   purePassWordUpdateReg: Password has been updated
   pureLoginExpired: Login expired, please login again
 admin:
-  searchPlaceholder: "Please enter username"
+  searchPlaceholder: "Please enter the admin name"
   username: "Username"
+  password: "Password"
+  repeatPassword: "Confirm Password"
+  description: "Description"
   id: "ID"
   nickname: "Nickname"
   createTime: "Create Time"
