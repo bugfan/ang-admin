@@ -251,6 +251,11 @@ login:
 admin:
   searchPlaceholder: "Please enter username"
   username: "Username"
+  id: "ID"
+  nickname: "Nickname"
+  createTime: "Create Time"
+  operation: "Operation"
+  selectionColumn: "Selection"
   status: "Status"
   search: "Search"
   reset: "Reset"

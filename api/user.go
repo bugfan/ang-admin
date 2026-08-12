@@ -22,7 +22,7 @@ func LoginHandler(c *gin.Context) {
 	}
 	
 	if !service.VerifyCaptcha(req.CaptchaId, req.VerifyCode) {
-		c.JSON(http.StatusOK, gin.H{"code": 1, "message": "invalid verify code"})
+		c.JSON(http.StatusOK, gin.H{"code": 1, "message": "用户名、密码或验证码错误"})
 		return
 	}
 

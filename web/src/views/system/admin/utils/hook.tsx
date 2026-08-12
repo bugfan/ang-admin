@@ -24,17 +24,20 @@ export function useAdmin(t: any, tableRef: Ref) {
     total: 0,
     pageSize: 10,
     currentPage: 1,
-    background: true
+    background: true,
+    size: deviceDetection() ? "small" : "default",
+    small: deviceDetection(),
+    layout: deviceDetection() ? "prev, pager, next" : "total, sizes, prev, pager, next, jumper"
   });
   const columns: TableColumnList = [
     {
-      label: "勾选列",
+      label: t('admin.selectionColumn'),
       type: "selection",
       fixed: "left",
       reserveSelection: true
     },
     {
-      label: "ID",
+      label: t('admin.id'),
       prop: "id",
       width: 90
     },
@@ -44,19 +47,19 @@ export function useAdmin(t: any, tableRef: Ref) {
       minWidth: 130
     },
     {
-      label: "Nickname",
+      label: t('admin.nickname'),
       prop: "nickname",
       minWidth: 130
     },
     {
-      label: "Create Time",
+      label: t('admin.createTime'),
       minWidth: 90,
       prop: "createTime",
       formatter: ({ createTime }) =>
         dayjs(createTime).format("YYYY-MM-DD HH:mm:ss")
     },
     {
-      label: "Operation",
+      label: t('admin.operation'),
       fixed: "right",
       width: 180,
       slot: "operation"

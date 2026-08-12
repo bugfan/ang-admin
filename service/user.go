@@ -56,15 +56,15 @@ func Login(username, password string) (map[string]interface{}, error) {
 	user := new(models.User)
 	has, err := models.GetEngine().Where("username = ?", username).Get(user)
 	if err != nil {
-		return nil, err
+		return nil, errors.New("用户名、密码或验证码错误")
 	}
 	if !has {
-		return nil, errors.New("user not found")
+		return nil, errors.New("用户名、密码或验证码错误")
 	}
 
 	err = bcrypt.CompareHashAndPassword([]byte(user.Password), []byte(password))
 	if err != nil {
-		return nil, errors.New("invalid password")
+		return nil, errors.New("用户名、密码或验证码错误")
 	}
 
 	return map[string]interface{}{

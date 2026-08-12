@@ -64,6 +64,8 @@ const {
             :placeholder="t('admin.searchPlaceholder')"
             clearable
             class="w-45!"
+            @keyup.enter="onSearch"
+            @clear="onSearch"
           />
         </el-form-item>
         <el-form-item>
@@ -74,9 +76,6 @@ const {
             @click="onSearch"
           >
             {{ t('admin.search') }}
-          </el-button>
-          <el-button :icon="useRenderIcon(Refresh)" @click="resetForm(formRef)">
-            {{ t('admin.reset') }}
           </el-button>
         </el-form-item>
       </el-form>
@@ -90,7 +89,7 @@ const {
           <el-button
             type="primary"
             :icon="useRenderIcon(AddFill)"
-            @click="openDialog()"
+            @click="openDialog(t('admin.addAdmin'))"
           >
             {{ t('admin.addAdmin') }}
           </el-button>
