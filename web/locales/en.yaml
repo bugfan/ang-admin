@@ -68,7 +68,9 @@ panel:
   pureHiddenFooter: Hidden Footer
   pureMultiTagsCache: MultiTags Cache
 menus:
-  pureHome: Home
+  pureHome: "Home"
+  pureAdminManagement: "Admin Management"
+  pureAccountManagement: "Account Management"
   pureLogin: Login
   pureEmpty: Empty Page
   pureTable: Table
@@ -246,6 +248,19 @@ login:
   purePassWordDifferentReg: The two passwords do not match!
   purePassWordUpdateReg: Password has been updated
   pureLoginExpired: Login expired, please login again
+admin:
+  searchPlaceholder: "Please enter username"
+  username: "Username"
+  status: "Status"
+  search: "Search"
+  reset: "Reset"
+  addAdmin: "Add Admin"
+  batchDelete: "Batch Delete"
+  cancelSelection: "Cancel Selection"
+  selected: "Selected"
+  edit: "Edit"
+  delete: "Delete"
+  confirmDelete: "Confirm delete?"
 tableBar:
   pureList: List
   pureLarge: Large

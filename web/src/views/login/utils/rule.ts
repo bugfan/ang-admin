@@ -32,10 +32,6 @@ const loginRules = reactive<FormRules>({
       validator: (rule, value, callback) => {
         if (value === "") {
           callback(new Error(transformI18n($t("login.pureVerifyCodeReg"))));
-        } else if (useUserStoreHook().verifyCode !== value) {
-          callback(
-            new Error(transformI18n($t("login.pureVerifyCodeCorrectReg")))
-          );
         } else {
           callback();
         }
@@ -123,4 +119,22 @@ const updateRules = reactive<FormRules>({
   ]
 });
 
-export { loginRules, phoneRules, updateRules };
+/** 注册校验 */
+const registerRules = reactive<FormRules>({
+  password: [
+    {
+      validator: (rule, value, callback) => {
+        if (value === "") {
+          callback(new Error(transformI18n($t("login.purePassWordReg"))));
+        } else if (!REGEXP_PWD.test(value)) {
+          callback(new Error(transformI18n($t("login.purePassWordRuleReg"))));
+        } else {
+          callback();
+        }
+      },
+      trigger: "blur"
+    }
+  ]
+});
+
+export { loginRules, phoneRules, updateRules, registerRules };

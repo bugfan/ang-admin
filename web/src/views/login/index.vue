@@ -10,16 +10,14 @@ import { useNav } from "@/layout/hooks/useNav";
 import { useEventListener } from "@vueuse/core";
 import type { FormInstance } from "element-plus";
 import { $t, transformI18n } from "@/plugins/i18n";
-import { operates, thirdParty } from "./utils/enums";
 import { useLayout } from "@/layout/hooks/useLayout";
-import LoginPhone from "./components/LoginPhone.vue";
 import LoginRegist from "./components/LoginRegist.vue";
 import LoginUpdate from "./components/LoginUpdate.vue";
-import LoginQrCode from "./components/LoginQrCode.vue";
 import { useUserStoreHook } from "@/store/modules/user";
+import { getCaptcha } from "@/api/user";
 import { initRouter, getTopMenu } from "@/router/utils";
 import { bg, avatar, illustration } from "./utils/static";
-import { ReImageVerify } from "@/components/ReImageVerify";
+
 import { ref, toRaw, reactive, watch, computed } from "vue";
 import { useRenderIcon } from "@/components/ReIcon/src/hooks";
 import { useTranslationLang } from "@/layout/hooks/useTranslationLang";
@@ -39,6 +37,16 @@ defineOptions({
 });
 
 const imgCode = ref("");
+const captchaId = ref("");
+const fetchCaptcha = async () => {
+  const res = await getCaptcha();
+  if (res.code === 0) {
+    imgCode.value = res.data.b64s;
+    captchaId.value = res.data.captchaId;
+  }
+};
+fetchCaptcha();
+
 const loginDay = ref(7);
 const router = useRouter();
 const loading = ref(false);
@@ -58,8 +66,8 @@ const { title, getDropdownItemStyle, getDropdownItemClass } = useNav();
 const { locale, translationCh, translationEn } = useTranslationLang();
 
 const ruleForm = reactive({
-  username: "admin",
-  password: "admin123",
+  username: "",
+  password: "",
   verifyCode: ""
 });
 
@@ -71,7 +79,9 @@ const onLogin = async (formEl: FormInstance | undefined) => {
       useUserStoreHook()
         .loginByUsername({
           username: ruleForm.username,
-          password: ruleForm.password
+          password: ruleForm.password,
+          verifyCode: ruleForm.verifyCode,
+          captchaId: captchaId.value
         })
         .then(async () => {
           // 获取后端路由
@@ -107,9 +117,7 @@ useEventListener(document, "keydown", ({ code }) => {
     immediateDebounce(ruleFormRef.value);
 });
 
-watch(imgCode, value => {
-  useUserStoreHook().SET_VERIFYCODE(value);
-});
+
 watch(checked, bool => {
   useUserStoreHook().SET_ISREMEMBERED(bool);
 });
@@ -226,7 +234,11 @@ watch(loginDay, value => {
                   :prefix-icon="useRenderIcon(Keyhole)"
                 >
                   <template v-slot:append>
-                    <ReImageVerify v-model:code="imgCode" />
+                    <img
+                      :src="imgCode"
+                      style="cursor: pointer; height: 100%; width: 120px; object-fit: contain"
+                      @click="fetchCaptcha"
+                    />
                   </template>
                 </el-input>
               </el-form-item>
@@ -287,45 +299,18 @@ watch(loginDay, value => {
               <el-form-item>
                 <div class="w-full h-5 flex-bc">
                   <el-button
-                    v-for="(item, index) in operates"
-                    :key="index"
                     class="w-full mt-4!"
                     size="default"
-                    @click="useUserStoreHook().SET_CURRENTPAGE(index + 1)"
+                    @click="useUserStoreHook().SET_CURRENTPAGE(3)"
                   >
-                    {{ t(item.title) }}
+                    {{ t('login.pureRegister') }}
                   </el-button>
                 </div>
               </el-form-item>
             </Motion>
           </el-form>
 
-          <Motion v-if="currentPage === 0" :delay="350">
-            <el-form-item>
-              <el-divider>
-                <p class="text-gray-500 text-xs">
-                  {{ t("login.pureThirdLogin") }}
-                </p>
-              </el-divider>
-              <div class="w-full flex justify-evenly">
-                <span
-                  v-for="(item, index) in thirdParty"
-                  :key="index"
-                  :title="t(item.title)"
-                >
-                  <IconifyIconOnline
-                    :icon="`ri:${item.icon}-fill`"
-                    width="20"
-                    class="cursor-pointer text-gray-500 hover:text-blue-400"
-                  />
-                </span>
-              </div>
-            </el-form-item>
-          </Motion>
-          <!-- 手机号登录 -->
-          <LoginPhone v-if="currentPage === 1" />
-          <!-- 二维码登录 -->
-          <LoginQrCode v-if="currentPage === 2" />
+
           <!-- 注册 -->
           <LoginRegist v-if="currentPage === 3" />
           <!-- 忘记密码 -->

@@ -1,22 +1,14 @@
 <script setup lang="ts">
-import { formUpload } from "@/api/mock";
 import { message } from "@/utils/message";
 import { onMounted, reactive, ref } from "vue";
 import { type UserInfo, getMine } from "@/api/user";
 import type { FormInstance, FormRules } from "element-plus";
-import ReCropperPreview from "@/components/ReCropperPreview";
-import { createFormData, deviceDetection } from "@pureadmin/utils";
-import uploadLine from "~icons/ri/upload-line";
+import { deviceDetection } from "@pureadmin/utils";
 
 defineOptions({
   name: "Profile"
 });
 
-const imgSrc = ref("");
-const cropperBlob = ref();
-const cropRef = ref();
-const uploadRef = ref();
-const isShow = ref(false);
 const userInfoFormRef = ref<FormInstance>();
 
 const userInfos = reactive({
@@ -51,40 +43,7 @@ function queryEmail(queryString, callback) {
   callback(results);
 }
 
-const onChange = uploadFile => {
-  const reader = new FileReader();
-  reader.onload = e => {
-    imgSrc.value = e.target.result as string;
-    isShow.value = true;
-  };
-  reader.readAsDataURL(uploadFile.raw);
-};
 
-const handleClose = () => {
-  cropRef.value.hidePopover();
-  uploadRef.value.clearFiles();
-  isShow.value = false;
-};
-
-const onCropper = ({ blob }) => (cropperBlob.value = blob);
-
-const handleSubmitImage = () => {
-  const formData = createFormData({
-    files: new File([cropperBlob.value], "avatar")
-  });
-  formUpload(formData)
-    .then(({ code }) => {
-      if (code === 0) {
-        message("更新头像成功", { type: "success" });
-        handleClose();
-      } else {
-        message("更新头像失败");
-      }
-    })
-    .catch(error => {
-      message(`提交异常 ${error}`, { type: "error" });
-    });
-};
 
 // 更新信息
 const onSubmit = async (formEl: FormInstance) => {
@@ -117,20 +76,6 @@ onMounted(async () => {
     >
       <el-form-item label="头像">
         <el-avatar :size="80" :src="userInfos.avatar" />
-        <el-upload
-          ref="uploadRef"
-          accept="image/*"
-          action="#"
-          :limit="1"
-          :auto-upload="false"
-          :show-file-list="false"
-          :on-change="onChange"
-        >
-          <el-button plain class="ml-4!">
-            <IconifyIconOffline :icon="uploadLine" />
-            <span class="ml-2">更新头像</span>
-          </el-button>
-        </el-upload>
       </el-form-item>
       <el-form-item label="昵称" prop="nickname">
         <el-input v-model="userInfos.nickname" placeholder="请输入昵称" />
@@ -166,24 +111,6 @@ onMounted(async () => {
         更新信息
       </el-button>
     </el-form>
-    <el-dialog
-      v-model="isShow"
-      width="40%"
-      title="编辑头像"
-      destroy-on-close
-      :closeOnClickModal="false"
-      :before-close="handleClose"
-      :fullscreen="deviceDetection()"
-    >
-      <ReCropperPreview ref="cropRef" :imgSrc="imgSrc" @cropper="onCropper" />
-      <template #footer>
-        <div class="dialog-footer">
-          <el-button bg text @click="handleClose">取消</el-button>
-          <el-button bg text type="primary" @click="handleSubmitImage">
-            确定
-          </el-button>
-        </div>
-      </template>
-    </el-dialog>
+
   </div>
 </template>
