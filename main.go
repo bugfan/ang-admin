@@ -4,8 +4,6 @@ import (
 	"log"
 	"net/http"
 
-	"github.com/bugfan/ang-admin/models"
-	"github.com/bugfan/rest"
 	"github.com/gin-gonic/gin"
 	"github.com/go-xorm/xorm"
 	_ "github.com/mattn/go-sqlite3"
@@ -13,13 +11,9 @@ import (
 
 func main() {
 	// Initialize SQLite database
-	engine, err := xorm.NewEngine("sqlite3", "./ang.db")
+	_, err := xorm.NewEngine("sqlite3", "./ang.db")
 	if err != nil {
 		log.Fatalf("Failed to create engine: %v", err)
-	}
-
-	if err := engine.Sync2(new(models.AppProxy)); err != nil {
-		log.Fatalf("Failed to sync database: %v", err)
 	}
 
 	// Initialize Gin router
@@ -37,13 +31,11 @@ func main() {
 		c.Next()
 	})
 
-	apiGroup := r.Group("/api")
-
-	// Create REST API Backend
-	rest.NewAPIBackend(apiGroup, engine, "")
-
-	// Register models to auto-generate REST endpoints
-	rest.Register(new(models.AppProxy), new(models.AppProxyContent), rest.RouteTypeALL, nil, "app_proxy")
+	r.GET("/ping", func(c *gin.Context) {
+		c.JSON(200, gin.H{
+			"message": "pong",
+		})
+	})
 
 	// Start the server
 	log.Println("ang-admin server started on :8080")
