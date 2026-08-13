@@ -39,6 +39,7 @@ func SetupRouter() *gin.Engine {
 	{
 		authorized.GET("/mine", MineHandler)
 		authorized.POST("/refresh-token", RefreshTokenHandler)
+		authorized.POST("/api/certificate/generate", GenerateCertHandler)
 	}
 
 	// 3. 基于 bugfan/rest 自动生成的模型 RESTful 增删改查接口 (Auto-generated Model RESTful APIs)

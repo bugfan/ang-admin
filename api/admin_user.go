@@ -267,6 +267,36 @@ func AsyncRoutesHandler(c *gin.Context) {
 		"message": "success",
 		"data": []gin.H{
 			{
+				"path": "/app",
+				"meta": gin.H{
+					"icon":  "ri:apps-line",
+					"title": "menus.pureApp",
+					"rank":  5,
+				},
+				"children": []gin.H{
+					{
+						"path":      "/app/cert",
+						"name":      "AppCert",
+						"component": "app/cert/index",
+						"meta": gin.H{
+							"icon":  "ri:shield-keyhole-line",
+							"title": "menus.pureCert",
+							"roles": []string{"admin", "common"},
+						},
+					},
+					{
+						"path":      "/app/tunnel",
+						"name":      "AppTunnel",
+						"component": "app/tunnel/index",
+						"meta": gin.H{
+							"icon":  "ri:route-line",
+							"title": "menus.pureTunnel",
+							"roles": []string{"admin", "common"},
+						},
+					},
+				},
+			},
+			{
 				"path": "/admin",
 				"meta": gin.H{
 					"icon":  "ri:admin-line",

@@ -8,6 +8,37 @@ import { system, monitor, permission, frame, tabs } from "@/router/enums";
  * common：普通角色
  */
 
+const appRouter = {
+  path: "/app",
+  meta: {
+    icon: "ri:apps-line",
+    title: "menus.pureApp",
+    rank: 5
+  },
+  children: [
+    {
+      path: "/app/cert",
+      name: "AppCert",
+      component: "app/cert/index",
+      meta: {
+        icon: "ri:shield-keyhole-line",
+        title: "menus.pureCert",
+        roles: ["admin", "common"]
+      }
+    },
+    {
+      path: "/app/tunnel",
+      name: "AppTunnel",
+      component: "app/tunnel/index",
+      meta: {
+        icon: "ri:route-line",
+        title: "menus.pureTunnel",
+        roles: ["admin", "common"]
+      }
+    }
+  ]
+};
+
 const accountManagementRouter = {
   path: "/admin",
   meta: {
@@ -38,6 +69,7 @@ export default defineFakeRoute([
         code: 0,
         message: "操作成功",
         data: [
+          appRouter,
           accountManagementRouter
         ]
       };

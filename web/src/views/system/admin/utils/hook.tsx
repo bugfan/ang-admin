@@ -27,7 +27,6 @@ export function useAdmin(t: any, tableRef: Ref) {
     currentPage: 1,
     background: true,
     size: deviceDetection() ? "small" : "default",
-    small: deviceDetection(),
     layout: deviceDetection() ? "prev, pager, next" : "total, sizes, prev, pager, next, jumper"
   });
   const columns: TableColumnList = [

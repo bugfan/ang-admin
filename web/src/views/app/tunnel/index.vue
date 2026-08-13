@@ -1,28 +1,21 @@
 <script setup lang="ts">
-import { ref, computed } from "vue";
+import { ref } from "vue";
 import { useI18n } from "vue-i18n";
-import { useAdmin } from "./utils/hook";
+import { useTunnel } from "./utils/hook";
 import { PureTableBar } from "@/components/RePureTableBar";
 import { useRenderIcon } from "@/components/ReIcon/src/hooks";
-import { useUserStoreHook } from "@/store/modules/user";
 
-import Upload from "~icons/ri/upload-line";
-import Role from "~icons/ri/admin-line";
-import Password from "~icons/ri/lock-password-line";
-import More from "~icons/ep/more-filled";
 import Delete from "~icons/ep/delete";
 import EditPen from "~icons/ep/edit-pen";
-import Refresh from "~icons/ep/refresh";
 import AddFill from "~icons/ri/add-circle-line";
 
 defineOptions({
-  name: "SystemAdmin"
+  name: "AppTunnel"
 });
 
 const { t } = useI18n();
 const formRef = ref();
 const tableRef = ref();
-const isSuperAdmin = computed(() => useUserStoreHook().is_super_admin);
 
 const {
   form,
@@ -43,14 +36,14 @@ const {
   onSelectionCancel,
   handleCurrentChange,
   handleSelectionChange
-} = useAdmin(t, tableRef);
+} = useTunnel(t, tableRef);
 </script>
 
 <template>
   <div :class="['flex', 'justify-between', deviceDetection() && 'flex-wrap']">
     <div class="w-full">
+      <!-- 顶部的多条件搜索表单 -->
       <el-form
-        v-if="isSuperAdmin"
         ref="formRef"
         :inline="true"
         :model="form"
@@ -58,16 +51,42 @@ const {
         :size="deviceDetection() ? 'small' : 'default'"
         class="search-form bg-bg_color w-full pl-4 md:pl-8 pt-3 overflow-auto"
       >
-        <el-form-item :label="t('admin.username')" prop="username">
+        <el-form-item :label="t('tunnel.type')" prop="type">
+          <el-select
+            v-model="form.type"
+            :placeholder="t('tunnel.searchTypePlaceholder')"
+            clearable
+            class="w-45!"
+            @change="onSearch"
+          >
+            <el-option :label="t('tunnel.allTypes')" value="" />
+            <el-option label="TLS-TUNNEL" value="TLS-TUNNEL" />
+            <el-option label="QUIC-TUNNEL" value="QUIC-TUNNEL" />
+          </el-select>
+        </el-form-item>
+
+        <el-form-item :label="t('tunnel.port')" prop="port">
           <el-input
-            v-model="form.username"
-            :placeholder="t('admin.searchPlaceholder')"
+            v-model="form.port"
+            :placeholder="t('tunnel.searchPortPlaceholder')"
             clearable
             class="w-45!"
             @keyup.enter="onSearch"
             @clear="onSearch"
           />
         </el-form-item>
+
+        <el-form-item :label="t('tunnel.sni')" prop="sni">
+          <el-input
+            v-model="form.sni"
+            :placeholder="t('tunnel.searchSniPlaceholder')"
+            clearable
+            class="w-45!"
+            @keyup.enter="onSearch"
+            @clear="onSearch"
+          />
+        </el-form-item>
+
         <el-form-item>
           <el-button
             type="primary"
@@ -75,24 +94,30 @@ const {
             :loading="loading"
             @click="onSearch"
           >
-            {{ t('admin.search') }}
+            {{ t('tunnel.search') }}
+          </el-button>
+          <el-button
+            :icon="useRenderIcon('ri/refresh-line')"
+            @click="resetForm(formRef)"
+          >
+            {{ t('tunnel.reset') }}
           </el-button>
         </el-form-item>
       </el-form>
 
+      <!-- 表格及操作栏 -->
       <PureTableBar
-        :title="t('menus.pureAdminManagement')"
+        :title="t('menus.pureTunnel')"
         :columns="columns"
         @refresh="onSearch"
       >
         <template #buttons>
           <el-button
-            v-if="isSuperAdmin"
             type="primary"
             :icon="useRenderIcon(AddFill)"
-            @click="openDialog(t('admin.addAdmin'))"
+            @click="openDialog(t('tunnel.addTunnel'))"
           >
-            {{ t('admin.addAdmin') }}
+            {{ t('tunnel.addTunnel') }}
           </el-button>
         </template>
         <template v-slot="{ size, dynamicColumns }">
@@ -106,16 +131,16 @@ const {
                 style="font-size: var(--el-font-size-base)"
                 class="text-[rgba(42,46,54,0.5)] dark:text-[rgba(220,220,242,0.5)]"
               >
-                {{ t('admin.selected') }} {{ selectedNum }} 项
+                {{ t('tunnel.selected') }} {{ selectedNum }} 项
               </span>
               <el-button type="primary" text @click="onSelectionCancel">
-                {{ t('admin.cancelSelection') }}
+                {{ t('tunnel.cancelSelection') }}
               </el-button>
             </div>
-            <el-popconfirm :title="t('admin.confirmDelete')" @confirm="onbatchDel">
+            <el-popconfirm :title="t('tunnel.confirmDelete')" @confirm="onbatchDel">
               <template #reference>
                 <el-button type="danger" text class="mr-1!">
-                  {{ t('admin.batchDelete') }}
+                  {{ t('tunnel.batchDelete') }}
                 </el-button>
               </template>
             </el-popconfirm>
@@ -147,13 +172,12 @@ const {
                 type="primary"
                 :size="size"
                 :icon="useRenderIcon(EditPen)"
-                @click="openDialog(t('admin.edit'), row)"
+                @click="openDialog(t('tunnel.editTunnel'), row)"
               >
-                {{ t('admin.edit') }}
+                {{ t('tunnel.edit') }}
               </el-button>
               <el-popconfirm
-                v-if="isSuperAdmin"
-                :title="t('admin.confirmDelete')"
+                :title="t('tunnel.confirmDelete')"
                 @confirm="handleDelete(row)"
               >
                 <template #reference>
@@ -164,7 +188,7 @@ const {
                     :size="size"
                     :icon="useRenderIcon(Delete)"
                   >
-                    {{ t('admin.delete') }}
+                    {{ t('tunnel.delete') }}
                   </el-button>
                 </template>
               </el-popconfirm>

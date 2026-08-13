@@ -1,28 +1,22 @@
 <script setup lang="ts">
-import { ref, computed } from "vue";
+import { ref } from "vue";
 import { useI18n } from "vue-i18n";
-import { useAdmin } from "./utils/hook";
+import { useCert } from "./utils/hook";
 import { PureTableBar } from "@/components/RePureTableBar";
 import { useRenderIcon } from "@/components/ReIcon/src/hooks";
-import { useUserStoreHook } from "@/store/modules/user";
 
-import Upload from "~icons/ri/upload-line";
-import Role from "~icons/ri/admin-line";
-import Password from "~icons/ri/lock-password-line";
-import More from "~icons/ep/more-filled";
 import Delete from "~icons/ep/delete";
 import EditPen from "~icons/ep/edit-pen";
-import Refresh from "~icons/ep/refresh";
 import AddFill from "~icons/ri/add-circle-line";
+import View from "~icons/ep/view";
 
 defineOptions({
-  name: "SystemAdmin"
+  name: "AppCert"
 });
 
 const { t } = useI18n();
 const formRef = ref();
 const tableRef = ref();
-const isSuperAdmin = computed(() => useUserStoreHook().is_super_admin);
 
 const {
   form,
@@ -37,20 +31,21 @@ const {
   resetForm,
   onbatchDel,
   openDialog,
+  openDetailDialog,
 
   handleDelete,
   handleSizeChange,
   onSelectionCancel,
   handleCurrentChange,
   handleSelectionChange
-} = useAdmin(t, tableRef);
+} = useCert(t, tableRef);
 </script>
 
 <template>
   <div :class="['flex', 'justify-between', deviceDetection() && 'flex-wrap']">
     <div class="w-full">
+      <!-- 顶部的多条件搜索表单 -->
       <el-form
-        v-if="isSuperAdmin"
         ref="formRef"
         :inline="true"
         :model="form"
@@ -58,16 +53,43 @@ const {
         :size="deviceDetection() ? 'small' : 'default'"
         class="search-form bg-bg_color w-full pl-4 md:pl-8 pt-3 overflow-auto"
       >
-        <el-form-item :label="t('admin.username')" prop="username">
+        <el-form-item :label="t('cert.certId')" prop="cert_id">
           <el-input
-            v-model="form.username"
-            :placeholder="t('admin.searchPlaceholder')"
+            v-model="form.cert_id"
+            :placeholder="t('cert.searchCertIdPlaceholder')"
             clearable
             class="w-45!"
             @keyup.enter="onSearch"
             @clear="onSearch"
           />
         </el-form-item>
+
+        <el-form-item :label="t('cert.type')" prop="type">
+          <el-select
+            v-model="form.type"
+            :placeholder="t('cert.searchTypePlaceholder')"
+            clearable
+            class="w-45!"
+            @change="onSearch"
+          >
+            <el-option :label="t('cert.allTypes')" value="" />
+            <el-option :label="t('cert.std')" value="STD" />
+            <el-option :label="t('cert.gm')" value="GM" />
+            <el-option :label="t('cert.selfStd')" value="SELF-STD" />
+          </el-select>
+        </el-form-item>
+
+        <el-form-item :label="t('cert.subjectCn')" prop="subject_cn">
+          <el-input
+            v-model="form.subject_cn"
+            :placeholder="t('cert.searchCnPlaceholder')"
+            clearable
+            class="w-45!"
+            @keyup.enter="onSearch"
+            @clear="onSearch"
+          />
+        </el-form-item>
+
         <el-form-item>
           <el-button
             type="primary"
@@ -75,24 +97,30 @@ const {
             :loading="loading"
             @click="onSearch"
           >
-            {{ t('admin.search') }}
+            {{ t('cert.search') }}
+          </el-button>
+          <el-button
+            :icon="useRenderIcon('ri/refresh-line')"
+            @click="resetForm(formRef)"
+          >
+            {{ t('cert.reset') }}
           </el-button>
         </el-form-item>
       </el-form>
 
+      <!-- 表格及操作栏 -->
       <PureTableBar
-        :title="t('menus.pureAdminManagement')"
+        :title="t('menus.pureCert')"
         :columns="columns"
         @refresh="onSearch"
       >
         <template #buttons>
           <el-button
-            v-if="isSuperAdmin"
             type="primary"
             :icon="useRenderIcon(AddFill)"
-            @click="openDialog(t('admin.addAdmin'))"
+            @click="openDialog(t('cert.addCert'))"
           >
-            {{ t('admin.addAdmin') }}
+            {{ t('cert.addCert') }}
           </el-button>
         </template>
         <template v-slot="{ size, dynamicColumns }">
@@ -106,16 +134,16 @@ const {
                 style="font-size: var(--el-font-size-base)"
                 class="text-[rgba(42,46,54,0.5)] dark:text-[rgba(220,220,242,0.5)]"
               >
-                {{ t('admin.selected') }} {{ selectedNum }} 项
+                {{ t('cert.selected') }} {{ selectedNum }} 项
               </span>
               <el-button type="primary" text @click="onSelectionCancel">
-                {{ t('admin.cancelSelection') }}
+                {{ t('cert.cancelSelection') }}
               </el-button>
             </div>
-            <el-popconfirm :title="t('admin.confirmDelete')" @confirm="onbatchDel">
+            <el-popconfirm :title="t('cert.confirmDelete')" @confirm="onbatchDel">
               <template #reference>
                 <el-button type="danger" text class="mr-1!">
-                  {{ t('admin.batchDelete') }}
+                  {{ t('cert.batchDelete') }}
                 </el-button>
               </template>
             </el-popconfirm>
@@ -141,33 +169,44 @@ const {
             @page-current-change="handleCurrentChange"
           >
             <template #operation="{ row }">
-              <el-button
-                class="reset-margin"
-                link
-                type="primary"
-                :size="size"
-                :icon="useRenderIcon(EditPen)"
-                @click="openDialog(t('admin.edit'), row)"
-              >
-                {{ t('admin.edit') }}
-              </el-button>
-              <el-popconfirm
-                v-if="isSuperAdmin"
-                :title="t('admin.confirmDelete')"
-                @confirm="handleDelete(row)"
-              >
-                <template #reference>
-                  <el-button
-                    class="reset-margin"
-                    link
-                    type="primary"
-                    :size="size"
-                    :icon="useRenderIcon(Delete)"
-                  >
-                    {{ t('admin.delete') }}
-                  </el-button>
-                </template>
-              </el-popconfirm>
+              <div class="flex items-center justify-center whitespace-nowrap space-x-1">
+                <el-button
+                  class="reset-margin"
+                  link
+                  type="info"
+                  :size="size"
+                  :icon="useRenderIcon(View)"
+                  @click="openDetailDialog(row)"
+                >
+                  {{ t('cert.viewDetail') }}
+                </el-button>
+                <el-button
+                  class="reset-margin"
+                  link
+                  type="primary"
+                  :size="size"
+                  :icon="useRenderIcon(EditPen)"
+                  @click="openDialog(t('cert.editCert'), row)"
+                >
+                  {{ t('cert.edit') }}
+                </el-button>
+                <el-popconfirm
+                  :title="t('cert.confirmDelete')"
+                  @confirm="handleDelete(row)"
+                >
+                  <template #reference>
+                    <el-button
+                      class="reset-margin"
+                      link
+                      type="primary"
+                      :size="size"
+                      :icon="useRenderIcon(Delete)"
+                    >
+                      {{ t('cert.delete') }}
+                    </el-button>
+                  </template>
+                </el-popconfirm>
+              </div>
             </template>
           </pure-table>
         </template>

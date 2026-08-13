@@ -17,8 +17,21 @@ func InitDB(dsn string) {
 		log.Fatalf("Failed to create engine: %v", err)
 	}
 
+	// Drop old tunnel table if it still contains obsolete key_name column
+	if isExist, _ := engine.IsTableExist("tunnel"); isExist {
+		results, err := engine.QueryString("PRAGMA table_info(tunnel)")
+		if err == nil {
+			for _, row := range results {
+				if row["name"] == "key_name" {
+					_ = engine.DropTables("tunnel")
+					break
+				}
+			}
+		}
+	}
+
 	// Automatically sync database schemas if necessary
-	err = engine.Sync2(new(AdminUser))
+	err = engine.Sync2(new(AdminUser), new(Tunnel), new(Certificate))
 	if err != nil {
 		log.Fatalf("Failed to sync database: %v", err)
 	}
