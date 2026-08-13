@@ -1,9 +1,10 @@
 <script setup lang="ts">
-import { ref } from "vue";
+import { ref, computed } from "vue";
 import { useI18n } from "vue-i18n";
 import { useAdmin } from "./utils/hook";
 import { PureTableBar } from "@/components/RePureTableBar";
 import { useRenderIcon } from "@/components/ReIcon/src/hooks";
+import { useUserStoreHook } from "@/store/modules/user";
 
 import Upload from "~icons/ri/upload-line";
 import Role from "~icons/ri/admin-line";
@@ -21,6 +22,7 @@ defineOptions({
 const { t } = useI18n();
 const formRef = ref();
 const tableRef = ref();
+const isSuperAdmin = computed(() => useUserStoreHook().is_super_admin);
 
 const {
   form,
@@ -53,6 +55,7 @@ const {
   <div :class="['flex', 'justify-between', deviceDetection() && 'flex-wrap']">
     <div class="w-full">
       <el-form
+        v-if="isSuperAdmin"
         ref="formRef"
         :inline="true"
         :model="form"
@@ -87,6 +90,7 @@ const {
       >
         <template #buttons>
           <el-button
+            v-if="isSuperAdmin"
             type="primary"
             :icon="useRenderIcon(AddFill)"
             @click="openDialog(t('admin.addAdmin'))"
@@ -121,7 +125,7 @@ const {
           </div>
           <pure-table
             ref="tableRef"
-            row-key="id"
+            :row-key="(row) => row.Id || row.id"
             adaptive
             :adaptiveConfig="{ offsetBottom: 108 }"
             align-whole="center"
@@ -151,6 +155,7 @@ const {
                 {{ t('admin.edit') }}
               </el-button>
               <el-popconfirm
+                v-if="isSuperAdmin"
                 :title="t('admin.confirmDelete')"
                 @confirm="handleDelete(row)"
               >

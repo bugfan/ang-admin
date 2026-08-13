@@ -5,7 +5,8 @@
   display: grid;
   grid-template-columns: 1fr;
   padding: 0 2rem;
-  background-color: #000;
+  background-color: var(--el-bg-color-page);
+  transition: background-color 0.3s;
 }
 
 .login-box {

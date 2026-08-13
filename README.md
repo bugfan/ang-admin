@@ -17,3 +17,6 @@ ang-admin是ang全协议代理网关的管理端，包含管理后台接口和�
 管理端web页面要始终支持中英双语
 管理端web页面要始终支持手机/PC双端响应式布局
 管理端web原地址仓库 https://github.com/pure-admin/vue-pure-admin 
+
+## ai agent注意事项
+改完代码测试运行之后一定要自己停到程序，不要影响我启动测试代码

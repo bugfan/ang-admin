@@ -28,6 +28,54 @@ export default async ({ mode }: ConfigEnv): Promise<UserConfigExport> => {
         "/api": {
           target: "http://127.0.0.1:8080",
           changeOrigin: true
+        },
+        "/users": {
+          target: "http://127.0.0.1:8080",
+          changeOrigin: true
+        },
+        "/login": {
+          target: "http://127.0.0.1:8080",
+          changeOrigin: true
+        },
+        "/register": {
+          target: "http://127.0.0.1:8080",
+          changeOrigin: true
+        },
+        "/updateUser": {
+          target: "http://127.0.0.1:8080",
+          changeOrigin: true
+        },
+        "/deleteUser": {
+          target: "http://127.0.0.1:8080",
+          changeOrigin: true
+        },
+        "/captcha": {
+          target: "http://127.0.0.1:8080",
+          changeOrigin: true
+        },
+        "/mine": {
+          target: "http://127.0.0.1:8080",
+          changeOrigin: true
+        },
+        "/get-async-routes": {
+          target: "http://127.0.0.1:8080",
+          changeOrigin: true
+        },
+        "/refresh-token": {
+          target: "http://127.0.0.1:8080",
+          changeOrigin: true
+        },
+        "/avatar.png": {
+          target: "http://127.0.0.1:8080",
+          changeOrigin: true
+        },
+        "/avatar": {
+          target: "http://127.0.0.1:8080",
+          changeOrigin: true
+        },
+        "/ping": {
+          target: "http://127.0.0.1:8080",
+          changeOrigin: true
         }
       },
       // 预热文件以提前转换和缓存结果，降低启动期间的初始页面加载时长并防止转换瀑布

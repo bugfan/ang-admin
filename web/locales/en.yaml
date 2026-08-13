@@ -269,6 +269,7 @@ admin:
   edit: "Edit"
   delete: "Delete"
   confirmDelete: "Confirm delete?"
+  isSuperAdmin: "Super Admin"
 tableBar:
   pureList: List
   pureLarge: Large

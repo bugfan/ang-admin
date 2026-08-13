@@ -85,32 +85,77 @@ func Login(username, password string) (map[string]interface{}, error) {
 		return nil, errors.New("用户名、密码或验证码错误")
 	}
 
+	accessToken, err := GenerateToken(user.Username, 7*24*time.Hour)
+	if err != nil {
+		return nil, errors.New("failed to generate token")
+	}
+
+	refreshToken, err := GenerateToken(user.Username, 30*24*time.Hour)
+	if err != nil {
+		return nil, errors.New("failed to generate refresh token")
+	}
+
 	return map[string]interface{}{
-		"id":           user.Id,
-		"avatar":       "/api/avatar.png?username=" + user.Username,
-		"username":     user.Username,
-		"roles":        []string{"admin"}, // For now, hardcode admin role
-		"permissions":  []string{"*:*:*"},
-		"accessToken":  "eyJhbGciOiJIUzUxMiJ9." + user.Username,
-		"refreshToken": "eyJhbGciOiJIUzUxMiJ9." + user.Username + "Refresh",
-		"expires":      time.Now().Add(24 * 7 * time.Hour).Format("2006/01/02 15:04:05"),
+		"id":             user.Id,
+		"avatar":         "/avatar.png?username=" + user.Username,
+		"username":       user.Username,
+		"is_super_admin": user.IsSuperAdmin,
+		"roles":          []string{"admin"}, // For now, hardcode admin role
+		"permissions":    []string{"*:*:*"},
+		"accessToken":    accessToken,
+		"refreshToken":   refreshToken,
+		"expires":        time.Now().Add(7 * 24 * time.Hour).Format("2006/01/02 15:04:05"),
 	}, nil
 }
 
-func GetUserInfo() (map[string]interface{}, error) {
+func GetUserInfo(username string) (map[string]interface{}, error) {
+	if username == "" {
+		username = "admin"
+	}
+	user := new(models.User)
+	has, err := models.GetEngine().Where("username = ?", username).Get(user)
+	if err != nil || !has {
+		return map[string]interface{}{
+			"avatar":         "/avatar.png?username=" + username,
+			"username":       username,
+			"is_super_admin": false,
+			"email":          "",
+			"phone":          "",
+			"description":    "",
+		}, nil
+	}
 	return map[string]interface{}{
-		"avatar":      "/api/avatar.png?username=admin",
-		"username":    "admin",
-		"email":       "",
-		"phone":       "",
-		"description": "",
+		"id":             user.Id,
+		"avatar":         "/avatar.png?username=" + user.Username,
+		"username":       user.Username,
+		"is_super_admin": user.IsSuperAdmin,
+		"email":          "",
+		"phone":          "",
+		"description":    user.Description,
 	}, nil
 }
 
 func RefreshToken(oldToken string) (map[string]interface{}, error) {
+	username := "admin"
+	if oldToken != "" {
+		claims, err := ParseToken(oldToken)
+		if err == nil && claims.Username != "" {
+			username = claims.Username
+		}
+	}
+
+	accessToken, err := GenerateToken(username, 7*24*time.Hour)
+	if err != nil {
+		return nil, errors.New("failed to generate token")
+	}
+	refreshToken, err := GenerateToken(username, 30*24*time.Hour)
+	if err != nil {
+		return nil, errors.New("failed to generate refresh token")
+	}
+
 	return map[string]interface{}{
-		"accessToken":  "eyJhbGciOiJIUzUxMiJ9.admin.new",
-		"refreshToken": "eyJhbGciOiJIUzUxMiJ9.adminRefresh.new",
-		"expires":      time.Now().Add(24 * 7 * time.Hour).Format("2006/01/02 15:04:05"),
+		"accessToken":  accessToken,
+		"refreshToken": refreshToken,
+		"expires":      time.Now().Add(7 * 24 * time.Hour).Format("2006/01/02 15:04:05"),
 	}, nil
 }

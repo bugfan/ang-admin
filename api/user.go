@@ -14,6 +14,7 @@ import (
 	"github.com/disintegration/letteravatar"
 	"github.com/gin-gonic/gin"
 	"github.com/go-xorm/xorm"
+	"golang.org/x/crypto/bcrypt"
 )
 
 func init() {
@@ -21,18 +22,82 @@ func init() {
 }
 
 type adminUser struct {
-	Id          int64
-	Username    string
-	Password    string
-	Description string
-	CreatedAt   time.Time
-	UpdatedAt   time.Time
+	Id           int64
+	Username     string
+	Password     string
+	Description  string
+	IsSuperAdmin bool `json:"is_super_admin"`
+	CreatedAt    time.Time
+	UpdatedAt    time.Time
 }
 
 func (u *adminUser) Before(g *gin.Context, x *xorm.Engine) bool {
-	if g.Request.Method == http.MethodPost {
-		if len(u.Password) > 0 && len(u.Password) < 3 {
-			g.AbortWithError(http.StatusBadRequest, errors.New("密码不少于3位"))
+	// 1. 获取当前登录的用户
+	currentUsername := ""
+	if uname, ok := g.Get("username"); ok {
+		if s, ok := uname.(string); ok {
+			currentUsername = s
+		}
+	}
+
+	var currentUser models.User
+	if currentUsername != "" {
+		_, _ = x.Where("username = ?", currentUsername).Get(&currentUser)
+	}
+
+	// 2. 如果登录的用户不是超管，进行权限判断
+	if !currentUser.IsSuperAdmin {
+		switch g.Request.Method {
+		case http.MethodGet:
+			// 如果是列表查询 (如 /api/admin)，强制约束只查询自己的账号
+			if g.Param("id") == "" {
+				q := g.Request.URL.Query()
+				q.Set("username", currentUser.Username)
+				g.Request.URL.RawQuery = q.Encode()
+			} else {
+				// 单条获取，如果不是自己的账号，拒绝访问
+				paramID := g.Param("id")
+				var targetUser models.User
+				has, _ := x.Where("id = ?", paramID).Get(&targetUser)
+				if has && targetUser.Username != currentUser.Username {
+					g.AbortWithStatusJSON(http.StatusForbidden, gin.H{"code": 403, "message": "非超级管理员只能查看自己的账号"})
+					return false
+				}
+			}
+		case http.MethodPost:
+			// 非超管无法新增管理员
+			g.AbortWithStatusJSON(http.StatusForbidden, gin.H{"code": 403, "message": "非超级管理员无法新增管理员"})
+			return false
+		case http.MethodDelete:
+			// 非超管无法删除管理员
+			g.AbortWithStatusJSON(http.StatusForbidden, gin.H{"code": 403, "message": "非超级管理员无法删除管理员"})
+			return false
+		case http.MethodPut, http.MethodPatch:
+			// 非超管只能修改自己，且无法修改超管属性
+			paramID := g.Param("id")
+			var targetUser models.User
+			has, _ := x.Where("id = ?", paramID).Get(&targetUser)
+			if has && targetUser.Username != currentUser.Username {
+				g.AbortWithStatusJSON(http.StatusForbidden, gin.H{"code": 403, "message": "非超级管理员无法修改其他管理员账号"})
+				return false
+			}
+			// 保持非超管用户的超管属性不变 (防止提权)
+			u.IsSuperAdmin = currentUser.IsSuperAdmin
+		}
+	}
+
+	// 3. 处理密码 Hash
+	if g.Request.Method == http.MethodPost || g.Request.Method == http.MethodPut || g.Request.Method == http.MethodPatch {
+		if len(u.Password) > 0 {
+			hashedPassword, err := bcrypt.GenerateFromPassword([]byte(u.Password), bcrypt.DefaultCost)
+			if err != nil {
+				g.AbortWithError(http.StatusInternalServerError, errors.New("failed to hash password"))
+				return false
+			}
+			u.Password = string(hashedPassword)
+		} else {
+			// Require password for new and edit
+			g.AbortWithError(http.StatusBadRequest, errors.New("password is required"))
 			return false
 		}
 	}
@@ -40,10 +105,10 @@ func (u *adminUser) Before(g *gin.Context, x *xorm.Engine) bool {
 }
 
 type LoginRequest struct {
-	Username  string `json:"username"`
-	Password  string `json:"password"`
+	Username   string `json:"username"`
+	Password   string `json:"password"`
 	VerifyCode string `json:"verifyCode"`
-	CaptchaId string `json:"captchaId"`
+	CaptchaId  string `json:"captchaId"`
 }
 
 func LoginHandler(c *gin.Context) {
@@ -52,7 +117,7 @@ func LoginHandler(c *gin.Context) {
 		c.JSON(http.StatusOK, gin.H{"code": 1, "message": "invalid request format"})
 		return
 	}
-	
+
 	if !service.VerifyCaptcha(req.CaptchaId, req.VerifyCode) {
 		c.JSON(http.StatusOK, gin.H{"code": 1, "message": "用户名、密码或验证码错误"})
 		return
@@ -71,145 +136,68 @@ func LoginHandler(c *gin.Context) {
 	})
 }
 
-type ListUsersRequest struct {
-	Username    string `json:"username"`
-	CurrentPage int    `json:"currentPage"`
-	PageSize    int    `json:"pageSize"`
-}
 
-func ListUsersHandler(c *gin.Context) {
-	var req ListUsersRequest
-	if err := c.ShouldBindJSON(&req); err != nil {
-		c.JSON(http.StatusOK, gin.H{"code": 1, "message": "invalid request format"})
-		return
-	}
-	if req.CurrentPage <= 0 {
-		req.CurrentPage = 1
-	}
-	if req.PageSize <= 0 {
-		req.PageSize = 10
-	}
 
-	users, total, err := service.ListUsers(req.Username, req.CurrentPage, req.PageSize)
-	if err != nil {
-		c.JSON(http.StatusOK, gin.H{"code": 1, "message": err.Error()})
-		return
-	}
-
-	c.JSON(http.StatusOK, gin.H{
-		"code":    0,
-		"message": "success",
-		"data": map[string]interface{}{
-			"list":        users,
-			"total":       total,
-			"pageSize":    req.PageSize,
-			"currentPage": req.CurrentPage,
-		},
-	})
-}
-
-type RegisterRequest struct {
-	Username       string `json:"username"`
-	Password       string `json:"password"`
-	RepeatPassword string `json:"repeatPassword"`
-	Description    string `json:"description"`
-}
-
-func RegisterHandler(c *gin.Context) {
-	var req RegisterRequest
-	if err := c.ShouldBindJSON(&req); err != nil {
-		c.JSON(http.StatusOK, gin.H{"code": 1, "message": "invalid request format"})
-		return
-	}
-
-	if req.Password != req.RepeatPassword {
-		c.JSON(http.StatusOK, gin.H{"code": 1, "message": "passwords do not match"})
-		return
-	}
-
-	user := &models.User{
-		Username:    req.Username,
-		Password:    req.Password,
-		Description: req.Description,
-	}
-
-	err := service.Register(user)
-	if err != nil {
-		c.JSON(http.StatusOK, gin.H{"code": 1, "message": err.Error()})
-		return
-	}
-
-	c.JSON(http.StatusOK, gin.H{
-		"code":    0,
-		"message": "register success",
-	})
-}
-
-func UpdateUserHandler(c *gin.Context) {
-	var req RegisterRequest
-	if err := c.ShouldBindJSON(&req); err != nil {
-		c.JSON(http.StatusOK, gin.H{"code": 1, "message": "invalid request format"})
-		return
-	}
-
-	if req.Password != "" && req.Password != req.RepeatPassword {
-		c.JSON(http.StatusOK, gin.H{"code": 1, "message": "passwords do not match"})
-		return
-	}
-
-	user := &models.User{
-		Username:    req.Username,
-		Password:    req.Password,
-		Description: req.Description,
-	}
-
-	err := service.UpdateUser(user)
-	if err != nil {
-		c.JSON(http.StatusOK, gin.H{"code": 1, "message": err.Error()})
-		return
-	}
-
-	c.JSON(http.StatusOK, gin.H{
-		"code":    0,
-		"message": "update success",
-	})
-}
-
-type DeleteUserRequest struct {
-	Id  int64   `json:"id"`
-	Ids []int64 `json:"ids"`
-}
-
-func DeleteUserHandler(c *gin.Context) {
-	var req DeleteUserRequest
-	if err := c.ShouldBindJSON(&req); err != nil {
-		c.JSON(http.StatusOK, gin.H{"code": 1, "message": "invalid request format"})
-		return
-	}
-
-	engine := models.GetEngine()
-	if len(req.Ids) > 0 {
-		_, err := engine.In("id", req.Ids).Delete(&models.User{})
-		if err != nil {
-			c.JSON(http.StatusOK, gin.H{"code": 1, "message": err.Error()})
-			return
-		}
-	} else if req.Id > 0 {
-		_, err := engine.ID(req.Id).Delete(&models.User{})
-		if err != nil {
-			c.JSON(http.StatusOK, gin.H{"code": 1, "message": err.Error()})
-			return
+func (u *adminUser) List(c *gin.Context) {
+	currentUsername := ""
+	if uname, ok := c.Get("username"); ok {
+		if s, ok := uname.(string); ok {
+			currentUsername = s
 		}
 	}
 
-	c.JSON(http.StatusOK, gin.H{
-		"code":    0,
-		"message": "delete success",
-	})
+	var currentUser models.User
+	has, err := models.GetEngine().Where("username = ?", currentUsername).Get(&currentUser)
+	if err != nil || !has {
+		c.JSON(http.StatusForbidden, gin.H{"code": 403, "message": "用户不存在"})
+		return
+	}
+
+	var users []models.User
+	session := models.GetEngine().NewSession()
+	defer session.Close()
+
+	if !currentUser.IsSuperAdmin {
+		// 非超级管理员，绝对只能查到自己的账号
+		session.Where("username = ?", currentUser.Username)
+	} else {
+		// 超级管理员，如果有搜索条件，按搜索条件模糊匹配
+		searchUsername := c.Query("username")
+		if searchUsername != "" {
+			session.Where("username LIKE ?", "%"+searchUsername+"%")
+		}
+	}
+
+	err = session.Find(&users)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"code": 1, "message": "查询列表失败: " + err.Error()})
+		return
+	}
+
+	resList := make([]adminUser, 0, len(users))
+	for _, user := range users {
+		resList = append(resList, adminUser{
+			Id:           user.Id,
+			Username:     user.Username,
+			Description:  user.Description,
+			IsSuperAdmin: user.IsSuperAdmin,
+			CreatedAt:    user.CreatedAt,
+			UpdatedAt:    user.UpdatedAt,
+		})
+	}
+
+	c.JSON(http.StatusOK, resList)
 }
 
 func MineHandler(c *gin.Context) {
-	data, err := service.GetUserInfo()
+	usernameStr := ""
+	if uname, ok := c.Get("username"); ok {
+		if s, ok := uname.(string); ok {
+			usernameStr = s
+		}
+	}
+
+	data, err := service.GetUserInfo(usernameStr)
 	if err != nil {
 		c.JSON(http.StatusOK, gin.H{"code": 1, "message": err.Error()})
 		return
@@ -223,7 +211,11 @@ func MineHandler(c *gin.Context) {
 }
 
 func RefreshTokenHandler(c *gin.Context) {
-	data, err := service.RefreshToken("")
+	var req struct {
+		RefreshToken string `json:"refreshToken"`
+	}
+	_ = c.ShouldBindJSON(&req)
+	data, err := service.RefreshToken(req.RefreshToken)
 	if err != nil {
 		c.JSON(http.StatusOK, gin.H{"code": 1, "message": err.Error()})
 		return
@@ -274,4 +266,33 @@ func AvatarHandler(c *gin.Context) {
 	if err != nil {
 		_ = c.AbortWithError(http.StatusBadRequest, err)
 	}
+}
+
+func AsyncRoutesHandler(c *gin.Context) {
+	c.JSON(http.StatusOK, gin.H{
+		"code":    0,
+		"message": "success",
+		"data": []gin.H{
+			{
+				"path": "/admin",
+				"meta": gin.H{
+					"icon":  "ri:admin-line",
+					"title": "menus.pureAdminManagement",
+					"rank":  10,
+				},
+				"children": []gin.H{
+					{
+						"path":      "/admin/index",
+						"name":      "SystemAdmin",
+						"component": "system/admin/index",
+						"meta": gin.H{
+							"icon":  "ri:admin-line",
+							"title": "menus.pureAdminManagement",
+							"roles": []string{"admin"},
+						},
+					},
+				},
+			},
+		},
+	})
 }

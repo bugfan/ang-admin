@@ -15,6 +15,8 @@ export interface DataInfo<T> {
   username?: string;
   /** 昵称 */
   nickname?: string;
+  /** 是否超级管理员 */
+  is_super_admin?: boolean;
   /** 当前登录用户的角色 */
   roles?: Array<string>;
   /** 当前登录用户的按钮级别权限 */
@@ -43,7 +45,7 @@ export function getToken(): DataInfo<number> {
  * @description 设置`token`以及一些必要信息并采用无感刷新`token`方案
  * 无感刷新：后端返回`accessToken`（访问接口使用的`token`）、`refreshToken`（用于调用刷新`accessToken`的接口时所需的`token`，`refreshToken`的过期时间（比如30天）应大于`accessToken`的过期时间（比如2小时））、`expires`（`accessToken`的过期时间）
  * 将`accessToken`、`expires`、`refreshToken`这三条信息放在key值为authorized-token的cookie里（过期自动销毁）
- * 将`avatar`、`username`、`nickname`、`roles`、`permissions`、`refreshToken`、`expires`这七条信息放在key值为`user-info`的localStorage里（利用`multipleTabsKey`当浏览器完全关闭后自动销毁）
+ * 将`avatar`、`username`、`nickname``is_super_admin`、`roles`、`permissions`、`refreshToken`、`expires`这些信息放在key值为`user-info`的localStorage里（利用`multipleTabsKey`当浏览器完全关闭后自动销毁）
  */
 export function setToken(data: DataInfo<Date>) {
   let expires = 0;
@@ -68,18 +70,24 @@ export function setToken(data: DataInfo<Date>) {
       : {}
   );
 
-  function setUserKey({ avatar, username, nickname, roles, permissions }) {
+  function setUserKey({ avatar, username, nickname, is_super_admin, roles, permissions }) {
+    if (avatar && avatar.startsWith("/api/avatar.png")) {
+      avatar = avatar.replace("/api/avatar.png", "/avatar.png");
+    }
     useUserStoreHook().SET_AVATAR(avatar);
     useUserStoreHook().SET_USERNAME(username);
     useUserStoreHook().SET_NICKNAME(nickname);
+    useUserStoreHook().SET_IS_SUPER_ADMIN(is_super_admin ?? false);
     useUserStoreHook().SET_ROLES(roles);
     useUserStoreHook().SET_PERMS(permissions);
     storageLocal().setItem(userKey, {
+      accessToken,
       refreshToken,
       expires,
       avatar,
       username,
       nickname,
+      is_super_admin,
       roles,
       permissions
     });
@@ -91,6 +99,7 @@ export function setToken(data: DataInfo<Date>) {
       avatar: data?.avatar ?? "",
       username,
       nickname: data?.nickname ?? "",
+      is_super_admin: data?.is_super_admin ?? false,
       roles,
       permissions: data?.permissions ?? []
     });
@@ -101,6 +110,8 @@ export function setToken(data: DataInfo<Date>) {
       storageLocal().getItem<DataInfo<number>>(userKey)?.username ?? "";
     const nickname =
       storageLocal().getItem<DataInfo<number>>(userKey)?.nickname ?? "";
+    const is_super_admin =
+      storageLocal().getItem<DataInfo<number>>(userKey)?.is_super_admin ?? false;
     const roles =
       storageLocal().getItem<DataInfo<number>>(userKey)?.roles ?? [];
     const permissions =
@@ -109,6 +120,7 @@ export function setToken(data: DataInfo<Date>) {
       avatar,
       username,
       nickname,
+      is_super_admin,
       roles,
       permissions
     });

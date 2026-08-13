@@ -9,6 +9,7 @@ import { getUserList, registerUser, updateUser, deleteUser } from "@/api/system"
 import { ElMessageBox } from "element-plus";
 import { type Ref, h, ref, toRaw, computed, reactive, onMounted } from "vue";
 import { useRenderIcon } from "@/components/ReIcon/src/hooks";
+import { useUserStoreHook } from "@/store/modules/user";
 import EditPen from "~icons/ep/edit-pen";
 import Delete from "~icons/ep/delete";
 
@@ -34,24 +35,41 @@ export function useAdmin(t: any, tableRef: Ref) {
       label: t('admin.selectionColumn'),
       type: "selection",
       fixed: "left",
-      reserveSelection: true
+      reserveSelection: true,
+      hide: !useUserStoreHook().is_super_admin
     },
     {
       label: t('admin.id'),
-      prop: "id",
+      prop: "Id",
       width: 90
     },
     {
       label: t('admin.username'),
-      prop: "username",
+      prop: "Username",
       minWidth: 130
+    },
+    {
+      label: t('admin.isSuperAdmin'),
+      prop: "is_super_admin",
+      minWidth: 100,
+      cellRenderer: scope => {
+        const isSuper = scope.row.is_super_admin ?? scope.row.IsSuperAdmin ?? false;
+        return (
+          <el-tag
+            type={isSuper ? "success" : "info"}
+            effect="plain"
+          >
+            {isSuper ? t('admin.isSuperAdmin') : "否"}
+          </el-tag>
+        );
+      }
     },
     {
       label: t('admin.createTime'),
       minWidth: 90,
-      prop: "created_at",
-      formatter: ({ created_at }) =>
-        dayjs(created_at).format("YYYY-MM-DD HH:mm:ss")
+      prop: "CreatedAt",
+      formatter: (row) =>
+        dayjs(row.CreatedAt || row.created_at).format("YYYY-MM-DD HH:mm:ss")
     },
     {
       label: t('admin.operation'),
@@ -62,9 +80,10 @@ export function useAdmin(t: any, tableRef: Ref) {
   ];
 
   async function handleDelete(row) {
-    const { code, message: msg } = await deleteUser({ id: row.id });
+    const targetId = row.Id || row.id;
+    const { code, message: msg } = await deleteUser({ id: targetId });
     if (code === 0) {
-      message(`${t('admin.delete')} ID: ${row.id} success`, { type: "success" });
+      message(`${t('admin.delete')} ID: ${targetId} success`, { type: "success" });
       onSearch();
     } else {
       message(msg, { type: "error" });
@@ -91,10 +110,10 @@ export function useAdmin(t: any, tableRef: Ref) {
 
   async function onbatchDel() {
     const curSelected = tableRef.value.getTableRef().getSelectionRows();
-    const ids = getKeyList(curSelected, "id");
+    const ids = curSelected.map(item => item.Id || item.id);
     const { code, message: msg } = await deleteUser({ ids });
     if (code === 0) {
-      message(`${t('admin.batchDelete')} ID: ${ids} success`, {
+      message(`${t('admin.batchDelete')} ID: ${ids.join(",")} success`, {
         type: "success"
       });
       tableRef.value.getTableRef().clearSelection();
@@ -131,10 +150,12 @@ export function useAdmin(t: any, tableRef: Ref) {
       props: {
         formInline: {
           title,
-          username: row?.username ?? "",
-          password: row?.password ?? "",
+          id: row?.Id ?? row?.id ?? undefined,
+          username: row?.Username ?? row?.username ?? "",
+          password: row?.Password ?? row?.password ?? "",
           repeatPassword: "",
-          description: row?.description ?? ""
+          is_super_admin: row?.is_super_admin ?? row?.IsSuperAdmin ?? false,
+          description: row?.Description ?? row?.description ?? ""
         }
       },
       width: "46%",
@@ -148,7 +169,7 @@ export function useAdmin(t: any, tableRef: Ref) {
         const curData = options.props.formInline;
         FormRef.validate(async valid => {
           if (valid) {
-            if (title === '新增') {
+            if (title === t('admin.addAdmin')) {
               const { code, message: msg } = await registerUser(curData);
               if (code !== 0) {
                 message(msg, { type: "error" });

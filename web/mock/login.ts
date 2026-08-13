@@ -1,44 +1,6 @@
-// 根据角色动态生成路由
+// Mock for login has been disabled — requests are now proxied to the real Go backend.
+// The fake tokens and hardcoded GitHub avatar URLs were causing:
+//   1. 401 errors on /api/admin (fake token rejected by real backend)
+//   2. Wrong avatar display (GitHub URL instead of /avatar.png?username=xxx)
 import { defineFakeRoute } from "vite-plugin-fake-server/client";
-
-export default defineFakeRoute([
-  {
-    url: "/login",
-    method: "post",
-    response: ({ body }) => {
-      if (body.username === "admin") {
-        return {
-          code: 0,
-          message: "操作成功",
-          data: {
-            avatar: "https://avatars.githubusercontent.com/u/44761321",
-            username: "admin",
-            nickname: "小铭",
-            // 一个用户可能有多个角色
-            roles: ["admin"],
-            // 按钮级别权限
-            permissions: ["*:*:*"],
-            accessToken: "eyJhbGciOiJIUzUxMiJ9.admin",
-            refreshToken: "eyJhbGciOiJIUzUxMiJ9.adminRefresh",
-            expires: "2030/10/30 00:00:00"
-          }
-        };
-      } else {
-        return {
-          code: 0,
-          message: "操作成功",
-          data: {
-            avatar: "https://avatars.githubusercontent.com/u/52823142",
-            username: "common",
-            nickname: "小林",
-            roles: ["common"],
-            permissions: ["permission:btn:add", "permission:btn:edit"],
-            accessToken: "eyJhbGciOiJIUzUxMiJ9.common",
-            refreshToken: "eyJhbGciOiJIUzUxMiJ9.commonRefresh",
-            expires: "2030/10/30 00:00:00"
-          }
-        };
-      }
-    }
-  }
-]);
+export default defineFakeRoute([]);

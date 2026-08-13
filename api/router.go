@@ -16,7 +16,7 @@ func SetupRouter() *gin.Engine {
 	r.Use(func(c *gin.Context) {
 		c.Writer.Header().Set("Access-Control-Allow-Origin", "*")
 		c.Writer.Header().Set("Access-Control-Allow-Methods", "GET, POST, PUT, PATCH, DELETE, OPTIONS")
-		c.Writer.Header().Set("Access-Control-Allow-Headers", "Content-Type, Authorization")
+		c.Writer.Header().Set("Access-Control-Allow-Headers", "Content-Type, Authorization, X-Requested-With, X-Token")
 		if c.Request.Method == "OPTIONS" {
 			c.AbortWithStatus(http.StatusNoContent)
 			return
@@ -24,24 +24,27 @@ func SetupRouter() *gin.Engine {
 		c.Next()
 	})
 
-	api := r.Group("/api")
+	// 1. 无需鉴权的通用/公共非 REST 接口 (Public / Custom APIs)
+	r.GET("/ping", func(c *gin.Context) {
+		c.JSON(200, gin.H{"message": "pong"})
+	})
+	r.POST("/login", LoginHandler)
+	r.GET("/captcha", CaptchaHandler)
+	r.GET("/avatar.png", AvatarHandler)
+	r.GET("/get-async-routes", AsyncRoutesHandler)
+
+	// 2. 需要鉴权的通用/业务非 REST 接口 (Protected Custom APIs)
+	authorized := r.Group("/")
+	authorized.Use(AuthMiddleware())
 	{
-		api.GET("/ping", func(c *gin.Context) {
-			c.JSON(200, gin.H{"message": "pong"})
-		})
-		api.POST("/login", LoginHandler)
-		api.POST("/register", RegisterHandler)
-		api.POST("/updateUser", UpdateUserHandler)
-		api.POST("/deleteUser", DeleteUserHandler)
-		api.GET("/captcha", CaptchaHandler)
-		api.POST("/users", ListUsersHandler)
-		api.GET("/mine", MineHandler)
-		api.POST("/refresh-token", RefreshTokenHandler)
-		api.GET("/avatar.png", AvatarHandler)
+		authorized.GET("/mine", MineHandler)
+		authorized.POST("/refresh-token", RefreshTokenHandler)
 	}
 
-	// Register RESTful APIs using bugfan/rest
-	rest.NewAPIBackend(api, models.GetEngine(), "/s")
+	// 3. 基于 bugfan/rest 自动生成的模型 RESTful 增删改查接口 (Auto-generated Model RESTful APIs)
+	apiGroup := r.Group("/api")
+	apiGroup.Use(AuthMiddleware())
+	rest.NewAPIBackend(apiGroup, models.GetEngine(), "")
 
 	return r
 }

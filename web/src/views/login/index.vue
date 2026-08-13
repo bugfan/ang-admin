@@ -91,7 +91,9 @@ const onLogin = async (formEl: FormInstance | undefined) => {
           });
         })
         .catch(_err => {
-          message(t("login.pureLoginFail"), { type: "error" });
+          message(_err || t("login.pureLoginFail"), { type: "error" });
+          fetchCaptcha();
+          ruleForm.verifyCode = "";
         })
         .finally(() => {
           disabled.value = false;

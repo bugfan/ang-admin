@@ -39,7 +39,15 @@ export function useNav() {
 
   /** 头像 */
   const userAvatar = computed(() => {
-    return useUserStoreHook()?.avatar;
+    let avatar = useUserStoreHook()?.avatar;
+    if (avatar && avatar.startsWith("/api/avatar.png")) {
+      avatar = avatar.replace("/api/avatar.png", "/avatar.png");
+    }
+    if (!avatar) {
+      const uname = useUserStoreHook()?.username || "Admin";
+      avatar = `/avatar.png?username=${encodeURIComponent(uname)}`;
+    }
+    return avatar;
   });
 
   /** 用户名 */

@@ -218,7 +218,7 @@ function initRouter() {
           } else {
             resolve(router);
           }
-        });
+        }).catch(() => resolve(router));
       });
     }
   } else {
@@ -230,7 +230,7 @@ function initRouter() {
         } else {
           resolve(router);
         }
-      });
+      }).catch(() => resolve(router));
     });
   }
 }

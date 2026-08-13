@@ -41,6 +41,7 @@ export type userType = {
   avatar?: string;
   username?: string;
   nickname?: string;
+  is_super_admin?: boolean;
   roles?: Array<string>;
   permissions?: Array<string>;
   verifyCode?: string;

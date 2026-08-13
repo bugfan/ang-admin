@@ -7,6 +7,7 @@ interface FormItemProps {
   nickname: string;
   username: string;
   password: string;
+  is_super_admin?: boolean;
   phone: string | number;
   email: string;
   sex: string | number;
