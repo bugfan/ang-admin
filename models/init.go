@@ -18,13 +18,13 @@ func InitDB(dsn string) {
 	}
 
 	// Automatically sync database schemas if necessary
-	err = engine.Sync2(new(User))
+	err = engine.Sync2(new(AdminUser))
 	if err != nil {
 		log.Fatalf("Failed to sync database: %v", err)
 	}
 
 	// Initialize default admin user
-	admin := &User{Username: "admin"}
+	admin := &AdminUser{Username: "admin"}
 	has, err := engine.Get(admin)
 	if err != nil {
 		log.Fatalf("Failed to query admin user: %v", err)

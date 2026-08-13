@@ -18,7 +18,7 @@ import (
 )
 
 func init() {
-	rest.Register(&models.User{}, &adminUser{}, rest.RouteTypeALL, []string{"Password"}, "admin")
+	rest.Register(&models.AdminUser{}, &adminUser{}, rest.RouteTypeALL, []string{"Password"}, "admin")
 }
 
 type adminUser struct {
@@ -32,7 +32,7 @@ type adminUser struct {
 }
 
 func (u *adminUser) Before(g *gin.Context, x *xorm.Engine) bool {
-	// 1. 获取当前登录的用户
+	// 1. 获取当前登录的管理员用户
 	currentUsername := ""
 	if uname, ok := g.Get("username"); ok {
 		if s, ok := uname.(string); ok {
@@ -40,26 +40,21 @@ func (u *adminUser) Before(g *gin.Context, x *xorm.Engine) bool {
 		}
 	}
 
-	var currentUser models.User
+	var currAdminUser models.AdminUser
 	if currentUsername != "" {
-		_, _ = x.Where("username = ?", currentUsername).Get(&currentUser)
+		_, _ = x.Where("username = ?", currentUsername).Get(&currAdminUser)
 	}
 
-	// 2. 如果登录的用户不是超管，进行权限判断
-	if !currentUser.IsSuperAdmin {
+	// 2. 如果登录的用户不是超管，进行权限拦截
+	if !currAdminUser.IsSuperAdmin {
 		switch g.Request.Method {
 		case http.MethodGet:
-			// 如果是列表查询 (如 /api/admin)，强制约束只查询自己的账号
-			if g.Param("id") == "" {
-				q := g.Request.URL.Query()
-				q.Set("username", currentUser.Username)
-				g.Request.URL.RawQuery = q.Encode()
-			} else {
-				// 单条获取，如果不是自己的账号，拒绝访问
+			// 如果是单条获取，如果不是自己的账号，拒绝访问
+			if g.Param("id") != "" {
 				paramID := g.Param("id")
-				var targetUser models.User
-				has, _ := x.Where("id = ?", paramID).Get(&targetUser)
-				if has && targetUser.Username != currentUser.Username {
+				var targetAdminUser models.AdminUser
+				has, _ := x.Where("id = ?", paramID).Get(&targetAdminUser)
+				if has && targetAdminUser.Username != currAdminUser.Username {
 					g.AbortWithStatusJSON(http.StatusForbidden, gin.H{"code": 403, "message": "非超级管理员只能查看自己的账号"})
 					return false
 				}
@@ -75,14 +70,14 @@ func (u *adminUser) Before(g *gin.Context, x *xorm.Engine) bool {
 		case http.MethodPut, http.MethodPatch:
 			// 非超管只能修改自己，且无法修改超管属性
 			paramID := g.Param("id")
-			var targetUser models.User
-			has, _ := x.Where("id = ?", paramID).Get(&targetUser)
-			if has && targetUser.Username != currentUser.Username {
+			var targetAdminUser models.AdminUser
+			has, _ := x.Where("id = ?", paramID).Get(&targetAdminUser)
+			if has && targetAdminUser.Username != currAdminUser.Username {
 				g.AbortWithStatusJSON(http.StatusForbidden, gin.H{"code": 403, "message": "非超级管理员无法修改其他管理员账号"})
 				return false
 			}
 			// 保持非超管用户的超管属性不变 (防止提权)
-			u.IsSuperAdmin = currentUser.IsSuperAdmin
+			u.IsSuperAdmin = currAdminUser.IsSuperAdmin
 		}
 	}
 
@@ -102,6 +97,57 @@ func (u *adminUser) Before(g *gin.Context, x *xorm.Engine) bool {
 		}
 	}
 	return true
+}
+
+func (u *adminUser) List(c *gin.Context) {
+	currentUsername := ""
+	if uname, ok := c.Get("username"); ok {
+		if s, ok := uname.(string); ok {
+			currentUsername = s
+		}
+	}
+
+	var currAdminUser models.AdminUser
+	has, err := models.GetEngine().Where("username = ?", currentUsername).Get(&currAdminUser)
+	if err != nil || !has {
+		c.JSON(http.StatusForbidden, gin.H{"code": 403, "message": "管理员不存在"})
+		return
+	}
+
+	var adminUsers []models.AdminUser
+	session := models.GetEngine().NewSession()
+	defer session.Close()
+
+	if !currAdminUser.IsSuperAdmin {
+		// 非超级管理员，绝对只能查到自己的账号
+		session.Where("username = ?", currAdminUser.Username)
+	} else {
+		// 超级管理员，如果有搜索条件，按搜索条件模糊匹配
+		searchUsername := c.Query("username")
+		if searchUsername != "" {
+			session.Where("username LIKE ?", "%"+searchUsername+"%")
+		}
+	}
+
+	err = session.Find(&adminUsers)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"code": 1, "message": "查询列表失败: " + err.Error()})
+		return
+	}
+
+	resList := make([]adminUser, 0, len(adminUsers))
+	for _, item := range adminUsers {
+		resList = append(resList, adminUser{
+			Id:           item.Id,
+			Username:     item.Username,
+			Description:  item.Description,
+			IsSuperAdmin: item.IsSuperAdmin,
+			CreatedAt:    item.CreatedAt,
+			UpdatedAt:    item.UpdatedAt,
+		})
+	}
+
+	c.JSON(http.StatusOK, resList)
 }
 
 type LoginRequest struct {
@@ -136,59 +182,6 @@ func LoginHandler(c *gin.Context) {
 	})
 }
 
-
-
-func (u *adminUser) List(c *gin.Context) {
-	currentUsername := ""
-	if uname, ok := c.Get("username"); ok {
-		if s, ok := uname.(string); ok {
-			currentUsername = s
-		}
-	}
-
-	var currentUser models.User
-	has, err := models.GetEngine().Where("username = ?", currentUsername).Get(&currentUser)
-	if err != nil || !has {
-		c.JSON(http.StatusForbidden, gin.H{"code": 403, "message": "用户不存在"})
-		return
-	}
-
-	var users []models.User
-	session := models.GetEngine().NewSession()
-	defer session.Close()
-
-	if !currentUser.IsSuperAdmin {
-		// 非超级管理员，绝对只能查到自己的账号
-		session.Where("username = ?", currentUser.Username)
-	} else {
-		// 超级管理员，如果有搜索条件，按搜索条件模糊匹配
-		searchUsername := c.Query("username")
-		if searchUsername != "" {
-			session.Where("username LIKE ?", "%"+searchUsername+"%")
-		}
-	}
-
-	err = session.Find(&users)
-	if err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"code": 1, "message": "查询列表失败: " + err.Error()})
-		return
-	}
-
-	resList := make([]adminUser, 0, len(users))
-	for _, user := range users {
-		resList = append(resList, adminUser{
-			Id:           user.Id,
-			Username:     user.Username,
-			Description:  user.Description,
-			IsSuperAdmin: user.IsSuperAdmin,
-			CreatedAt:    user.CreatedAt,
-			UpdatedAt:    user.UpdatedAt,
-		})
-	}
-
-	c.JSON(http.StatusOK, resList)
-}
-
 func MineHandler(c *gin.Context) {
 	usernameStr := ""
 	if uname, ok := c.Get("username"); ok {
@@ -197,7 +190,7 @@ func MineHandler(c *gin.Context) {
 		}
 	}
 
-	data, err := service.GetUserInfo(usernameStr)
+	data, err := service.GetAdminUserInfo(usernameStr)
 	if err != nil {
 		c.JSON(http.StatusOK, gin.H{"code": 1, "message": err.Error()})
 		return

@@ -4,8 +4,8 @@ import (
 	"time"
 )
 
-// User represents the user model in the database
-type User struct {
+// AdminUser represents the admin user model in the database
+type AdminUser struct {
 	Id           int64     `xorm:"pk autoincr" json:"id"`
 	Username     string    `xorm:"unique notnull" json:"username"`
 	Password     string    `xorm:"notnull" json:"-"`
@@ -16,4 +16,8 @@ type User struct {
 	Permissions  []string  `xorm:"-" json:"permissions"`
 	CreatedAt    time.Time `xorm:"created" json:"created_at"`
 	UpdatedAt    time.Time `xorm:"updated" json:"updated_at"`
+}
+
+func (AdminUser) TableName() string {
+	return "admin_user"
 }

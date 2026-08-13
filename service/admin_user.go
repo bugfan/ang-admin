@@ -8,61 +8,65 @@ import (
 	"golang.org/x/crypto/bcrypt"
 )
 
-func ListUsers(username string, page, pageSize int) ([]models.User, int64, error) {
-	var users []models.User
+func ListAdminUsers(username string, page, pageSize int) ([]models.AdminUser, int64, error) {
+	var adminUsers []models.AdminUser
 	session := models.GetEngine().NewSession()
 	defer session.Close()
 
 	if username != "" {
 		session.Where("username LIKE ?", "%"+username+"%")
 	}
-	total, err := session.Clone().Count(new(models.User))
+	total, err := session.Clone().Count(new(models.AdminUser))
 	if err != nil {
 		return nil, 0, err
 	}
 
-	err = session.Limit(pageSize, (page-1)*pageSize).Find(&users)
-	return users, total, err
+	err = session.Limit(pageSize, (page-1)*pageSize).Find(&adminUsers)
+	return adminUsers, total, err
 }
 
-func Register(user *models.User) error {
+func RegisterAdminUser(adminUser *models.AdminUser) error {
 	engine := models.GetEngine()
 
-	has, err := engine.Where("username = ?", user.Username).Exist(&models.User{})
+	has, err := engine.Where("username = ?", adminUser.Username).Exist(&models.AdminUser{})
 	if err != nil {
 		return err
 	}
 	if has {
-		return errors.New("user already exists")
+		return errors.New("admin user already exists")
 	}
 
-	hashedPassword, err := bcrypt.GenerateFromPassword([]byte(user.Password), bcrypt.DefaultCost)
+	hashedPassword, err := bcrypt.GenerateFromPassword([]byte(adminUser.Password), bcrypt.DefaultCost)
 	if err != nil {
 		return err
 	}
 
-	user.Password = string(hashedPassword)
-	user.Roles = []string{"common"}
+	adminUser.Password = string(hashedPassword)
+	adminUser.Roles = []string{"common"}
 
-	_, err = engine.Insert(user)
+	_, err = engine.Insert(adminUser)
 	return err
 }
 
-func UpdateUser(user *models.User) error {
+func Register(adminUser *models.AdminUser) error {
+	return RegisterAdminUser(adminUser)
+}
+
+func UpdateAdminUser(adminUser *models.AdminUser) error {
 	engine := models.GetEngine()
-	existing := new(models.User)
-	has, err := engine.Where("username = ?", user.Username).Get(existing)
+	existing := new(models.AdminUser)
+	has, err := engine.Where("username = ?", adminUser.Username).Get(existing)
 	if err != nil {
 		return err
 	}
 	if !has {
-		return errors.New("user not found")
+		return errors.New("admin user not found")
 	}
 
-	existing.Description = user.Description
+	existing.Description = adminUser.Description
 
-	if user.Password != "" {
-		hashedPassword, _ := bcrypt.GenerateFromPassword([]byte(user.Password), bcrypt.DefaultCost)
+	if adminUser.Password != "" {
+		hashedPassword, _ := bcrypt.GenerateFromPassword([]byte(adminUser.Password), bcrypt.DefaultCost)
 		existing.Password = string(hashedPassword)
 	}
 
@@ -71,8 +75,8 @@ func UpdateUser(user *models.User) error {
 }
 
 func Login(username, password string) (map[string]interface{}, error) {
-	user := new(models.User)
-	has, err := models.GetEngine().Where("username = ?", username).Get(user)
+	adminUser := new(models.AdminUser)
+	has, err := models.GetEngine().Where("username = ?", username).Get(adminUser)
 	if err != nil {
 		return nil, errors.New("用户名、密码或验证码错误")
 	}
@@ -80,26 +84,26 @@ func Login(username, password string) (map[string]interface{}, error) {
 		return nil, errors.New("用户名、密码或验证码错误")
 	}
 
-	err = bcrypt.CompareHashAndPassword([]byte(user.Password), []byte(password))
+	err = bcrypt.CompareHashAndPassword([]byte(adminUser.Password), []byte(password))
 	if err != nil {
 		return nil, errors.New("用户名、密码或验证码错误")
 	}
 
-	accessToken, err := GenerateToken(user.Username, 7*24*time.Hour)
+	accessToken, err := GenerateToken(adminUser.Username, 7*24*time.Hour)
 	if err != nil {
 		return nil, errors.New("failed to generate token")
 	}
 
-	refreshToken, err := GenerateToken(user.Username, 30*24*time.Hour)
+	refreshToken, err := GenerateToken(adminUser.Username, 30*24*time.Hour)
 	if err != nil {
 		return nil, errors.New("failed to generate refresh token")
 	}
 
 	return map[string]interface{}{
-		"id":             user.Id,
-		"avatar":         "/avatar.png?username=" + user.Username,
-		"username":       user.Username,
-		"is_super_admin": user.IsSuperAdmin,
+		"id":             adminUser.Id,
+		"avatar":         "/avatar.png?username=" + adminUser.Username,
+		"username":       adminUser.Username,
+		"is_super_admin": adminUser.IsSuperAdmin,
 		"roles":          []string{"admin"}, // For now, hardcode admin role
 		"permissions":    []string{"*:*:*"},
 		"accessToken":    accessToken,
@@ -108,12 +112,12 @@ func Login(username, password string) (map[string]interface{}, error) {
 	}, nil
 }
 
-func GetUserInfo(username string) (map[string]interface{}, error) {
+func GetAdminUserInfo(username string) (map[string]interface{}, error) {
 	if username == "" {
 		username = "admin"
 	}
-	user := new(models.User)
-	has, err := models.GetEngine().Where("username = ?", username).Get(user)
+	adminUserObj := new(models.AdminUser)
+	has, err := models.GetEngine().Where("username = ?", username).Get(adminUserObj)
 	if err != nil || !has {
 		return map[string]interface{}{
 			"avatar":         "/avatar.png?username=" + username,
@@ -125,14 +129,18 @@ func GetUserInfo(username string) (map[string]interface{}, error) {
 		}, nil
 	}
 	return map[string]interface{}{
-		"id":             user.Id,
-		"avatar":         "/avatar.png?username=" + user.Username,
-		"username":       user.Username,
-		"is_super_admin": user.IsSuperAdmin,
+		"id":             adminUserObj.Id,
+		"avatar":         "/avatar.png?username=" + adminUserObj.Username,
+		"username":       adminUserObj.Username,
+		"is_super_admin": adminUserObj.IsSuperAdmin,
 		"email":          "",
 		"phone":          "",
-		"description":    user.Description,
+		"description":    adminUserObj.Description,
 	}, nil
+}
+
+func GetUserInfo(username string) (map[string]interface{}, error) {
+	return GetAdminUserInfo(username)
 }
 
 func RefreshToken(oldToken string) (map[string]interface{}, error) {
