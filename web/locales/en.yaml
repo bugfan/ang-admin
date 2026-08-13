@@ -270,6 +270,7 @@ admin:
   delete: "Delete"
   confirmDelete: "Confirm delete?"
   isSuperAdmin: "Super Admin"
+  commonAdmin: "Normal Admin"
 tableBar:
   pureList: List
   pureLarge: Large

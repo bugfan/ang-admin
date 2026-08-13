@@ -270,6 +270,7 @@ admin:
   delete: "删除"
   confirmDelete: "是否确认删除?"
   isSuperAdmin: "超管"
+  commonAdmin: "普通管理员"
 tableBar:
   pureList: 列表
   pureLarge: 宽松

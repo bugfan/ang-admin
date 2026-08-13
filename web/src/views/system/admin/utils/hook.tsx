@@ -59,7 +59,7 @@ export function useAdmin(t: any, tableRef: Ref) {
             type={isSuper ? "success" : "info"}
             effect="plain"
           >
-            {isSuper ? t('admin.isSuperAdmin') : "否"}
+            {isSuper ? t('admin.isSuperAdmin') : t('admin.commonAdmin')}
           </el-tag>
         );
       }
