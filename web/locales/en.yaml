@@ -361,6 +361,7 @@ cert:
   month3: "3 Months (90 Days)"
   month6: "6 Months (180 Days)"
   year20: "20 Years (7300 Days)"
+  certDeleteBlockedByTunnel: "Certificate '{certId}' is referenced by Tunnel (Port: {port}) and cannot be deleted! Please disassociate or delete corresponding Tunnel first."
 tableBar:
   pureList: List
   pureLarge: Large

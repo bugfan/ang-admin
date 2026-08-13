@@ -33,7 +33,7 @@ type certHandler struct {
 }
 
 func (c *certHandler) Before(g *gin.Context, x *xorm.Engine) bool {
-	// Automatically parse certificate metadata before saving
+	// 1. Automatically parse certificate metadata before saving
 	if g.Request.Method == http.MethodPost || g.Request.Method == http.MethodPut || g.Request.Method == http.MethodPatch {
 		mCert := &models.Certificate{
 			CertContent: c.CertContent,
@@ -46,6 +46,36 @@ func (c *certHandler) Before(g *gin.Context, x *xorm.Engine) bool {
 		c.Issuer = mCert.Issuer
 		c.SerialNumber = mCert.SerialNumber
 	}
+
+	// 2. Intercept deletion if certificate is referenced by active Tunnels
+	if g.Request.Method == http.MethodDelete {
+		idStr := g.Param("id")
+		if idStr != "" {
+			var mCert models.Certificate
+			has, err := x.Id(idStr).Get(&mCert)
+			if err == nil && has && mCert.CertId != "" {
+				var count int64
+				count, err = x.Where("certificate = ?", mCert.CertId).Count(new(models.Tunnel))
+				if err == nil && count > 0 {
+					var refTunnel models.Tunnel
+					_, _ = x.Where("certificate = ?", mCert.CertId).Get(&refTunnel)
+					g.JSON(http.StatusBadRequest, gin.H{
+						"code":      1,
+						"error_key": "certDeleteBlockedByTunnel",
+						"details": gin.H{
+							"certId": mCert.CertId,
+							"port":   refTunnel.Port,
+							"count":  count,
+						},
+						"message": "证书 '" + mCert.CertId + "' 正在被 Tunnel (端口: " + refTunnel.Port + ") 关联使用，无法删除！请先取消关联或删除对应 Tunnel。",
+					})
+					g.Abort()
+					return false
+				}
+			}
+		}
+	}
+
 	return true
 }
 

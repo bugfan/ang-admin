@@ -10,6 +10,7 @@ import {
   updateTunnel,
   deleteTunnel
 } from "@/api/tunnel";
+import { getCertList } from "@/api/certificate";
 import { type Ref, h, ref, toRaw, reactive, onMounted } from "vue";
 
 export function useTunnel(t: any, tableRef: Ref) {
@@ -30,6 +31,8 @@ export function useTunnel(t: any, tableRef: Ref) {
     size: deviceDetection() ? "small" : "default",
     layout: deviceDetection() ? "prev, pager, next" : "total, sizes, prev, pager, next, jumper"
   });
+
+  const validCertSet = ref<Set<string>>(new Set());
 
   const columns: TableColumnList = [
     {
@@ -80,15 +83,21 @@ export function useTunnel(t: any, tableRef: Ref) {
     {
       label: t("tunnel.certificate"),
       prop: "Certificate",
-      minWidth: 120,
+      minWidth: 140,
       cellRenderer: scope => {
         const cert = scope.row.Certificate || scope.row.certificate || "";
-        return cert ? (
+        if (!cert) return <span class="text-gray-400">-</span>;
+        const isValid = validCertSet.value.has(cert);
+        return isValid ? (
           <el-tag type="primary" size="small" effect="plain">
             {cert}
           </el-tag>
         ) : (
-          <span class="text-gray-400">-</span>
+          <el-tooltip content="引用的证书已被删除，请编辑重选" placement="top">
+            <el-tag type="danger" size="small" effect="light" class="font-bold">
+              {cert} (关联失效)
+            </el-tag>
+          </el-tooltip>
         );
       }
     },
@@ -164,12 +173,20 @@ export function useTunnel(t: any, tableRef: Ref) {
   async function onSearch() {
     loading.value = true;
     const searchParams = toRaw(form);
-    const { code, data } = await getTunnelList(searchParams);
-    if (code === 0 && data) {
-      dataList.value = data.list || [];
-      pagination.total = data.total || dataList.value.length;
-      pagination.pageSize = data.pageSize || 10;
-      pagination.currentPage = data.currentPage || 1;
+    const [tunnelRes, certRes] = await Promise.all([
+      getTunnelList(searchParams),
+      getCertList()
+    ]);
+
+    if (certRes?.code === 0 && certRes?.data?.list) {
+      validCertSet.value = new Set(certRes.data.list.map((c: any) => c.CertId || c.cert_id));
+    }
+
+    if (tunnelRes?.code === 0 && tunnelRes?.data) {
+      dataList.value = tunnelRes.data.list || [];
+      pagination.total = tunnelRes.data.total || dataList.value.length;
+      pagination.pageSize = tunnelRes.data.pageSize || 10;
+      pagination.currentPage = tunnelRes.data.currentPage || 1;
     }
     setTimeout(() => {
       loading.value = false;
