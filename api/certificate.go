@@ -79,6 +79,13 @@ func (c *certHandler) Before(g *gin.Context, x *xorm.Engine) bool {
 	return true
 }
 
+func (c *certHandler) After(g *gin.Context, x *xorm.Engine, args ...interface{}) {
+	if g.Request.Method == http.MethodPost || g.Request.Method == http.MethodPut || g.Request.Method == http.MethodPatch || g.Request.Method == http.MethodDelete {
+		service.SyncCertificateToCluster()
+	}
+}
+
+
 func (c *certHandler) List(ctx *gin.Context) {
 	var certs []models.Certificate
 	session := models.GetEngine().NewSession()

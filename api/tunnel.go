@@ -5,6 +5,7 @@ import (
 	"time"
 
 	"github.com/bugfan/ang-admin/models"
+	"github.com/bugfan/ang-admin/service"
 	"github.com/bugfan/rest"
 	"github.com/gin-gonic/gin"
 	"github.com/go-xorm/xorm"
@@ -28,6 +29,13 @@ type tunnelHandler struct {
 func (t *tunnelHandler) Before(g *gin.Context, x *xorm.Engine) bool {
 	return true
 }
+
+func (t *tunnelHandler) After(g *gin.Context, x *xorm.Engine, args ...interface{}) {
+	if g.Request.Method == http.MethodPost || g.Request.Method == http.MethodPut || g.Request.Method == http.MethodPatch || g.Request.Method == http.MethodDelete {
+		service.SyncTunnelToCluster()
+	}
+}
+
 
 func (t *tunnelHandler) List(c *gin.Context) {
 	var tunnels []models.Tunnel
