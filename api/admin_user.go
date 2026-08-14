@@ -296,6 +296,8 @@ func AsyncRoutesHandler(c *gin.Context) {
 					},
 				},
 			},
+
+
 			{
 				"path": "/admin",
 				"meta": gin.H{

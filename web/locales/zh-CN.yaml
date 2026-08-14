@@ -72,7 +72,9 @@ menus:
   pureApp: "应用"
   pureCert: "证书管理"
   pureTunnel: "TUNNEL"
+  pureTunnelClient: "隧道客户端"
   pureAdminManagement: "管理员管理"
+
   pureAccountManagement: "账号管理"
   pureLogin: 登录
   pureEmpty: 无Layout页
@@ -275,7 +277,10 @@ admin:
   isSuperAdmin: "超管"
   commonAdmin: "普通管理员"
 tunnel:
+  serverTab: "服务端监听 (Server)"
+  clientTab: "客户端节点 (Client)"
   type: "类型"
+
   keyName: "标识"
   port: "端口"
   sni: "SNI"
@@ -307,6 +312,19 @@ tunnel:
   sniRequired: "请输入SNI"
   selectCertPlaceholder: "请选择或搜索证书 (选填)"
   goCertPage: "去配置证书"
+  clientNodes: "节点"
+  onlineCount: "在线"
+  totalNodes: "已配置节点"
+  noNodes: "暂无节点"
+  addNode: "新增节点"
+  nodeDetail: "隧道节点明细"
+  unsavedOnline: "实时未保存"
+  unsavedTag: "未保存"
+  unsavedCount: "待保存"
+  unsavedBannerTip: "检测到 {count} 个客户端正在实时连接但尚未保存配置，点击“存为节点”即可使用。"
+  clickToExpand: "点击展开节点明细列表"
+
+
 cert:
   certId: "名称"
   type: "证书类型"
@@ -380,3 +398,28 @@ tableBar:
   purePinLeft: 固定在左边
   purePinRight: 固定在右边
   pureUnpin: 取消固定
+tunnelClient:
+  name: "名称"
+  nodeRef: "节点"
+  type: "类型"
+  tunnelId: "Tunnel ID"
+  token: "Token"
+  remark: "备注"
+  status: "实时连接状态"
+  online: "在线"
+  offline: "未连接"
+  addClient: "新增节点"
+  editClient: "编辑节点"
+  selectActivePlaceholder: "从在线连接中选择"
+  nodeNamePlaceholder: "例如: 节点-1"
+  nameRequired: "请输入名称"
+  selectNodeRequired: "请选择并关联有效的在线节点"
+  typeRequired: "请选择类型 (tls/quic)"
+  tunnelIdRequired: "请输入 Tunnel ID"
+  tokenRequired: "请输入 Token"
+  refreshNodes: "刷新在线节点列表"
+  refreshNodesSuccess: "已成功刷新实时在线节点！"
+  unsavedNode: "待配置节点"
+  unsavedId: "未存库"
+  saveAsNode: "存为节点"
+  remarkPlaceholder: "请输入备注信息 (选填)"

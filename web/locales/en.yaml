@@ -72,7 +72,9 @@ menus:
   pureApp: "Application"
   pureCert: "Certificate Management"
   pureTunnel: "TUNNEL"
+  pureTunnelClient: "Tunnel Client"
   pureAdminManagement: "Admin Management"
+
   pureAccountManagement: "Account Management"
   pureLogin: Login
   pureEmpty: Empty Page
@@ -275,7 +277,10 @@ admin:
   isSuperAdmin: "Super Admin"
   commonAdmin: "Normal Admin"
 tunnel:
+  serverTab: "Server Listeners"
+  clientTab: "Client Nodes"
   type: "Type"
+
   keyName: "Key Name"
   port: "Port"
   sni: "SNI"
@@ -306,6 +311,19 @@ tunnel:
   portFormatError: "Port must be a valid number (1-65535)"
   selectCertPlaceholder: "Select or search certificate (Optional)"
   goCertPage: "Go to Certificate Management"
+  clientNodes: "Nodes"
+  onlineCount: "Online"
+  totalNodes: "Configured Nodes"
+  noNodes: "No nodes"
+  addNode: "Add Node"
+  nodeDetail: "Tunnel Node Details"
+  unsavedOnline: "Live (Unsaved)"
+  unsavedTag: "Unsaved"
+  unsavedCount: "Unsaved"
+  unsavedBannerTip: "Detected {count} live client(s) connected without saved config. Click 'Save as Node' to use."
+  clickToExpand: "Click to expand node list"
+
+
 cert:
   certId: "Name"
   type: "Certificate Type"
@@ -379,3 +397,28 @@ tableBar:
   purePinLeft: Pin Left
   purePinRight: Pin Right
   pureUnpin: Unpin
+tunnelClient:
+  name: "Name"
+  nodeRef: "Node"
+  type: "Type"
+  tunnelId: "Tunnel ID"
+  token: "Token"
+  remark: "Remark"
+  status: "Live Connection Status"
+  online: "Online"
+  offline: "Disconnected"
+  addClient: "Add Node"
+  editClient: "Edit Node"
+  selectActivePlaceholder: "Select live connection"
+  nodeNamePlaceholder: "e.g. Node-1"
+  nameRequired: "Please enter name"
+  selectNodeRequired: "Please select an active online node"
+  typeRequired: "Please select type (tls/quic)"
+  tunnelIdRequired: "Please enter Tunnel ID"
+  tokenRequired: "Please enter Token"
+  refreshNodes: "Refresh live nodes list"
+  refreshNodesSuccess: "Live nodes refreshed successfully!"
+  unsavedNode: "Unconfigured Node"
+  unsavedId: "Unsaved"
+  saveAsNode: "Save as Node"
+  remarkPlaceholder: "Please enter remark (optional)"
