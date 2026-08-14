@@ -5,19 +5,18 @@ import { addDialog } from "@/components/ReDialog";
 import type { PaginationProps } from "@pureadmin/table";
 import { deviceDetection } from "@pureadmin/utils";
 import {
-  getTunnelClientList,
-  createTunnelClient,
-  updateTunnelClient,
-  deleteTunnelClient
-} from "@/api/tunnel-client";
+  getDnsList,
+  createDns,
+  updateDns,
+  deleteDns,
+  type DnsProxyItem
+} from "@/api/dns";
 import { type Ref, h, ref, computed, toRaw, reactive, onMounted } from "vue";
 
-export function useTunnelClient(t: any, tableRef: Ref) {
+export function useDnsProxy(t: any, tableRef: Ref) {
   const form = reactive({
-    name: "",
-    type: "",
-    tunnel_id: "",
-    token: ""
+    address: "",
+    port: ""
   });
   const formRef = ref();
   const dataList = ref([]);
@@ -34,92 +33,77 @@ export function useTunnelClient(t: any, tableRef: Ref) {
 
   const columns = computed<TableColumnList>(() => [
     {
-      label: t("tunnel.selectionColumn"),
+      type: "expand",
+      slot: "expand"
+    },
+    {
+      label: t("dns.selectionColumn") || t("tunnel.selectionColumn"),
       type: "selection",
       fixed: "left",
       reserveSelection: true
     },
     {
-      label: t("tunnel.id"),
+      label: t("dns.id"),
       prop: "Id",
       width: 80,
       formatter: (row) => row.Id || row.id
     },
     {
-      label: t("tunnelClient.name"),
-      prop: "Name",
-      minWidth: 140,
-      formatter: (row) => row.Name || row.name
-    },
-    {
-      label: t("tunnelClient.type"),
-      prop: "Type",
-      minWidth: 100,
+      label: t("dns.listenAddressPort"),
+      minWidth: 170,
       cellRenderer: scope => {
-        const clientType = (scope.row.Type || scope.row.type || "").toLowerCase();
-        const tagType = "primary";
+        const addr = scope.row.Address || scope.row.address || "0.0.0.0";
+        const port = scope.row.Port || scope.row.port || "";
         return (
-          <el-tag type={tagType} effect="plain" class="font-bold">
-            {clientType.toUpperCase()}
+          <el-tag type="primary" effect="light" class="font-mono font-bold whitespace-nowrap">
+            {addr}:{port}
           </el-tag>
         );
       }
     },
     {
-      label: t("tunnelClient.tunnelId"),
-      prop: "TunnelId",
-      minWidth: 110,
-      cellRenderer: scope => {
-        const tid = scope.row.TunnelId || scope.row.tunnel_id || "";
-        return (
-          <el-tag type="info" effect="light" class="font-mono">
-            ID: {tid}
-          </el-tag>
-        );
-      }
-    },
-    {
-      label: t("tunnelClient.token"),
-      prop: "Token",
-      minWidth: 120,
-      cellRenderer: scope => {
-        const token = scope.row.Token || scope.row.token || "";
-        return (
-          <span class="font-mono font-medium text-blue-600 dark:text-blue-400">
-            {token}
-          </span>
-        );
-      }
-    },
-    {
-      label: t("tunnelClient.status"),
+      label: t("dns.rules"),
       minWidth: 160,
       cellRenderer: scope => {
-        const isOnline = scope.row.IsOnline ?? scope.row.is_online ?? false;
-        const remoteAddr = scope.row.RemoteAddr || scope.row.remote_addr || "";
-        return isOnline ? (
-          <el-tooltip content={`Remote: ${remoteAddr}`} placement="top">
-            <el-tag type="success" effect="light" class="font-medium inline-flex items-center">
-              <span class="w-1.5 h-1.5 rounded-full bg-emerald-500 inline-block mr-1"></span>
-              {t("tunnelClient.online")} ({remoteAddr})
-            </el-tag>
-          </el-tooltip>
-        ) : (
-          <el-tag type="info" effect="plain" class="text-gray-400 inline-flex items-center">
-            <span class="w-1.5 h-1.5 rounded-full bg-rose-500 inline-block mr-1"></span>
-            {t("tunnelClient.offline")}
-          </el-tag>
+        const rulesStr = scope.row.Rules || scope.row.rules || "";
+        let ruleList: string[] = [];
+        try {
+          if (rulesStr) ruleList = JSON.parse(rulesStr);
+        } catch (e) {
+          ruleList = [];
+        }
+        if (!ruleList || ruleList.length === 0) {
+          return <span class="text-gray-400 text-xs">-</span>;
+        }
+        return (
+          <div class="flex flex-wrap gap-1">
+            {ruleList.map(r => (
+              <el-tag key={r} size="small" type="info" effect="plain" class="font-mono">
+                {r}
+              </el-tag>
+            ))}
+          </div>
         );
       }
     },
     {
-      label: t("tunnelClient.remark"),
+      label: t("dns.hosts"),
+      minWidth: 180,
+      slot: "hosts"
+    },
+    {
+      label: t("dns.backend"),
+      minWidth: 200,
+      slot: "backend"
+    },
+    {
+      label: t("dns.remark"),
       prop: "Remark",
       minWidth: 140,
       formatter: (row) => row.Remark || row.remark || "-"
     },
     {
-      label: t("tunnel.createTime"),
+      label: t("dns.createTime"),
       minWidth: 160,
       prop: "CreatedAt",
       formatter: (row) => {
@@ -128,7 +112,7 @@ export function useTunnelClient(t: any, tableRef: Ref) {
       }
     },
     {
-      label: t("tunnel.operation"),
+      label: t("dns.operation"),
       fixed: "right",
       width: 160,
       slot: "operation"
@@ -137,9 +121,9 @@ export function useTunnelClient(t: any, tableRef: Ref) {
 
   async function handleDelete(row: any) {
     const targetId = row.Id || row.id;
-    const { code, message: msg } = await deleteTunnelClient({ id: targetId });
+    const { code, message: msg } = await deleteDns({ id: targetId });
     if (code === 0) {
-      message(`${t("tunnel.delete")} ID: ${targetId} success`, { type: "success" });
+      message(`${t("dns.delete")} ID: ${targetId} 成功`, { type: "success" });
       onSearch();
     } else {
       message(msg, { type: "error" });
@@ -171,9 +155,9 @@ export function useTunnelClient(t: any, tableRef: Ref) {
   async function onbatchDel() {
     const curSelected = tableRef.value.getTableRef().getSelectionRows();
     const ids = curSelected.map((item: any) => item.Id || item.id);
-    const { code, message: msg } = await deleteTunnelClient({ ids });
+    const { code, message: msg } = await deleteDns({ ids });
     if (code === 0) {
-      message(`${t("tunnel.batchDelete")} success`, { type: "success" });
+      message(`批量删除成功`, { type: "success" });
       tableRef.value.getTableRef().clearSelection();
       onSearch();
     } else {
@@ -184,7 +168,7 @@ export function useTunnelClient(t: any, tableRef: Ref) {
   async function onSearch() {
     loading.value = true;
     const searchParams = toRaw(form);
-    const res = await getTunnelClientList(searchParams);
+    const res = await getDnsList(searchParams);
 
     if (res?.code === 0 && res?.data) {
       dataList.value = res.data.list || [];
@@ -210,14 +194,21 @@ export function useTunnelClient(t: any, tableRef: Ref) {
         formInline: {
           title,
           id: row?.Id ?? row?.id ?? undefined,
-          name: row?.Name ?? row?.name ?? "",
-          type: (row?.Type ?? row?.type ?? "tls").toLowerCase(),
+          address: row?.Address ?? row?.address ?? "",
+          port: row?.Port ?? row?.port ?? "5656",
+          rules: row?.Rules ?? row?.rules ?? "[]",
+          hosts_text: row?.HostsText ?? row?.hosts_text ?? "",
+          hosts_json: row?.HostsJSON ?? row?.hosts_json ?? "",
+          backend_type: row?.BackendType ?? row?.backend_type ?? "upstream",
+          tunnel_type: (row?.TunnelType ?? row?.tunnel_type ?? "quic").toLowerCase(),
           tunnel_id: row?.TunnelId ?? row?.tunnel_id ?? "",
-          token: row?.Token ?? row?.token ?? "",
+          tunnel_token: row?.TunnelToken ?? row?.tunnel_token ?? "",
+          upstream_method: row?.UpstreamMethod ?? row?.upstream_method ?? "round_robin",
+          upstream_servers: row?.UpstreamServers ?? row?.upstream_servers ?? JSON.stringify([{ target: "8.8.8.8:53", weight: 1 }]),
           remark: row?.Remark ?? row?.remark ?? ""
         }
       },
-      width: "46%",
+      width: deviceDetection() ? "95%" : "860px",
       draggable: true,
       fullscreen: deviceDetection(),
       fullscreenIcon: true,
@@ -229,20 +220,20 @@ export function useTunnelClient(t: any, tableRef: Ref) {
         const curData = options.props.formInline;
         FormRef.validate(async (valid: boolean) => {
           if (valid) {
-            if (title === t("tunnelClient.addClient")) {
-              const { code, message: msg } = await createTunnelClient(curData);
+            if (title === t("dns.addDns")) {
+              const { code, message: msg } = await createDns(curData);
               if (code !== 0) {
                 message(msg, { type: "error" });
                 return;
               }
             } else {
-              const { code, message: msg } = await updateTunnelClient(curData);
+              const { code, message: msg } = await updateDns(curData);
               if (code !== 0) {
                 message(msg, { type: "error" });
                 return;
               }
             }
-            message(`${title} success`, { type: "success" });
+            message(`${title} 成功`, { type: "success" });
             done();
             onSearch();
           }

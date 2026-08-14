@@ -35,6 +35,16 @@ const appRouter = {
         title: "menus.pureTunnel",
         roles: ["admin", "common"]
       }
+    },
+    {
+      path: "/app/dns",
+      name: "AppDns",
+      component: "app/dns/index",
+      meta: {
+        icon: "ri:global-line",
+        title: "menus.pureDns",
+        roles: ["admin", "common"]
+      }
     }
   ]
 };

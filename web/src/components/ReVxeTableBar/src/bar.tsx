@@ -7,6 +7,7 @@ import {
   type PropType,
   ref,
   unref,
+  watch,
   computed,
   nextTick,
   defineComponent,
@@ -67,6 +68,31 @@ export default defineComponent({
     let checkColumnList = getKeyList(cloneDeep(props?.columns), "title");
     const checkedColumns = ref(getKeyList(cloneDeep(props?.columns), "title"));
     const dynamicColumns = ref(cloneDeep(props?.columns));
+
+    watch(
+      () => props.columns,
+      val => {
+        if (!val) return;
+        const hideMap = new Map();
+        const fixedMap = new Map();
+        dynamicColumns.value.forEach(col => {
+          const key = col.field || col.prop || col.slot || col.title;
+          if (key) {
+            hideMap.set(key, col.visible === false);
+            fixedMap.set(key, col.fixed);
+          }
+        });
+        const newCols = cloneDeep(val);
+        newCols.forEach(col => {
+          const key = col.field || col.prop || col.slot || col.title;
+          if (hideMap.has(key)) col.visible = !hideMap.get(key);
+          if (fixedMap.has(key)) col.fixed = fixedMap.get(key);
+        });
+        dynamicColumns.value = newCols;
+        checkColumnList = getKeyList(cloneDeep(val), "title");
+      },
+      { deep: true }
+    );
 
     const getDropdownItemStyle = computed(() => {
       return s => {

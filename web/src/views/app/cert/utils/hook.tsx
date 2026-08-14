@@ -10,7 +10,7 @@ import {
   updateCert,
   deleteCert
 } from "@/api/certificate";
-import { type Ref, h, ref, toRaw, reactive, onMounted } from "vue";
+import { type Ref, h, ref, computed, toRaw, reactive, onMounted } from "vue";
 
 export function useCert(t: any, tableRef: Ref) {
   const form = reactive({
@@ -31,7 +31,7 @@ export function useCert(t: any, tableRef: Ref) {
     layout: deviceDetection() ? "prev, pager, next" : "total, sizes, prev, pager, next, jumper"
   });
 
-  const columns: TableColumnList = [
+  const columns = computed<TableColumnList>(() => [
     {
       label: t("cert.selectionColumn"),
       type: "selection",
@@ -128,9 +128,9 @@ export function useCert(t: any, tableRef: Ref) {
           <div class="flex flex-col text-xs">
             <span>{startStr} ~ {endStr}</span>
             {isExpired ? (
-              <span class="text-red-500 font-semibold">已到期</span>
+              <span class="text-red-500 font-semibold">{t("cert.expired") || "已到期"}</span>
             ) : (
-              <span class="text-green-600 font-semibold">有效</span>
+              <span class="text-green-600 font-semibold">{t("cert.valid") || "有效"}</span>
             )}
           </div>
         );
@@ -157,7 +157,7 @@ export function useCert(t: any, tableRef: Ref) {
       minWidth: 200,
       slot: "operation"
     }
-  ];
+  ]);
 
   async function handleDelete(row: any) {
     const targetId = row.Id || row.id;

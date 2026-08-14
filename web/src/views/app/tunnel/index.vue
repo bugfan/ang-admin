@@ -192,28 +192,31 @@ function toggleRowExpand(row: any, forceExpand?: boolean) {
                         v-if="row.unsaved_count > 0"
                         type="warning"
                         effect="light"
-                        class="font-medium animate-pulse border-amber-300"
+                        class="font-medium animate-pulse border-amber-300 inline-flex items-center gap-1"
                       >
-                        ⚡ {{ row.unsaved_count }} {{ t('tunnel.unsavedCount') }}
+                        <IconifyIconOffline icon="ri:flash-line" /> {{ row.unsaved_count }} {{ t('tunnel.unsavedCount') }}
                       </el-tag>
                       <el-tag
                         v-if="(row.online_count - row.unsaved_count) > 0"
                         type="success"
                         effect="light"
-                        class="font-medium"
+                        class="font-medium inline-flex items-center gap-1"
                       >
-                        🟢 {{ row.online_count - row.unsaved_count }} {{ t('tunnel.onlineCount') }} / {{ row.total_count - row.unsaved_count }} {{ t('tunnel.totalNodes') }}
+                        <span class="w-1.5 h-1.5 rounded-full bg-emerald-500 inline-block"></span>
+                        {{ row.online_count - row.unsaved_count }} {{ t('tunnel.onlineCount') }} / {{ row.total_count - row.unsaved_count }} {{ t('tunnel.totalNodes') }}
                       </el-tag>
                       <el-tag
                         v-else-if="row.total_count > 0 && row.unsaved_count === 0"
                         type="info"
                         effect="light"
-                        class="font-medium text-gray-500"
+                        class="font-medium text-gray-500 inline-flex items-center gap-1"
                       >
-                        🔴 0 {{ t('tunnel.onlineCount') }} / {{ row.total_count }} {{ t('tunnel.totalNodes') }}
+                        <span class="w-1.5 h-1.5 rounded-full bg-rose-500 inline-block"></span>
+                        0 {{ t('tunnel.onlineCount') }} / {{ row.total_count }} {{ t('tunnel.totalNodes') }}
                       </el-tag>
-                      <el-tag v-else-if="row.total_count === 0 && row.unsaved_count === 0" type="info" effect="plain" class="text-gray-400">
-                        ⚪ {{ t('tunnel.noNodes') }}
+                      <el-tag v-else-if="row.total_count === 0 && row.unsaved_count === 0" type="info" effect="plain" class="text-gray-400 inline-flex items-center gap-1">
+                        <span class="w-1.5 h-1.5 rounded-full bg-gray-400 inline-block"></span>
+                        {{ t('tunnel.noNodes') }}
                       </el-tag>
                     </div>
                   </el-tooltip>
@@ -222,9 +225,12 @@ function toggleRowExpand(row: any, forceExpand?: boolean) {
                 <!-- Popover 浮层内容 (点击也可展开下侧节点明细) -->
                 <div class="p-1 cursor-pointer" @click="toggleRowExpand(row, true)">
                   <div class="font-bold text-sm mb-2 border-b pb-1.5 flex justify-between items-center">
-                    <span class="flex items-center gap-1">🔗 {{ t('tunnel.nodeDetail') }}</span>
+                    <span class="inline-flex items-center gap-1">
+                      <IconifyIconOffline icon="ri:node-tree" />
+                      {{ t('tunnel.nodeDetail') }}
+                    </span>
                     <span class="text-xs text-blue-600 dark:text-blue-400 font-normal hover:underline">
-                      {{ t('tunnel.clickToExpand') }} ⬇
+                      {{ t('tunnel.clickToExpand') }}
                     </span>
                   </div>
 
@@ -254,14 +260,14 @@ function toggleRowExpand(row: any, forceExpand?: boolean) {
                           {{ c.name || (c.is_saved ? '-' : t('tunnelClient.unsavedNode')) }}
                         </span>
                         <div class="flex items-center space-x-1">
-                          <el-tag v-if="!c.is_saved" type="warning" size="small" effect="light">
-                            ⚡ {{ t('tunnel.unsavedOnline') }}
+                          <el-tag v-if="!c.is_saved" type="warning" size="small" effect="light" class="inline-flex items-center gap-1">
+                            <IconifyIconOffline icon="ri:flash-line" /> {{ t('tunnel.unsavedOnline') }}
                           </el-tag>
-                          <el-tag v-else-if="c.is_online" type="success" size="small" effect="plain">
-                            🟢 {{ t('tunnelClient.online') }}
+                          <el-tag v-else-if="c.is_online" type="success" size="small" effect="plain" class="inline-flex items-center gap-1">
+                            <span class="w-1.5 h-1.5 rounded-full bg-emerald-500 inline-block"></span> {{ t('tunnelClient.online') }}
                           </el-tag>
-                          <el-tag v-else type="info" size="small" effect="plain" class="text-gray-400">
-                            🔴 {{ t('tunnelClient.offline') }}
+                          <el-tag v-else type="info" size="small" effect="plain" class="text-gray-400 inline-flex items-center gap-1">
+                            <span class="w-1.5 h-1.5 rounded-full bg-rose-500 inline-block"></span> {{ t('tunnelClient.offline') }}
                           </el-tag>
                         </div>
                       </div>
@@ -296,32 +302,33 @@ function toggleRowExpand(row: any, forceExpand?: boolean) {
                   class="mb-3 p-2 bg-amber-50 dark:bg-amber-950/30 border border-amber-200 dark:border-amber-800/60 rounded-md flex items-center justify-between text-xs text-amber-800 dark:text-amber-200 flex-wrap gap-2"
                 >
                   <div class="flex items-center space-x-1.5 font-medium">
-                    <span class="text-base leading-none">⚡</span>
+                    <IconifyIconOffline icon="ri:flash-line" class="text-amber-500" />
                     <span>{{ t('tunnel.unsavedBannerTip', { count: row.unsaved_count }) }}</span>
                   </div>
                 </div>
 
                 <div class="flex flex-wrap sm:flex-nowrap justify-between items-center gap-2 mb-3">
                   <div class="flex items-center space-x-2 flex-wrap gap-y-1">
-                    <span class="font-bold text-sm text-gray-800 dark:text-gray-200">
-                      🔗 {{ t('tunnel.clientNodes') }}
+                    <span class="font-bold text-sm text-gray-800 dark:text-gray-200 inline-flex items-center gap-1">
+                      <IconifyIconOffline icon="ri:node-tree" />
+                      {{ t('tunnel.clientNodes') }}
                     </span>
                     <el-tag
                       v-if="(row.unsaved_count || 0) > 0"
                       size="small"
                       type="warning"
                       effect="light"
-                      class="font-medium animate-pulse"
+                      class="font-medium animate-pulse inline-flex items-center gap-1"
                     >
-                      ⚡ {{ row.unsaved_count }} {{ t('tunnel.unsavedCount') }}
+                      <IconifyIconOffline icon="ri:flash-line" /> {{ row.unsaved_count }} {{ t('tunnel.unsavedCount') }}
                     </el-tag>
                     <el-tag
                       size="small"
                       :type="((row.online_count || 0) - (row.unsaved_count || 0)) > 0 ? 'success' : 'info'"
                       effect="light"
-                      class="font-medium"
+                      class="font-medium inline-flex items-center gap-1"
                     >
-                      🟢 {{ (row.online_count || 0) - (row.unsaved_count || 0) }} {{ t('tunnel.onlineCount') }} / {{ (row.total_count || 0) - (row.unsaved_count || 0) }} {{ t('tunnel.totalNodes') }}
+                      <span class="w-1.5 h-1.5 rounded-full bg-emerald-500 inline-block"></span> {{ (row.online_count || 0) - (row.unsaved_count || 0) }} {{ t('tunnel.onlineCount') }} / {{ (row.total_count || 0) - (row.unsaved_count || 0) }} {{ t('tunnel.totalNodes') }}
                     </el-tag>
                   </div>
                   <div class="flex items-center space-x-2">
@@ -370,8 +377,8 @@ function toggleRowExpand(row: any, forceExpand?: boolean) {
                       <span v-if="client.is_saved" class="font-medium text-gray-800 dark:text-gray-200">
                         {{ client.name }}
                       </span>
-                      <span v-else class="font-semibold text-amber-600 dark:text-amber-400 flex items-center gap-1">
-                        <span class="text-xs">⚡</span> {{ client.name || t('tunnelClient.unsavedNode') }}
+                      <span v-else class="font-semibold text-amber-600 dark:text-amber-400 inline-flex items-center gap-1">
+                        <IconifyIconOffline icon="ri:flash-line" /> {{ client.name || t('tunnelClient.unsavedNode') }}
                       </span>
                     </template>
                   </el-table-column>
@@ -384,14 +391,14 @@ function toggleRowExpand(row: any, forceExpand?: boolean) {
                   </el-table-column>
                   <el-table-column :label="t('tunnelClient.status')" min-width="180">
                     <template #default="{ row: client }">
-                      <el-tag v-if="!client.is_saved" type="warning" size="small" effect="light" class="font-medium border-amber-300">
-                        ⚡ {{ t('tunnel.unsavedOnline') }} ({{ client.remote_addr }})
+                      <el-tag v-if="!client.is_saved" type="warning" size="small" effect="light" class="font-medium border-amber-300 inline-flex items-center gap-1">
+                        <IconifyIconOffline icon="ri:flash-line" /> {{ t('tunnel.unsavedOnline') }} ({{ client.remote_addr }})
                       </el-tag>
-                      <el-tag v-else-if="client.is_online" type="success" size="small" effect="light" class="font-medium">
-                        🟢 {{ t('tunnelClient.online') }} ({{ client.remote_addr }})
+                      <el-tag v-else-if="client.is_online" type="success" size="small" effect="light" class="font-medium inline-flex items-center gap-1">
+                        <span class="w-1.5 h-1.5 rounded-full bg-emerald-500 inline-block"></span> {{ t('tunnelClient.online') }} ({{ client.remote_addr }})
                       </el-tag>
-                      <el-tag v-else type="info" size="small" effect="plain" class="text-gray-400">
-                        🔴 {{ t('tunnelClient.offline') }}
+                      <el-tag v-else type="info" size="small" effect="plain" class="text-gray-400 inline-flex items-center gap-1">
+                        <span class="w-1.5 h-1.5 rounded-full bg-rose-500 inline-block"></span> {{ t('tunnelClient.offline') }}
                       </el-tag>
                     </template>
                   </el-table-column>

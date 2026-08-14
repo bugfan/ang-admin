@@ -122,8 +122,9 @@ defineExpose({ getRef });
         >
           <template #header>
             <div class="flex items-center justify-between text-sm font-semibold">
-              <span class="text-green-700 dark:text-green-400 font-bold">
-                ⚡ {{ t('cert.autoGenerate') }}
+              <span class="text-green-700 dark:text-green-400 font-bold inline-flex items-center gap-1">
+                <IconifyIconOffline icon="ri:magic-line" />
+                {{ t('cert.autoGenerate') }}
               </span>
               <el-button link type="info" size="small" @click="showGenPanel = false">
                 关闭面板

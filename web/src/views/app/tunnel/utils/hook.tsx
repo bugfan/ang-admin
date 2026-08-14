@@ -17,7 +17,7 @@ import {
   deleteTunnelClient
 } from "@/api/tunnel-client";
 import { getCertList } from "@/api/certificate";
-import { type Ref, h, ref, toRaw, reactive, onMounted } from "vue";
+import { type Ref, h, ref, computed, toRaw, reactive, onMounted } from "vue";
 
 export function useTunnel(t: any, tableRef: Ref) {
   const form = reactive({
@@ -41,7 +41,7 @@ export function useTunnel(t: any, tableRef: Ref) {
 
   const validCertSet = ref<Set<string>>(new Set());
 
-  const columns: TableColumnList = [
+  const columns = computed<TableColumnList>(() => [
     {
       type: "expand",
       slot: "expand"
@@ -138,7 +138,7 @@ export function useTunnel(t: any, tableRef: Ref) {
       width: 160,
       slot: "operation"
     }
-  ];
+  ]);
 
   async function handleDelete(row: any) {
     const targetId = row.Id || row.id;

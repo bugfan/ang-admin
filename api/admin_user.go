@@ -294,6 +294,16 @@ func AsyncRoutesHandler(c *gin.Context) {
 							"roles": []string{"admin", "common"},
 						},
 					},
+					{
+						"path":      "/app/dns",
+						"name":      "AppDns",
+						"component": "app/dns/index",
+						"meta": gin.H{
+							"icon":  "ri:global-line",
+							"title": "menus.pureDns",
+							"roles": []string{"admin", "common"},
+						},
+					},
 				},
 			},
 

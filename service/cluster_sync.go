@@ -1,6 +1,7 @@
 package service
 
 import (
+	"encoding/json"
 	"fmt"
 	"log"
 	"strconv"
@@ -82,8 +83,71 @@ func SyncTunnelToCluster() {
 	cluster.Put("QUIC-TUNNEL", quicMap)
 }
 
+// SyncDNSToCluster queries all DNS proxies from database and calls cluster.Put("DNS", dnsMap)
+func SyncDNSToCluster() {
+	engine := models.GetEngine()
+	if engine == nil {
+		return
+	}
+
+	var dnsList []models.DnsProxy
+	err := engine.Find(&dnsList)
+	if err != nil {
+		log.Printf("SyncDNSToCluster error: %v\n", err)
+		return
+	}
+
+	dnsMap := make(map[string]entity.DNSConfig)
+	for _, item := range dnsList {
+		keyStr := strconv.FormatInt(item.Id, 10)
+
+		// Parse Hosts
+		var hosts entity.DNSHosts
+		if item.HostsJSON != "" {
+			_ = json.Unmarshal([]byte(item.HostsJSON), &hosts)
+		}
+
+		// Parse Backend
+		var backend entity.DNSBackend
+		if item.TunnelId != "" {
+			backend.Tunnel = &entity.BackendTunnel{
+				Type:  item.TunnelType,
+				ID:    item.TunnelId,
+				Token: item.TunnelToken,
+			}
+		}
+
+		if item.UpstreamServers != "" {
+			var servers []entity.UpstreamServer
+			_ = json.Unmarshal([]byte(item.UpstreamServers), &servers)
+			if len(servers) > 0 {
+				method := item.UpstreamMethod
+				if method == "" {
+					method = "round_robin"
+				}
+				backend.Upstream = &entity.UpstreamConfig{
+					Method: method,
+					Data: entity.UpstreamData{
+						Servers: servers,
+					},
+				}
+			}
+		}
+
+		dnsMap[keyStr] = entity.DNSConfig{
+			Address: item.Address,
+			Port:    item.Port,
+			Hosts:   &hosts,
+			Backend: &backend,
+		}
+	}
+
+	cluster.Put("DNS", dnsMap)
+}
+
 // SyncAllToCluster syncs all implemented entities to cluster
 func SyncAllToCluster() {
 	SyncCertificateToCluster()
 	SyncTunnelToCluster()
+	SyncDNSToCluster()
 }

@@ -216,15 +216,15 @@ defineExpose({ getRef });
                         >
                           已绑定: {{ item.boundName }}
                         </el-tag>
-                        <el-tag
-                          v-else
-                          size="small"
-                          type="warning"
-                          effect="light"
-                          class="rounded font-medium"
-                        >
-                          ⚡ {{ t('tunnel.unsavedTag') }}
-                        </el-tag>
+                          <el-tag
+                            v-else
+                            size="small"
+                            type="warning"
+                            effect="light"
+                            class="rounded font-medium inline-flex items-center gap-1"
+                          >
+                            <IconifyIconOffline icon="ri:flash-line" /> {{ t('tunnel.unsavedTag') }}
+                          </el-tag>
                         <el-tag
                           size="small"
                           type="primary"

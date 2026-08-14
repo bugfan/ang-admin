@@ -29,7 +29,7 @@ export function useAdmin(t: any, tableRef: Ref) {
     size: deviceDetection() ? "small" : "default",
     layout: deviceDetection() ? "prev, pager, next" : "total, sizes, prev, pager, next, jumper"
   });
-  const columns: TableColumnList = [
+  const columns = computed<TableColumnList>(() => [
     {
       label: t('admin.selectionColumn'),
       type: "selection",
@@ -76,7 +76,7 @@ export function useAdmin(t: any, tableRef: Ref) {
       width: 180,
       slot: "operation"
     }
-  ];
+  ]);
 
   async function handleDelete(row) {
     const targetId = row.Id || row.id;
