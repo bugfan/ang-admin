@@ -65,10 +65,14 @@ export function useAdmin(t: any, tableRef: Ref) {
     },
     {
       label: t('admin.createTime'),
-      minWidth: 90,
+      minWidth: 160,
       prop: "CreatedAt",
-      formatter: (row) =>
-        dayjs(row.CreatedAt || row.created_at).format("YYYY-MM-DD HH:mm:ss")
+      formatter: (row) => {
+        const timeVal = row.CreatedAt || row.created_at;
+        return timeVal && dayjs(timeVal).isValid() && dayjs(timeVal).year() > 1
+          ? dayjs(timeVal).format("YYYY-MM-DD HH:mm:ss")
+          : "-";
+      }
     },
     {
       label: t('admin.operation'),

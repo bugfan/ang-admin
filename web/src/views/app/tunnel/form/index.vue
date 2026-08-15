@@ -124,7 +124,7 @@ defineExpose({ getRef });
           <el-select
             v-model="newFormInline.type"
             class="w-full"
-            placeholder="请选择Tunnel类型"
+            :placeholder="t('tunnel.typeRequired')"
           >
             <el-option
               v-for="item in typeOptions"
@@ -144,7 +144,7 @@ defineExpose({ getRef });
               v-if="newFormInline.sni"
               class="mb-2 flex items-center text-xs text-gray-600 dark:text-gray-300"
             >
-              <span class="mr-2 font-medium">关联 SNI (域名):</span>
+              <span class="mr-2 font-medium">{{ t('tunnel.associatedSni') }}</span>
               <el-tag size="small" type="success" effect="plain" class="font-mono font-bold">
                 {{ newFormInline.sni }}
               </el-tag>
@@ -193,7 +193,7 @@ defineExpose({ getRef });
         <el-form-item :label="t('tunnel.port')" prop="port">
           <el-input
             v-model="newFormInline.port"
-            placeholder="例如: 443, 4432"
+            placeholder="443"
             clearable
           />
         </el-form-item>
@@ -205,7 +205,7 @@ defineExpose({ getRef });
             v-model="newFormInline.remark"
             type="textarea"
             :rows="3"
-            placeholder="选填"
+            :placeholder="t('tunnel.remarkPlaceholder')"
             clearable
           />
         </el-form-item>

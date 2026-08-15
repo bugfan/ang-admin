@@ -121,16 +121,21 @@ export function useCert(t: any, tableRef: Ref) {
         const notBefore = scope.row.NotBefore || scope.row.not_before;
         const notAfter = scope.row.NotAfter || scope.row.not_after;
         if (!notBefore || !notAfter) return <span class="text-gray-400">-</span>;
-        const startStr = dayjs(notBefore).format("YYYY-MM-DD");
-        const endStr = dayjs(notAfter).format("YYYY-MM-DD");
-        const isExpired = dayjs().isAfter(dayjs(notAfter));
+        const startDay = dayjs(notBefore);
+        const endDay = dayjs(notAfter);
+        if (!startDay.isValid() || !endDay.isValid() || startDay.year() <= 1 || endDay.year() <= 1) {
+          return <span class="text-gray-400">-</span>;
+        }
+        const startStr = startDay.format("YYYY-MM-DD");
+        const endStr = endDay.format("YYYY-MM-DD");
+        const isExpired = dayjs().isAfter(endDay);
         return (
           <div class="flex flex-col text-xs">
             <span>{startStr} ~ {endStr}</span>
             {isExpired ? (
-              <span class="text-red-500 font-semibold">{t("cert.expired") || "已到期"}</span>
+              <span class="text-red-500 font-semibold">{t("cert.expired")}</span>
             ) : (
-              <span class="text-green-600 font-semibold">{t("cert.valid") || "有效"}</span>
+              <span class="text-green-600 font-semibold">{t("cert.valid")}</span>
             )}
           </div>
         );
@@ -148,7 +153,9 @@ export function useCert(t: any, tableRef: Ref) {
       prop: "CreatedAt",
       formatter: (row) => {
         const timeVal = row.CreatedAt || row.created_at;
-        return timeVal ? dayjs(timeVal).format("YYYY-MM-DD HH:mm:ss") : "-";
+        return timeVal && dayjs(timeVal).isValid() && dayjs(timeVal).year() > 1
+          ? dayjs(timeVal).format("YYYY-MM-DD HH:mm:ss")
+          : "-";
       }
     },
     {
@@ -273,51 +280,57 @@ export function useCert(t: any, tableRef: Ref) {
     });
   }
 
+  function formatDialogDate(dateVal: any) {
+    if (!dateVal) return "-";
+    const d = dayjs(dateVal);
+    return d.isValid() && d.year() > 1 ? d.format("YYYY-MM-DD HH:mm:ss") : "-";
+  }
+
   function openDetailDialog(row: any) {
     addDialog({
       title: `${t("cert.certDetail")} (${row.CertId || row.cert_id})`,
-      width: "45%",
+      width: deviceDetection() ? "92%" : "520px",
       footerRenderer: ({ options, index }) => (
         <el-button type="primary" onClick={() => closeDialog(options, index)}>
-          关闭
+          {t("cert.close")}
         </el-button>
       ),
       contentRenderer: () => (
         <div class="space-y-3 text-sm p-2">
           <div class="flex border-b pb-2">
-            <span class="w-28 text-gray-500 font-medium">{t("cert.certId")}:</span>
+            <span class="w-32 text-gray-500 font-medium">{t("cert.certId")}:</span>
             <span class="font-semibold text-blue-600">{row.CertId || row.cert_id}</span>
           </div>
           <div class="flex border-b pb-2">
-            <span class="w-28 text-gray-500 font-medium">证书类型:</span>
+            <span class="w-32 text-gray-500 font-medium">{t("cert.type")}:</span>
             <span>{row.Type || row.type}</span>
           </div>
           <div class="flex border-b pb-2">
-            <span class="w-28 text-gray-500 font-medium">Common Name:</span>
+            <span class="w-32 text-gray-500 font-medium">{t("cert.subjectCn")}:</span>
             <span class="font-mono">{row.SubjectCN || row.subject_cn || "-"}</span>
           </div>
           <div class="flex border-b pb-2">
-            <span class="w-28 text-gray-500 font-medium">SAN 域名:</span>
+            <span class="w-32 text-gray-500 font-medium">{t("cert.sans")}:</span>
             <span class="font-mono break-all">{row.SANs || row.sans || "-"}</span>
           </div>
           <div class="flex border-b pb-2">
-            <span class="w-28 text-gray-500 font-medium">颁发者 (Issuer):</span>
+            <span class="w-32 text-gray-500 font-medium">{t("cert.issuer")}:</span>
             <span>{row.Issuer || row.issuer || "-"}</span>
           </div>
           <div class="flex border-b pb-2">
-            <span class="w-28 text-gray-500 font-medium">序列号:</span>
+            <span class="w-32 text-gray-500 font-medium">{t("cert.serialNumber")}:</span>
             <span class="font-mono text-xs break-all">{row.SerialNumber || row.serial_number || "-"}</span>
           </div>
           <div class="flex border-b pb-2">
-            <span class="w-28 text-gray-500 font-medium">生效时间:</span>
-            <span>{(row.NotBefore || row.not_before) ? dayjs(row.NotBefore || row.not_before).format("YYYY-MM-DD HH:mm:ss") : "-"}</span>
+            <span class="w-32 text-gray-500 font-medium">{t("cert.notBefore")}:</span>
+            <span>{formatDialogDate(row.NotBefore || row.not_before)}</span>
           </div>
           <div class="flex border-b pb-2">
-            <span class="w-28 text-gray-500 font-medium">到期时间:</span>
-            <span>{(row.NotAfter || row.not_after) ? dayjs(row.NotAfter || row.not_after).format("YYYY-MM-DD HH:mm:ss") : "-"}</span>
+            <span class="w-32 text-gray-500 font-medium">{t("cert.notAfter")}:</span>
+            <span>{formatDialogDate(row.NotAfter || row.not_after)}</span>
           </div>
           <div class="flex">
-            <span class="w-28 text-gray-500 font-medium">备注:</span>
+            <span class="w-32 text-gray-500 font-medium">{t("cert.remark")}:</span>
             <span>{row.Remark || row.remark || "-"}</span>
           </div>
         </div>

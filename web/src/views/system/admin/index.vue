@@ -54,16 +54,15 @@ const {
         ref="formRef"
         :inline="true"
         :model="form"
-        label-width="80px"
         :size="deviceDetection() ? 'small' : 'default'"
-        class="search-form bg-bg_color w-full pl-4 md:pl-8 pt-3 overflow-auto"
+        class="search-form bg-bg_color w-full px-4 pt-4 mb-2 rounded overflow-auto"
       >
         <el-form-item :label="t('admin.username')" prop="username">
           <el-input
             v-model="form.username"
             :placeholder="t('admin.searchPlaceholder')"
             clearable
-            class="w-45!"
+            class="w-36! sm:w-44!"
             @keyup.enter="onSearch"
             @clear="onSearch"
           />
@@ -106,7 +105,7 @@ const {
                 style="font-size: var(--el-font-size-base)"
                 class="text-[rgba(42,46,54,0.5)] dark:text-[rgba(220,220,242,0.5)]"
               >
-                {{ t('admin.selected') }} {{ selectedNum }} 项
+                {{ t('admin.selected') }} {{ selectedNum }} {{ t('admin.items') }}
               </span>
               <el-button type="primary" text @click="onSelectionCancel">
                 {{ t('admin.cancelSelection') }}
@@ -185,13 +184,26 @@ const {
   outline: none;
 }
 
-.main-content {
-  margin: 24px 24px 0 !important;
-}
-
 .search-form {
   :deep(.el-form-item) {
     margin-bottom: 12px;
+    margin-right: 16px;
+  }
+  :deep(.el-form-item__label) {
+    font-size: 13px;
+    white-space: nowrap;
+    font-weight: 500;
+    padding-right: 8px;
+    text-align: left;
+    justify-content: flex-start;
+  }
+  :deep(.el-input__inner),
+  :deep(.el-select__wrapper) {
+    font-size: 12px;
+  }
+  :deep(.el-input__inner::placeholder),
+  :deep(.el-select__placeholder) {
+    font-size: 12px;
   }
 }
 </style>

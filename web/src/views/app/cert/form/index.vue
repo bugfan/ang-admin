@@ -102,7 +102,7 @@ defineExpose({ getRef });
     <el-row :gutter="30">
       <re-col :value="24" :xs="24" :sm="24">
         <div class="mb-3 flex justify-between items-center">
-          <span class="text-xs text-gray-500">可手动粘贴证书或使用右侧一键自动生成：</span>
+          <span class="text-xs text-gray-500">{{ t('cert.pasteOrGenTip') }}</span>
           <el-button
             type="success"
             plain
@@ -127,7 +127,7 @@ defineExpose({ getRef });
                 {{ t('cert.autoGenerate') }}
               </span>
               <el-button link type="info" size="small" @click="showGenPanel = false">
-                关闭面板
+                {{ t('cert.closePanel') }}
               </el-button>
             </div>
           </template>
@@ -135,14 +135,14 @@ defineExpose({ getRef });
             <el-form-item :label="t('cert.genCnLabel')">
               <el-input
                 v-model="genConfig.common_name"
-                placeholder="例如: foo.com"
+                :placeholder="t('cert.genCnPlaceholder')"
                 clearable
               />
             </el-form-item>
             <el-form-item :label="t('cert.genSansLabel')">
               <el-input
                 v-model="genConfig.sans_str"
-                placeholder="例如: *.foo.com, foo.com"
+                :placeholder="t('cert.genSansPlaceholder')"
                 clearable
               />
             </el-form-item>
@@ -176,7 +176,7 @@ defineExpose({ getRef });
         <el-form-item :label="t('cert.certId')" prop="cert_id">
           <el-input
             v-model="newFormInline.cert_id"
-            placeholder="例如: id-1, id-2"
+            :placeholder="t('cert.certIdPlaceholder')"
             :disabled="!!newFormInline.id"
             clearable
           />
@@ -188,7 +188,7 @@ defineExpose({ getRef });
           <el-select
             v-model="newFormInline.type"
             class="w-full"
-            placeholder="请选择证书类型"
+            :placeholder="t('cert.typeRequired')"
           >
             <el-option
               v-for="item in typeOptions"
@@ -230,7 +230,7 @@ defineExpose({ getRef });
             v-model="newFormInline.remark"
             type="textarea"
             :rows="2"
-            placeholder="选填"
+            :placeholder="t('cert.remarkPlaceholder')"
             clearable
           />
         </el-form-item>

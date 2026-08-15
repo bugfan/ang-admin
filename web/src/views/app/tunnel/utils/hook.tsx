@@ -129,7 +129,9 @@ export function useTunnel(t: any, tableRef: Ref) {
       prop: "CreatedAt",
       formatter: (row) => {
         const timeVal = row.CreatedAt || row.created_at;
-        return timeVal ? dayjs(timeVal).format("YYYY-MM-DD HH:mm:ss") : "-";
+        return timeVal && dayjs(timeVal).isValid() && dayjs(timeVal).year() > 1
+          ? dayjs(timeVal).format("YYYY-MM-DD HH:mm:ss")
+          : "-";
       }
     },
     {
@@ -155,7 +157,7 @@ export function useTunnel(t: any, tableRef: Ref) {
     const targetId = clientRow.Id || clientRow.id;
     const { code, message: msg } = await deleteTunnelClient({ id: targetId });
     if (code === 0) {
-      message(`删除节点 ID: ${targetId} 成功`, { type: "success" });
+      message(`${t("tunnel.delete")} ID: ${targetId} success`, { type: "success" });
       onSearch();
     } else {
       message(msg, { type: "error" });

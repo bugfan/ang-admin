@@ -214,7 +214,7 @@ defineExpose({ getRef });
                           type="info"
                           class="rounded"
                         >
-                          已绑定: {{ item.boundName }}
+                          {{ t('tunnelClient.bound') }}: {{ item.boundName }}
                         </el-tag>
                           <el-tag
                             v-else

@@ -2,7 +2,10 @@ package models
 
 import (
 	"crypto/x509"
+	"encoding/asn1"
 	"encoding/pem"
+	"math/big"
+	"net"
 	"strings"
 	"time"
 )
@@ -37,14 +40,164 @@ func (c *Certificate) BeforeUpdate() {
 	c.ParseCertInfo()
 }
 
+type rawCert struct {
+	TBSCertificate rawTBSCertificate
+	SignatureAlgorithm struct {
+		Algorithm  asn1.ObjectIdentifier
+		Parameters asn1.RawValue `asn1:"optional"`
+	}
+	SignatureValue asn1.BitString
+}
+
+type rawTBSCertificate struct {
+	Raw                asn1.RawContent
+	Version            int `asn1:"optional,explicit,default:0,tag:0"`
+	SerialNumber       asn1.RawValue
+	SignatureAlgorithm struct {
+		Algorithm  asn1.ObjectIdentifier
+		Parameters asn1.RawValue `asn1:"optional"`
+	}
+	Issuer             asn1.RawValue
+	Validity           struct {
+		NotBefore time.Time
+		NotAfter  time.Time
+	}
+	Subject            asn1.RawValue
+	PublicKey          struct {
+		Algorithm struct {
+			Algorithm  asn1.ObjectIdentifier
+			Parameters asn1.RawValue `asn1:"optional"`
+		}
+		PublicKey asn1.BitString
+	}
+	UniqueId           asn1.BitString `asn1:"optional,tag:1"`
+	SubjectUniqueId    asn1.BitString `asn1:"optional,tag:2"`
+	Extensions         []struct {
+		Id       asn1.ObjectIdentifier
+		Critical bool `asn1:"optional"`
+		Value    []byte
+	} `asn1:"optional,explicit,tag:3"`
+}
+
+func parseRDNString(rdnRaw []byte, targetOID asn1.ObjectIdentifier) string {
+	rest := rdnRaw
+	for len(rest) > 0 {
+		var rawValue asn1.RawValue
+		var err error
+		var nextRest []byte
+		nextRest, err = asn1.Unmarshal(rest, &rawValue)
+		if err != nil {
+			if len(rest) > 1 {
+				rest = rest[1:]
+				continue
+			}
+			break
+		}
+		rest = nextRest
+
+		if rawValue.Tag == 16 && rawValue.IsCompound {
+			var atv struct {
+				Type  asn1.ObjectIdentifier
+				Value asn1.RawValue
+			}
+			if _, err := asn1.Unmarshal(rawValue.FullBytes, &atv); err == nil {
+				if atv.Type.Equal(targetOID) {
+					return string(atv.Value.Bytes)
+				}
+			}
+		}
+
+		if rawValue.IsCompound && len(rawValue.Bytes) > 0 {
+			if res := parseRDNString(rawValue.Bytes, targetOID); res != "" {
+				return res
+			}
+		}
+	}
+	return ""
+}
+
+func parseSANExtension(extVal []byte) []string {
+	var sans []string
+	var rawSeq []asn1.RawValue
+	if _, err := asn1.Unmarshal(extVal, &rawSeq); err == nil {
+		for _, v := range rawSeq {
+			if v.Tag == 2 { // dNSName [2] IA5String
+				sans = append(sans, string(v.Bytes))
+			} else if v.Tag == 7 { // iPAddress [7] OCTET STRING
+				if len(v.Bytes) == 4 || len(v.Bytes) == 16 {
+					sans = append(sans, net.IP(v.Bytes).String())
+				}
+			}
+		}
+	}
+	return sans
+}
+
+func parseSingleCertBlock(der []byte) (firstCN string, sans []string, nb, na time.Time, issuer, sn string, ok bool) {
+	if cert, err := x509.ParseCertificate(der); err == nil {
+		firstCN = cert.Subject.CommonName
+		if firstCN != "" {
+			sans = append(sans, firstCN)
+		}
+		sans = append(sans, cert.DNSNames...)
+		for _, ip := range cert.IPAddresses {
+			sans = append(sans, ip.String())
+		}
+		nb = cert.NotBefore
+		na = cert.NotAfter
+		issuer = cert.Issuer.CommonName
+		if issuer == "" {
+			issuer = cert.Issuer.String()
+		}
+		sn = cert.SerialNumber.String()
+		ok = true
+		return
+	}
+
+	// Fallback using raw ASN.1 unmarshaling for non-standard / lenient certificates
+	var rc rawCert
+	if _, err := asn1.Unmarshal(der, &rc); err == nil {
+		tbs := rc.TBSCertificate
+		nb = tbs.Validity.NotBefore
+		na = tbs.Validity.NotAfter
+		oidCN := asn1.ObjectIdentifier{2, 5, 4, 3}
+		firstCN = parseRDNString(tbs.Subject.FullBytes, oidCN)
+		if firstCN != "" {
+			sans = append(sans, firstCN)
+		}
+		issuer = parseRDNString(tbs.Issuer.FullBytes, oidCN)
+		if issuer == "" {
+			oidO := asn1.ObjectIdentifier{2, 5, 4, 10}
+			issuer = parseRDNString(tbs.Issuer.FullBytes, oidO)
+		}
+		if len(tbs.SerialNumber.Bytes) > 0 {
+			sn = new(big.Int).SetBytes(tbs.SerialNumber.Bytes).String()
+		}
+		for _, ext := range tbs.Extensions {
+			if ext.Id.Equal(asn1.ObjectIdentifier{2, 5, 29, 17}) {
+				sans = append(sans, parseSANExtension(ext.Value)...)
+			}
+		}
+		ok = true
+		return
+	}
+	return
+}
+
 // ParseCertInfo helper to extract SANs, CN, NotBefore, NotAfter from PEM CertContent
 func (c *Certificate) ParseCertInfo() {
 	if c.CertContent == "" {
 		return
 	}
-	rest := []byte(c.CertContent)
-	var firstCert *x509.Certificate
+	content := c.CertContent
+	if strings.Contains(content, "\\n") && !strings.Contains(content, "\n") {
+		content = strings.ReplaceAll(content, "\\n", "\n")
+	}
+	rest := []byte(content)
+	var firstCN, issuer, sn string
 	var sanList []string
+	var notBefore, notAfter time.Time
+	foundFirst := false
 
 	for len(rest) > 0 {
 		var block *pem.Block
@@ -53,31 +206,27 @@ func (c *Certificate) ParseCertInfo() {
 			break
 		}
 		if block.Type == "CERTIFICATE" {
-			cert, err := x509.ParseCertificate(block.Bytes)
-			if err == nil {
-				if firstCert == nil {
-					firstCert = cert
+			cn, sans, nb, na, iss, snum, ok := parseSingleCertBlock(block.Bytes)
+			if ok {
+				if !foundFirst {
+					firstCN = cn
+					notBefore = nb
+					notAfter = na
+					issuer = iss
+					sn = snum
+					foundFirst = true
 				}
-				if cert.Subject.CommonName != "" {
-					sanList = append(sanList, cert.Subject.CommonName)
-				}
-				sanList = append(sanList, cert.DNSNames...)
-				for _, ip := range cert.IPAddresses {
-					sanList = append(sanList, ip.String())
-				}
+				sanList = append(sanList, sans...)
 			}
 		}
 	}
 
-	if firstCert != nil {
-		c.SubjectCN = firstCert.Subject.CommonName
-		c.NotBefore = firstCert.NotBefore
-		c.NotAfter = firstCert.NotAfter
-		c.Issuer = firstCert.Issuer.CommonName
-		if c.Issuer == "" {
-			c.Issuer = firstCert.Issuer.String()
-		}
-		c.SerialNumber = firstCert.SerialNumber.String()
+	if foundFirst {
+		c.SubjectCN = firstCN
+		c.NotBefore = notBefore
+		c.NotAfter = notAfter
+		c.Issuer = issuer
+		c.SerialNumber = sn
 	}
 
 	// Remove duplicate SAN entries

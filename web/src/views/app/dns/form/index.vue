@@ -283,7 +283,7 @@ defineExpose({ getRef });
       <div class="flex items-center space-x-2">
         <div class="w-1.5 h-4 bg-blue-500 rounded-full"></div>
         <span class="font-bold text-sm text-gray-800 dark:text-gray-200">
-          基础监听与规则
+          {{ t('dns.baseInfoTab') }}
         </span>
       </div>
 
@@ -302,7 +302,7 @@ defineExpose({ getRef });
           <el-form-item :label="t('dns.address')" prop="address">
             <el-input
               v-model="newFormInline.address"
-              placeholder="0.0.0.0 (选填)"
+              placeholder="0.0.0.0"
               clearable
             />
           </el-form-item>
@@ -390,15 +390,15 @@ defineExpose({ getRef });
         <div class="flex items-center space-x-2">
           <div class="w-1.5 h-4 bg-emerald-500 rounded-full"></div>
           <span class="font-bold text-sm text-gray-800 dark:text-gray-200">
-            Hosts 域名映射
+            {{ t('dns.hostsTab') }}
           </span>
         </div>
         <div class="flex items-center space-x-2">
           <el-tag size="small" type="primary" effect="light" class="font-mono font-medium">
-            A 记录: {{ hostsSummary.aCount }}
+            A: {{ hostsSummary.aCount }}
           </el-tag>
           <el-tag size="small" type="success" effect="light" class="font-mono font-medium">
-            AAAA 记录: {{ hostsSummary.aaaaCount }}
+            AAAA: {{ hostsSummary.aaaaCount }}
           </el-tag>
         </div>
       </div>
@@ -422,7 +422,7 @@ defineExpose({ getRef });
       <div class="flex items-center space-x-2">
         <div class="w-1.5 h-4 bg-purple-500 rounded-full"></div>
         <span class="font-bold text-sm text-gray-800 dark:text-gray-200">
-          上游配置 (Upstream)
+          {{ t('dns.backendTab') }}
         </span>
       </div>
 
@@ -489,7 +489,7 @@ defineExpose({ getRef });
             border
             size="small"
             class="w-full text-xs"
-            empty-text="暂无上游服务器，请点击右上角“添加”"
+            :empty-text="t('dns.noUpstreamServers')"
           >
             <el-table-column label="#" width="50" align="center">
               <template #default="{ $index }">
@@ -500,7 +500,7 @@ defineExpose({ getRef });
               <template #default="{ row }">
                 <el-input
                   v-model="row.target"
-                  placeholder="8.8.8.8:53 或 https://dns.google/dns-query"
+                  placeholder="8.8.8.8:53 / https://dns.google/dns-query"
                   size="small"
                   class="font-mono"
                 />

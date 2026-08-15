@@ -37,6 +37,15 @@ func InitDB(dsn string) {
 		log.Fatalf("Failed to sync database: %v", err)
 	}
 
+	// Backfill certificate parsed metadata for all certificates
+	var allCerts []Certificate
+	if err := engine.Where("cert_content != ''").Find(&allCerts); err == nil {
+		for _, cert := range allCerts {
+			cert.ParseCertInfo()
+			_, _ = engine.ID(cert.Id).Cols("subject_cn", "sans", "not_before", "not_after", "issuer", "serial_number").Update(&cert)
+		}
+	}
+
 	// Initialize default admin user
 	admin := &AdminUser{Username: "admin"}
 	has, err := engine.Get(admin)

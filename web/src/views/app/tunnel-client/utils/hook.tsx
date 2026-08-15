@@ -124,7 +124,9 @@ export function useTunnelClient(t: any, tableRef: Ref) {
       prop: "CreatedAt",
       formatter: (row) => {
         const timeVal = row.CreatedAt || row.created_at;
-        return timeVal ? dayjs(timeVal).format("YYYY-MM-DD HH:mm:ss") : "-";
+        return timeVal && dayjs(timeVal).isValid() && dayjs(timeVal).year() > 1
+          ? dayjs(timeVal).format("YYYY-MM-DD HH:mm:ss")
+          : "-";
       }
     },
     {

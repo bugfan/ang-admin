@@ -108,7 +108,9 @@ export function useDnsProxy(t: any, tableRef: Ref) {
       prop: "CreatedAt",
       formatter: (row) => {
         const timeVal = row.CreatedAt || row.created_at;
-        return timeVal ? dayjs(timeVal).format("YYYY-MM-DD HH:mm:ss") : "-";
+        return timeVal && dayjs(timeVal).isValid() && dayjs(timeVal).year() > 1
+          ? dayjs(timeVal).format("YYYY-MM-DD HH:mm:ss")
+          : "-";
       }
     },
     {
@@ -123,7 +125,7 @@ export function useDnsProxy(t: any, tableRef: Ref) {
     const targetId = row.Id || row.id;
     const { code, message: msg } = await deleteDns({ id: targetId });
     if (code === 0) {
-      message(`${t("dns.delete")} ID: ${targetId} 成功`, { type: "success" });
+      message(`${t("dns.delete")} ID: ${targetId} success`, { type: "success" });
       onSearch();
     } else {
       message(msg, { type: "error" });
@@ -157,7 +159,7 @@ export function useDnsProxy(t: any, tableRef: Ref) {
     const ids = curSelected.map((item: any) => item.Id || item.id);
     const { code, message: msg } = await deleteDns({ ids });
     if (code === 0) {
-      message(`批量删除成功`, { type: "success" });
+      message(`${t("dns.batchDelete")} success`, { type: "success" });
       tableRef.value.getTableRef().clearSelection();
       onSearch();
     } else {
