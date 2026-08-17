@@ -304,6 +304,16 @@ func AsyncRoutesHandler(c *gin.Context) {
 							"roles": []string{"admin", "common"},
 						},
 					},
+					{
+						"path":      "/app/rule",
+						"name":      "AppRule",
+						"component": "app/rule/index",
+						"meta": gin.H{
+							"icon":  "ri:shield-flash-line",
+							"title": "menus.pureRule",
+							"roles": []string{"admin", "common"},
+						},
+					},
 				},
 			},
 

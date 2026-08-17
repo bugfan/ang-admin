@@ -3,6 +3,7 @@ import { ref, reactive, onMounted, computed, watch } from "vue";
 import ReCol from "@/components/ReCol";
 import { useI18n } from "vue-i18n";
 import { getTunnelList } from "@/api/tunnel";
+import { getRuleList } from "@/api/rule";
 import { message } from "@/utils/message";
 import { useRenderIcon } from "@/components/ReIcon/src/hooks";
 import AddFill from "~icons/ri/add-line";
@@ -32,15 +33,60 @@ const ruleFormRef = ref();
 const newFormInline = ref(props.formInline);
 const { t } = useI18n();
 
-// Rules multi-select & ordering
-const availableRules = [
-  { label: "IP 匹配器 (ip_matcher)", value: "ip_matcher" },
-  { label: "全匹配器 (always_true_matcher)", value: "always_true_matcher" },
-  { label: "阻断连接动作 (reset_conn_action)", value: "reset_conn_action" },
-  { label: "URL 匹配器 (url_matcher)", value: "url_matcher" },
-  { label: "隐藏版本动作 (hide_version_action)", value: "hide_version_action" },
-  { label: "认证门户动作 (auth_portal_action)", value: "auth_portal_action" }
-];
+// Rules multi-select & ordering (L4 rules only for DNS Proxy)
+const availableRules = ref<Array<{ label: string; value: string; desc?: string }>>([]);
+
+function isL4Rule(r: any): boolean {
+  try {
+    const mObj = typeof r.Matcher === "string" ? JSON.parse(r.Matcher) : r.Matcher;
+    const aObj = typeof r.Action === "string" ? JSON.parse(r.Action) : r.Action;
+
+    const mName = mObj?.Name || mObj?.name || "";
+    const aName = aObj?.Name || aObj?.name || "";
+
+    // Exclude HTTP application layer matchers
+    if (["http_ip_matcher", "url_matcher", "js_matcher"].includes(mName)) {
+      return false;
+    }
+    // Exclude HTTP application layer actions
+    if ([
+      "hide_version_action", "auth_portal_action", "response_text_action",
+      "modify_status_action", "forward_request_action", "replace_request_body_action",
+      "replace_response_body_action", "replace_request_header_action",
+      "replace_response_header_action", "auth_guard_action", "insert_data_action",
+      "subdomain_webvpn_action"
+    ].includes(aName)) {
+      return false;
+    }
+
+    return true;
+  } catch (e) {
+    return false;
+  }
+}
+
+async function fetchCustomRules() {
+  try {
+    const res = await getRuleList();
+    const rulesList: Array<{ label: string; value: string; desc?: string }> = [];
+
+    if (res?.code === 0 && res?.data?.list) {
+      for (const r of res.data.list) {
+        if (!isL4Rule(r)) continue;
+        const ruleName = r.Name || r.name || `Rule #${r.Id || r.id}`;
+        rulesList.push({
+          label: ruleName,
+          value: ruleName,
+          desc: r.Remark || r.remark || ""
+        });
+      }
+    }
+
+    availableRules.value = rulesList;
+  } catch (e) {
+    availableRules.value = [];
+  }
+}
 
 const selectedRules = ref<string[]>([]);
 
@@ -244,6 +290,7 @@ function validateCustomBackend() {
 
 onMounted(() => {
   fetchTunnels();
+  fetchCustomRules();
   syncRulesJSON();
   syncUpstreamJSON();
 });
@@ -327,6 +374,10 @@ defineExpose({ getRef });
                   :value="r.value"
                 />
               </el-select>
+
+              <div class="text-[11px] text-[var(--el-text-color-secondary)] mt-1 leading-relaxed">
+                提示: DNS 代理属于传输层 (L4) 服务，下拉列表仅展示在“规则”菜单中配置的传输层 (L4) 中间件规则 (如 ip_matcher / reset_conn_action)，HTTP 应用层规则 (如 http_ip_matcher / hide_version_action) 不适用于 DNS。
+              </div>
 
               <!-- 已选中规则的排序清单 -->
               <div v-if="selectedRules.length > 0" class="p-2.5 bg-gray-50 dark:bg-gray-800/60 rounded border border-gray-100 dark:border-gray-700/60 text-xs">

@@ -9,3 +9,14 @@ func Put(key string, value interface{}) {
 	data, _ := json.Marshal(value)
 	fmt.Println("hot data:", key, string(data))
 }
+
+func PrintFullServerConfig(cfg interface{}) {
+	data, err := json.MarshalIndent(cfg, "", "  ")
+	if err != nil {
+		fmt.Printf("=== Overall server.json Error: %v ===\n", err)
+		return
+	}
+	fmt.Println("\n=================== OVERALL ANG SERVER.JSON CONFIG ===================")
+	fmt.Println(string(data))
+	fmt.Println("======================================================================\n")
+}

@@ -45,6 +45,16 @@ const appRouter = {
         title: "menus.pureDns",
         roles: ["admin", "common"]
       }
+    },
+    {
+      path: "/app/rule",
+      name: "AppRule",
+      component: "app/rule/index",
+      meta: {
+        icon: "ri:shield-flash-line",
+        title: "menus.pureRule",
+        roles: ["admin", "common"]
+      }
     }
   ]
 };
