@@ -3,8 +3,7 @@ import { http } from "@/utils/http";
 export type RuleItem = {
   id?: number;
   name?: string;
-  matcher?: string; // JSON string e.g. {"Name":"ip_matcher","Config":{...}}
-  action?: string;  // JSON string e.g. {"Name":"reset_conn_action","Config":{...}}
+  items?: string; // JSON string e.g. [{"Matcher":{...},"Action":{...}}]
   remark?: string;
   created_at?: string;
   updated_at?: string;

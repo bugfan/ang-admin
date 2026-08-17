@@ -48,8 +48,8 @@ export function useRule(t: any, tableRef: Ref) {
       formatter: (row) => row.Id || row.id
     },
     {
-      label: t("rule.name") || "规则名称",
-      minWidth: 160,
+      label: t("rule.name") || "规则组名称",
+      minWidth: 180,
       cellRenderer: scope => {
         const name = scope.row.Name || scope.row.name || "-";
         return (
@@ -58,63 +58,19 @@ export function useRule(t: any, tableRef: Ref) {
       }
     },
     {
-      label: t("rule.matcher") || "匹配器 (Matcher)",
-      minWidth: 220,
+      label: "包含条目数",
+      minWidth: 160,
       cellRenderer: scope => {
-        const mStr = scope.row.Matcher || scope.row.matcher || "";
-        let mName = "-";
+        const itemsStr = scope.row.Items || scope.row.items || "";
+        let count = 0;
         try {
-          const parsed = typeof mStr === "string" ? JSON.parse(mStr) : mStr;
-          mName = parsed?.Name || parsed?.name || "-";
-        } catch (e) {
-          mName = mStr;
-        }
-
-        let tagType: "primary" | "success" | "warning" | "info" = "info";
-        let labelText = mName;
-
-        if (mName === "ip_matcher") {
-          tagType = "primary";
-          labelText = "ip_matcher (L4 IP)";
-        } else if (mName === "http_ip_matcher") {
-          tagType = "success";
-          labelText = "http_ip_matcher (HTTP IP)";
-        }
+          const parsed = typeof itemsStr === "string" ? JSON.parse(itemsStr) : itemsStr;
+          if (Array.isArray(parsed)) count = parsed.length;
+        } catch (e) {}
 
         return (
-          <el-tag size="small" type={tagType} effect="light" class="font-mono font-medium">
-            {labelText}
-          </el-tag>
-        );
-      }
-    },
-    {
-      label: t("rule.action") || "动作 (Action)",
-      minWidth: 220,
-      cellRenderer: scope => {
-        const aStr = scope.row.Action || scope.row.action || "";
-        let aName = "-";
-        try {
-          const parsed = typeof aStr === "string" ? JSON.parse(aStr) : aStr;
-          aName = parsed?.Name || parsed?.name || "-";
-        } catch (e) {
-          aName = aStr;
-        }
-
-        let tagType: "danger" | "warning" | "info" | "success" = "info";
-        let labelText = aName;
-
-        if (aName === "reset_conn_action") {
-          tagType = "danger";
-          labelText = "reset_conn_action (L4 TCP重置)";
-        } else if (aName === "hide_version_action") {
-          tagType = "warning";
-          labelText = "hide_version_action (HTTP隐藏版本)";
-        }
-
-        return (
-          <el-tag size="small" type={tagType} effect="light" class="font-mono font-medium">
-            {labelText}
+          <el-tag size="small" type="primary" effect="light" class="font-mono font-medium">
+            包含 {count} 条 Matcher+Action 条目
           </el-tag>
         );
       }
@@ -148,7 +104,7 @@ export function useRule(t: any, tableRef: Ref) {
     const targetId = row.Id || row.id;
     const { code, message: msg } = await deleteRule({ id: targetId });
     if (code === 0) {
-      message(`删除规则 ID: ${targetId} 成功`, { type: "success" });
+      message(`删除规则组 ID: ${targetId} 成功`, { type: "success" });
       onSearch();
     } else {
       message(msg, { type: "error" });
@@ -182,7 +138,7 @@ export function useRule(t: any, tableRef: Ref) {
     const ids = curSelected.map((item: any) => item.Id || item.id);
     const { code, message: msg } = await deleteRule({ ids });
     if (code === 0) {
-      message("批量删除规则成功", { type: "success" });
+      message("批量删除规则组成功", { type: "success" });
       tableRef.value.getTableRef().clearSelection();
       onSearch();
     } else {
@@ -213,6 +169,13 @@ export function useRule(t: any, tableRef: Ref) {
   };
 
   function openDialog(title = "", row?: any) {
+    const defaultItems = JSON.stringify([
+      {
+        Matcher: { Name: "ip_matcher", Config: { Address: ["127.0.0.1"] } },
+        Action: { Name: "reset_conn_action", Config: { Content: "Connection reset by rule" } }
+      }
+    ], null, 2);
+
     addDialog({
       title: `${title}`,
       props: {
@@ -220,12 +183,11 @@ export function useRule(t: any, tableRef: Ref) {
           title,
           id: row?.Id ?? row?.id ?? undefined,
           name: row?.Name ?? row?.name ?? "",
-          matcher: row?.Matcher ?? row?.matcher ?? JSON.stringify({ Name: "ip_matcher", Config: { Address: ["127.0.0.1"] } }),
-          action: row?.Action ?? row?.action ?? JSON.stringify({ Name: "reset_conn_action", Config: { Content: "Connection reset by rule" } }),
+          items: row?.Items ?? row?.items ?? defaultItems,
           remark: row?.Remark ?? row?.remark ?? ""
         }
       },
-      width: deviceDetection() ? "95%" : "780px",
+      width: deviceDetection() ? "95%" : "840px",
       draggable: true,
       fullscreen: deviceDetection(),
       fullscreenIcon: true,

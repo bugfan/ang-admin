@@ -19,8 +19,7 @@ func init() {
 type ruleHandler struct {
 	Id        int64     `json:"id"`
 	Name      string    `json:"name"`
-	Matcher   string    `json:"matcher"`
-	Action    string    `json:"action"`
+	Items     string    `json:"items"`
 	Remark    string    `json:"remark"`
 	CreatedAt time.Time `json:"created_at"`
 	UpdatedAt time.Time `json:"updated_at"`

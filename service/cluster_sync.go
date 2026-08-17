@@ -120,7 +120,7 @@ func buildDNSMap(rulesMap map[string]models.Rule) map[string]entity.DNSConfig {
 			_ = json.Unmarshal([]byte(item.HostsJSON), &hosts)
 		}
 
-		// Parse Rules
+		// Parse Rules (Rule Set expansion)
 		var ruleConfigs []entity.RuleConfig
 		if item.Rules != "" {
 			var ruleNames []string
@@ -128,14 +128,12 @@ func buildDNSMap(rulesMap map[string]models.Rule) map[string]entity.DNSConfig {
 			for _, rName := range ruleNames {
 				rName = strings.TrimSpace(rName)
 				if dbRule, exists := rulesMap[rName]; exists {
-					var matcherObj entity.MatcherConfig
-					var actionObj entity.ActionConfig
-					_ = json.Unmarshal([]byte(dbRule.Matcher), &matcherObj)
-					_ = json.Unmarshal([]byte(dbRule.Action), &actionObj)
-					ruleConfigs = append(ruleConfigs, entity.RuleConfig{
-						Matcher: matcherObj,
-						Action:  actionObj,
-					})
+					if dbRule.Items != "" {
+						var items []entity.RuleConfig
+						if err := json.Unmarshal([]byte(dbRule.Items), &items); err == nil {
+							ruleConfigs = append(ruleConfigs, items...)
+						}
+					}
 				} else if rName == "ip_matcher" {
 					ruleConfigs = append(ruleConfigs, entity.RuleConfig{
 						Matcher: entity.MatcherConfig{
@@ -148,21 +146,6 @@ func buildDNSMap(rulesMap map[string]models.Rule) map[string]entity.DNSConfig {
 							Name: "reset_conn_action",
 							Config: map[string]interface{}{
 								"Content": "reset you",
-							},
-						},
-					})
-				} else if rName == "reset_conn_action" {
-					ruleConfigs = append(ruleConfigs, entity.RuleConfig{
-						Matcher: entity.MatcherConfig{
-							Name: "ip_matcher",
-							Config: map[string]interface{}{
-								"Address": []string{"127.0.0.1"},
-							},
-						},
-						Action: entity.ActionConfig{
-							Name: "reset_conn_action",
-							Config: map[string]interface{}{
-								"Content": "reset connection",
 							},
 						},
 					})

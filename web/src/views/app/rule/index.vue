@@ -55,10 +55,10 @@ function formatJSON(jsonStr: string) {
       :model="form"
       class="search-form bg-bg_color w-[99/100] pl-8 pt-[12px] overflow-auto mb-2 rounded-md"
     >
-      <el-form-item label="规则名称：" prop="name">
+      <el-form-item label="规则组名称：" prop="name">
         <el-input
           v-model="form.name"
-          placeholder="请输入规则名称"
+          placeholder="请输入规则组名称"
           clearable
           class="!w-[200px]"
           @keyup.enter="onSearch"
@@ -83,7 +83,7 @@ function formatJSON(jsonStr: string) {
     </el-form>
 
     <PureTableBar
-      title="规则管理 (Matcher & Action 匹配控制链)"
+      title="规则管理 (策略包 / Matcher & Action 规则组)"
       :columns="columns"
       @refresh="onSearch"
     >
@@ -141,31 +141,24 @@ function formatJSON(jsonStr: string) {
           @page-size-change="handleSizeChange"
           @page-current-change="handleCurrentChange"
         >
-          <!-- Expand Row Slot: Theme-Adaptive Layout -->
+          <!-- Expand Row Slot: Theme-Adaptive Layout for Rule Set Items -->
           <template #expand="{ row }">
             <div class="p-3 bg-[var(--el-fill-color-light)] rounded-lg m-2 border border-[var(--el-border-color-lighter)]">
               <div class="text-xs font-semibold text-[var(--el-text-color-regular)] mb-2 flex items-center justify-between">
                 <div class="flex items-center space-x-2">
                   <div class="w-1.5 h-1.5 bg-[var(--el-color-primary)] rounded-full"></div>
-                  <span>规则 JSON 详细配置 [ID: {{ row.Id || row.id }}]</span>
+                  <span>规则组详细 Items JSON 数据 [ID: {{ row.Id || row.id }}]</span>
                 </div>
                 <span class="text-[var(--el-text-color-secondary)] font-mono text-[11px]">Storage JSON string</span>
               </div>
-              <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
-                <div class="bg-[var(--el-bg-color)] p-3 rounded-md border border-[var(--el-border-color-lighter)]">
-                  <div class="flex items-center justify-between mb-1.5 pb-1 border-b border-[var(--el-border-color-lighter)]">
-                    <span class="text-xs font-bold text-[var(--el-color-primary)]">Matcher (匹配条件)</span>
-                    <el-tag size="small" type="primary" effect="plain" class="font-mono">JSON</el-tag>
-                  </div>
-                  <pre class="text-xs text-[var(--el-text-color-primary)] font-mono whitespace-pre-wrap break-all max-h-40 overflow-y-auto leading-relaxed">{{ formatJSON(row.Matcher || row.matcher) }}</pre>
+              <div class="bg-[var(--el-bg-color)] p-3 rounded-md border border-[var(--el-border-color-lighter)]">
+                <div class="flex items-center justify-between mb-1.5 pb-1 border-b border-[var(--el-border-color-lighter)]">
+                  <span class="text-xs font-bold text-[var(--el-color-primary)]">Items (Matcher+Action 规则链列表)</span>
+                  <el-tag size="small" type="primary" effect="plain" class="font-mono">JSON Array</el-tag>
                 </div>
-                <div class="bg-[var(--el-bg-color)] p-3 rounded-md border border-[var(--el-border-color-lighter)]">
-                  <div class="flex items-center justify-between mb-1.5 pb-1 border-b border-[var(--el-border-color-lighter)]">
-                    <span class="text-xs font-bold text-[var(--el-color-success)]">Action (触发动作)</span>
-                    <el-tag size="small" type="success" effect="plain" class="font-mono">JSON</el-tag>
-                  </div>
-                  <pre class="text-xs text-[var(--el-text-color-primary)] font-mono whitespace-pre-wrap break-all max-h-40 overflow-y-auto leading-relaxed">{{ formatJSON(row.Action || row.action) }}</pre>
-                </div>
+                <el-scrollbar max-height="200px" class="item-scrollbar pr-1">
+                  <pre class="text-xs text-[var(--el-text-color-primary)] font-mono whitespace-pre-wrap break-all leading-relaxed">{{ formatJSON(row.Items || row.items) }}</pre>
+                </el-scrollbar>
               </div>
             </div>
           </template>
@@ -208,5 +201,18 @@ function formatJSON(jsonStr: string) {
 <style scoped>
 .search-form :deep(.el-form-item) {
   margin-bottom: 12px;
+}
+
+.item-scrollbar :deep(.el-scrollbar__bar.is-vertical) {
+  width: 5px;
+}
+.item-scrollbar :deep(.el-scrollbar__thumb) {
+  background-color: var(--el-border-color);
+  border-radius: 4px;
+  opacity: 0.6;
+}
+.item-scrollbar :deep(.el-scrollbar__thumb:hover) {
+  background-color: var(--el-color-primary);
+  opacity: 0.85;
 }
 </style>

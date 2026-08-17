@@ -38,25 +38,32 @@ const availableRules = ref<Array<{ label: string; value: string; desc?: string }
 
 function isL4Rule(r: any): boolean {
   try {
-    const mObj = typeof r.Matcher === "string" ? JSON.parse(r.Matcher) : r.Matcher;
-    const aObj = typeof r.Action === "string" ? JSON.parse(r.Action) : r.Action;
+    const itemsStr = r.Items || r.items;
+    if (!itemsStr) return true;
+    const items = typeof itemsStr === "string" ? JSON.parse(itemsStr) : itemsStr;
+    if (!Array.isArray(items)) return true;
 
-    const mName = mObj?.Name || mObj?.name || "";
-    const aName = aObj?.Name || aObj?.name || "";
+    for (const item of items) {
+      const mObj = item?.Matcher || item?.matcher || {};
+      const aObj = item?.Action || item?.action || {};
 
-    // Exclude HTTP application layer matchers
-    if (["http_ip_matcher", "url_matcher", "js_matcher"].includes(mName)) {
-      return false;
-    }
-    // Exclude HTTP application layer actions
-    if ([
-      "hide_version_action", "auth_portal_action", "response_text_action",
-      "modify_status_action", "forward_request_action", "replace_request_body_action",
-      "replace_response_body_action", "replace_request_header_action",
-      "replace_response_header_action", "auth_guard_action", "insert_data_action",
-      "subdomain_webvpn_action"
-    ].includes(aName)) {
-      return false;
+      const mName = mObj?.Name || mObj?.name || "";
+      const aName = aObj?.Name || aObj?.name || "";
+
+      // Exclude HTTP application layer matchers
+      if (["http_ip_matcher", "url_matcher", "js_matcher"].includes(mName)) {
+        return false;
+      }
+      // Exclude HTTP application layer actions
+      if ([
+        "hide_version_action", "auth_portal_action", "response_text_action",
+        "modify_status_action", "forward_request_action", "replace_request_body_action",
+        "replace_response_body_action", "replace_request_header_action",
+        "replace_response_header_action", "auth_guard_action", "insert_data_action",
+        "subdomain_webvpn_action"
+      ].includes(aName)) {
+        return false;
+      }
     }
 
     return true;
