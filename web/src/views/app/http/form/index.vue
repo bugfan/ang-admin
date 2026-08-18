@@ -20,6 +20,14 @@ export interface LocationItem {
   };
 }
 
+export interface TunnelNodeOption {
+  label: string;
+  value: string;
+  tunnel_id: string;
+  tunnel_token: string;
+  tunnel_type: string;
+}
+
 const props = withDefaults(defineProps<{ formInline: any }>(), {
   formInline: () => ({
     title: "",
@@ -83,6 +91,8 @@ const selectedProxyHeaders = ref<string[]>([]);
 const certOptions = ref<Array<{ label: string; value: string }>>([]);
 // Tunnel options
 const tunnelOptions = ref<Array<{ label: string; value: string; type: string }>>([]);
+const tunnelNodeOptions = ref<TunnelNodeOption[]>([]);
+const selectedTunnelNodeKey = ref<string>("");
 // Rule options
 const availableRules = ref<Array<{ label: string; value: string }>>([]);
 // Selected Rules array
@@ -157,42 +167,55 @@ async function fetchCertificates() {
 async function fetchTunnels() {
   try {
     const res = await getTunnelList();
-    if (res?.code === 0 && res?.data) {
-      const list = res.data.list || res.data || [];
-      const opts: TunnelNodeOption[] = [];
-      list.forEach((tItem: any) => {
-        const tidStr = String(tItem.Id || tItem.id);
-        const tType = (tItem.Type || tItem.type || "TLS").toLowerCase().includes("quic") ? "quic" : "tls";
-        const cNodes = tItem.client_nodes || tItem.ClientNodes || [];
+    let list: any[] = [];
+    if (Array.isArray(res?.data?.list)) {
+      list = res.data.list;
+    } else if (Array.isArray(res?.data)) {
+      list = res.data;
+    } else if (Array.isArray(res)) {
+      list = res;
+    }
 
-        if (Array.isArray(cNodes) && cNodes.length > 0) {
-          cNodes.forEach((c: any) => {
-            const isOnline = c.IsOnline ?? c.is_online ?? false;
-            const cName = c.Name || c.name || "Node";
-            const token = c.Token || c.token || "";
-            const key = `${tidStr}|${token}`;
-            opts.push({
-              label: `[${isOnline ? '在线' : '离线'}] ${cName} (Tunnel #${tidStr} ${tType.toUpperCase()} | Token: ${token || '-'})`,
-              value: key,
-              tunnel_id: tidStr,
-              tunnel_token: token,
-              tunnel_type: tType
-            });
-          });
-        } else {
-          const key = `${tidStr}||${tType}`;
+    const opts: TunnelNodeOption[] = [];
+    list.forEach((tItem: any) => {
+      const tidStr = String(tItem.Id || tItem.id);
+      const tName = tItem.Name || tItem.name || "";
+      const tPort = tItem.Port || tItem.port || "";
+      const tSni = tItem.SNI || tItem.sni || "";
+      const tType = (tItem.Type || tItem.type || "TLS").toLowerCase().includes("quic") ? "quic" : "tls";
+
+      // 1. Add Tunnel Server Option
+      const serverLabel = `${tName ? '[' + tName + '] ' : ''}Tunnel #${tidStr} (${tType.toUpperCase()} | Port: ${tPort}${tSni ? ' | SNI: ' + tSni : ''})`;
+      const serverKey = `${tidStr}||${tType}`;
+      opts.push({
+        label: serverLabel,
+        value: serverKey,
+        tunnel_id: tidStr,
+        tunnel_token: "",
+        tunnel_type: tType
+      });
+
+      // 2. Add Client Node Options if present
+      const cNodes = tItem.client_nodes || tItem.ClientNodes || [];
+      if (Array.isArray(cNodes) && cNodes.length > 0) {
+        cNodes.forEach((c: any) => {
+          const isOnline = c.IsOnline ?? c.is_online ?? false;
+          const cName = c.Name || c.name || "Node";
+          const token = c.Token || c.token || "";
+          const key = `${tidStr}|${token}`;
           opts.push({
-            label: `Tunnel #${tidStr} Server (${tType.toUpperCase()} | Port: ${tItem.Port || tItem.port || ''})`,
+            label: `  ↳ [${isOnline ? '在线' : '离线'}] ${cName} (Token: ${token || '-'})`,
             value: key,
             tunnel_id: tidStr,
-            tunnel_token: "",
+            tunnel_token: token,
             tunnel_type: tType
           });
-        }
-      });
-      tunnelNodeOptions.value = opts;
-      syncSelectedTunnelNodeKey();
-    }
+        });
+      }
+    });
+
+    tunnelNodeOptions.value = opts;
+    syncSelectedTunnelNodeKey();
   } catch (e) {}
 }
 
