@@ -215,7 +215,6 @@ const isWeightDisabled = computed(() => {
 
 function handleMethodChange(val: string) {
   if (val === "round_robin" || val === "ip_hash") {
-    // Reset all row weights to 1 when strategy is round_robin or ip_hash
     upstreamList.value.forEach(row => {
       row.weight = 1;
     });
@@ -285,7 +284,6 @@ const formRules = reactive({
   ]
 });
 
-// Custom validation for upstream / tunnel requirement before submit
 function validateCustomBackend() {
   const hasTunnel = Boolean(newFormInline.value.tunnel_id);
   const validServers = upstreamList.value.filter(s => s.target && s.target.trim().length > 0);
@@ -329,17 +327,19 @@ defineExpose({ getRef });
     ref="ruleFormRef"
     :model="newFormInline"
     :rules="formRules"
-    label-width="auto"
-    class="py-2 px-3 space-y-6 max-h-[75vh] overflow-y-auto"
+    label-width="120px"
+    class="dns-form py-1 px-1 sm:px-2 space-y-4"
   >
     <!-- 板块 1: 基础监听与规则 -->
-    <div class="space-y-4 border-b border-gray-100 dark:border-gray-700/80 pb-5">
-      <div class="flex items-center space-x-2">
-        <div class="w-1.5 h-4 bg-blue-500 rounded-full"></div>
-        <span class="font-bold text-sm text-gray-800 dark:text-gray-200">
-          {{ t('dns.baseInfoTab') }}
-        </span>
-      </div>
+    <el-card shadow="never" class="!border-[var(--el-border-color-lighter)] rounded-xl">
+      <template #header>
+        <div class="flex items-center space-x-2">
+          <div class="w-1.5 h-4 bg-blue-500 rounded-full"></div>
+          <span class="font-bold text-sm sm:text-base text-[var(--el-text-color-primary)]">
+            {{ t('dns.baseInfoTab') }}
+          </span>
+        </div>
+      </template>
 
       <el-row :gutter="16">
         <re-col :value="12" :xs="24" :sm="12">
@@ -382,26 +382,26 @@ defineExpose({ getRef });
                 />
               </el-select>
 
-              <div class="text-[11px] text-[var(--el-text-color-secondary)] mt-1 leading-relaxed">
-                提示: DNS 代理属于传输层 (L4) 服务，下拉列表仅展示在“规则”菜单中配置的传输层 (L4) 中间件规则 (如 ip_matcher / reset_conn_action)，HTTP 应用层规则 (如 http_ip_matcher / hide_version_action) 不适用于 DNS。
+              <div class="text-xs text-[var(--el-text-color-secondary)] mt-1 leading-relaxed">
+                提示: DNS 代理属于传输层 (L4) 服务，下拉列表仅展示在“规则”菜单中配置的传输层 (L4) 中间件规则 (如 ip_matcher / reset_conn_action)，HTTP 应用层规则不适用于 DNS。
               </div>
 
               <!-- 已选中规则的排序清单 -->
-              <div v-if="selectedRules.length > 0" class="p-2.5 bg-gray-50 dark:bg-gray-800/60 rounded border border-gray-100 dark:border-gray-700/60 text-xs">
-                <div class="text-gray-500 dark:text-gray-400 mb-1.5 font-medium flex justify-between items-center">
+              <div v-if="selectedRules.length > 0" class="p-2.5 bg-[var(--el-fill-color-light)] rounded-lg border border-[var(--el-border-color-lighter)] text-xs">
+                <div class="text-[var(--el-text-color-secondary)] mb-1.5 font-medium flex justify-between items-center">
                   <span class="inline-flex items-center gap-1">
                     <IconifyIconOffline icon="ri:settings-3-line" />
                     {{ t('dns.ruleOrderTip') }}
                   </span>
-                  <span class="font-mono text-gray-400">共 {{ selectedRules.length }} 项</span>
+                  <span class="font-mono">共 {{ selectedRules.length }} 项</span>
                 </div>
                 <div class="space-y-1">
                   <div
                     v-for="(ruleVal, idx) in selectedRules"
                     :key="ruleVal"
-                    class="flex items-center justify-between p-2 bg-white dark:bg-gray-800 rounded border border-gray-200/80 dark:border-gray-600"
+                    class="flex items-center justify-between p-2 bg-[var(--el-bg-color)] rounded-lg border border-[var(--el-border-color-lighter)]"
                   >
-                    <span class="font-mono text-gray-800 dark:text-gray-200">
+                    <span class="font-mono text-[var(--el-text-color-primary)]">
                       <span class="text-gray-400 font-bold mr-1.5">#{{ idx + 1 }}</span> {{ ruleVal }}
                     </span>
                     <div class="flex items-center space-x-1">
@@ -440,52 +440,58 @@ defineExpose({ getRef });
           </el-form-item>
         </re-col>
       </el-row>
-    </div>
+    </el-card>
 
     <!-- 板块 2: Hosts 域名映射 -->
-    <div class="space-y-3 border-b border-gray-100 dark:border-gray-700/80 pb-5">
-      <div class="flex items-center justify-between flex-wrap gap-2">
-        <div class="flex items-center space-x-2">
-          <div class="w-1.5 h-4 bg-emerald-500 rounded-full"></div>
-          <span class="font-bold text-sm text-gray-800 dark:text-gray-200">
-            {{ t('dns.hostsTab') }}
-          </span>
+    <el-card shadow="never" class="!border-[var(--el-border-color-lighter)] rounded-xl">
+      <template #header>
+        <div class="flex items-center justify-between flex-wrap gap-2">
+          <div class="flex items-center space-x-2">
+            <div class="w-1.5 h-4 bg-emerald-500 rounded-full"></div>
+            <span class="font-bold text-sm sm:text-base text-[var(--el-text-color-primary)]">
+              {{ t('dns.hostsTab') }}
+            </span>
+          </div>
+          <div class="flex items-center space-x-2">
+            <el-tag size="small" type="primary" effect="light" class="font-mono font-medium">
+              A: {{ hostsSummary.aCount }}
+            </el-tag>
+            <el-tag size="small" type="success" effect="light" class="font-mono font-medium">
+              AAAA: {{ hostsSummary.aaaaCount }}
+            </el-tag>
+          </div>
         </div>
-        <div class="flex items-center space-x-2">
-          <el-tag size="small" type="primary" effect="light" class="font-mono font-medium">
-            A: {{ hostsSummary.aCount }}
-          </el-tag>
-          <el-tag size="small" type="success" effect="light" class="font-mono font-medium">
-            AAAA: {{ hostsSummary.aaaaCount }}
-          </el-tag>
+      </template>
+
+      <div class="space-y-3">
+        <div class="text-xs text-[var(--el-text-color-secondary)] font-medium inline-flex items-center gap-1">
+          <IconifyIconOffline icon="ri:information-line" class="text-blue-500" />
+          {{ t('dns.hostsTip') }}
         </div>
-      </div>
 
-      <div class="text-xs text-gray-500 dark:text-gray-400 font-medium inline-flex items-center gap-1">
-        <IconifyIconOffline icon="ri:information-line" class="text-blue-500" />
-        {{ t('dns.hostsTip') }}
+        <el-input
+          v-model="newFormInline.hosts_text"
+          type="textarea"
+          :rows="5"
+          :placeholder="t('dns.hostsPlaceholder')"
+          class="font-mono text-xs"
+        />
       </div>
-
-      <el-input
-        v-model="newFormInline.hosts_text"
-        type="textarea"
-        :rows="5"
-        :placeholder="t('dns.hostsPlaceholder')"
-        class="font-mono text-xs"
-      />
-    </div>
+    </el-card>
 
     <!-- 板块 3: 上游配置 -->
-    <div class="space-y-4">
-      <div class="flex items-center space-x-2">
-        <div class="w-1.5 h-4 bg-purple-500 rounded-full"></div>
-        <span class="font-bold text-sm text-gray-800 dark:text-gray-200">
-          {{ t('dns.backendTab') }}
-        </span>
-      </div>
+    <el-card shadow="never" class="!border-[var(--el-border-color-lighter)] rounded-xl">
+      <template #header>
+        <div class="flex items-center space-x-2">
+          <div class="w-1.5 h-4 bg-purple-500 rounded-full"></div>
+          <span class="font-bold text-sm sm:text-base text-[var(--el-text-color-primary)]">
+            {{ t('dns.backendTab') }}
+          </span>
+        </div>
+      </template>
 
-      <!-- 1. Tunnel 隧道选择 -->
-      <div class="space-y-2">
+      <div class="space-y-4">
+        <!-- 1. Tunnel 隧道选择 -->
         <el-form-item :label="t('dns.tunnel')" prop="tunnel_id">
           <div class="w-full space-y-1">
             <el-select
@@ -504,102 +510,111 @@ defineExpose({ getRef });
                 :value="String(tItem.id || tItem.Id)"
               />
             </el-select>
-            <div class="text-xs text-gray-500 dark:text-gray-400 font-medium inline-flex items-center gap-1">
+            <div class="text-xs text-[var(--el-text-color-secondary)] font-medium inline-flex items-center gap-1">
               <IconifyIconOffline icon="ri:information-line" class="text-blue-500" />
               {{ t('dns.tunnelTip') }}
             </div>
           </div>
         </el-form-item>
-      </div>
 
-      <!-- 2. Upstream DNS 服务器列表配置 -->
-      <div class="space-y-3 pt-2 border-t border-gray-100 dark:border-gray-700/60">
-        <el-form-item :label="t('dns.upstreamMethod')" prop="upstream_method">
-          <el-select
-            v-model="newFormInline.upstream_method"
-            class="w-full"
-            @change="handleMethodChange"
-          >
-            <el-option label="轮询 (round_robin)" value="round_robin" />
-            <el-option label="权重 (weight)" value="weight" />
-            <el-option label="IP Hash (ip_hash)" value="ip_hash" />
-          </el-select>
-        </el-form-item>
-
-        <!-- 上游 DNS 服务器列表表格 -->
-        <div class="space-y-2">
-          <div class="flex justify-between items-center">
-            <span class="text-xs font-medium text-gray-700 dark:text-gray-300">
-              {{ t('dns.upstreamServers') }}
-            </span>
-            <el-button
-              type="primary"
-              size="small"
-              :icon="useRenderIcon(AddFill)"
-              @click="addUpstreamRow"
+        <!-- 2. Upstream DNS 服务器列表配置 -->
+        <div class="space-y-3 pt-3 border-t border-[var(--el-border-color-lighter)]">
+          <el-form-item :label="t('dns.upstreamMethod')" prop="upstream_method">
+            <el-select
+              v-model="newFormInline.upstream_method"
+              class="w-full"
+              @change="handleMethodChange"
             >
-              {{ t('dns.addServer') }}
-            </el-button>
-          </div>
+              <el-option label="轮询 (round_robin)" value="round_robin" />
+              <el-option label="权重 (weight)" value="weight" />
+              <el-option label="IP Hash (ip_hash)" value="ip_hash" />
+            </el-select>
+          </el-form-item>
 
-          <el-table
-            :data="upstreamList"
-            border
-            size="small"
-            class="w-full text-xs"
-            :empty-text="t('dns.noUpstreamServers')"
-          >
-            <el-table-column label="#" width="50" align="center">
-              <template #default="{ $index }">
-                <span class="font-mono text-gray-400">{{ $index + 1 }}</span>
-              </template>
-            </el-table-column>
-            <el-table-column :label="t('dns.targetServer')" min-width="240">
-              <template #default="{ row }">
-                <el-input
-                  v-model="row.target"
-                  placeholder="8.8.8.8:53 / https://dns.google/dns-query"
-                  size="small"
-                  class="font-mono"
-                />
-              </template>
-            </el-table-column>
-            <el-table-column :label="t('dns.weight')" width="110" align="center">
-              <template #default="{ row }">
-                <el-input-number
-                  v-model="row.weight"
-                  :min="1"
-                  :max="100"
-                  :disabled="isWeightDisabled"
-                  size="small"
-                  controls-position="right"
-                  class="w-full!"
-                />
-              </template>
-            </el-table-column>
-            <el-table-column :label="t('dns.operation')" width="70" align="center">
-              <template #default="{ $index }">
-                <el-button
-                  type="danger"
-                  link
-                  size="small"
-                  :icon="useRenderIcon(Delete)"
-                  @click="removeUpstreamRow($index)"
-                />
-              </template>
-            </el-table-column>
-          </el-table>
+          <!-- 上游 DNS 服务器列表表格 -->
+          <div class="space-y-2">
+            <div class="flex justify-between items-center">
+              <span class="text-xs font-medium text-[var(--el-text-color-primary)]">
+                {{ t('dns.upstreamServers') }}
+              </span>
+              <el-button
+                type="primary"
+                size="small"
+                :icon="useRenderIcon(AddFill)"
+                @click="addUpstreamRow"
+              >
+                {{ t('dns.addServer') }}
+              </el-button>
+            </div>
+
+            <el-table
+              :data="upstreamList"
+              border
+              size="small"
+              class="w-full text-xs"
+              :empty-text="t('dns.noUpstreamServers')"
+            >
+              <el-table-column label="#" width="50" align="center">
+                <template #default="{ $index }">
+                  <span class="font-mono text-gray-400">{{ $index + 1 }}</span>
+                </template>
+              </el-table-column>
+              <el-table-column :label="t('dns.targetServer')" min-width="180">
+                <template #default="{ row }">
+                  <el-input
+                    v-model="row.target"
+                    placeholder="8.8.8.8:53"
+                    size="small"
+                    class="font-mono"
+                  />
+                </template>
+              </el-table-column>
+              <el-table-column :label="t('dns.weight')" width="100" align="center">
+                <template #default="{ row }">
+                  <el-input-number
+                    v-model="row.weight"
+                    :min="1"
+                    :max="100"
+                    :disabled="isWeightDisabled"
+                    size="small"
+                    controls-position="right"
+                    class="w-full!"
+                  />
+                </template>
+              </el-table-column>
+              <el-table-column :label="t('dns.operation')" width="65" align="center">
+                <template #default="{ $index }">
+                  <el-button
+                    type="danger"
+                    link
+                    size="small"
+                    :icon="useRenderIcon(Delete)"
+                    @click="removeUpstreamRow($index)"
+                  />
+                </template>
+              </el-table-column>
+            </el-table>
+          </div>
         </div>
       </div>
-    </div>
+    </el-card>
   </el-form>
 </template>
 
 <style scoped lang="scss">
-:deep(.el-form-item) {
+.dns-form :deep(.el-form-item) {
   margin-bottom: 14px;
 }
-:deep(.el-form-item__label) {
-  white-space: nowrap;
+
+@media (max-width: 640px) {
+  .dns-form :deep(.el-form-item) {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+  .dns-form :deep(.el-form-item__label) {
+    justify-content: flex-start;
+    margin-bottom: 4px;
+    width: 100% !important;
+  }
 }
 </style>

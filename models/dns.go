@@ -16,10 +16,23 @@ type DnsProxy struct {
 	UpstreamMethod  string    `xorm:"varchar(50) 'upstream_method'" json:"upstream_method"` // "round_robin", "weight", "failover", "random"
 	UpstreamServers string    `xorm:"text 'upstream_servers'" json:"upstream_servers"` // JSON string array of servers [{"target":"8.8.8.8:53","weight":1}]
 	Remark          string    `xorm:"varchar(255) 'remark'" json:"remark"`
-	CreatedAt       time.Time `xorm:"created 'created_at'" json:"created_at"`
-	UpdatedAt       time.Time `xorm:"updated 'updated_at'" json:"updated_at"`
+	CreatedAt       time.Time `xorm:"created" json:"created_at"`
+	UpdatedAt       time.Time `xorm:"updated" json:"updated_at"`
 }
 
 func (DnsProxy) TableName() string {
 	return "dns_proxy"
+}
+
+func (d *DnsProxy) BeforeInsert() {
+	if d.CreatedAt.IsZero() {
+		d.CreatedAt = time.Now()
+	}
+	if d.UpdatedAt.IsZero() {
+		d.UpdatedAt = time.Now()
+	}
+}
+
+func (d *DnsProxy) BeforeUpdate() {
+	d.UpdatedAt = time.Now()
 }

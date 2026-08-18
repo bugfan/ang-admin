@@ -2,35 +2,43 @@
 import { ref } from "vue";
 import { useI18n } from "vue-i18n";
 import { useDnsProxy } from "./utils/hook";
+import editForm from "./form/index.vue";
 import { PureTableBar } from "@/components/RePureTableBar";
 import { useRenderIcon } from "@/components/ReIcon/src/hooks";
+import { message } from "@/utils/message";
+import { createDns, updateDns } from "@/api/dns";
 
 import Delete from "~icons/ep/delete";
 import EditPen from "~icons/ep/edit-pen";
 import AddFill from "~icons/ri/add-circle-line";
+import BackIcon from "~icons/ep/back";
+import CheckIcon from "~icons/ep/check";
+import CloseIcon from "~icons/ep/close";
 
 defineOptions({
   name: "AppDns"
 });
 
 const { t } = useI18n();
-const formRef = ref();
+const searchFormRef = ref();
 const tableRef = ref();
+const createEditFormRef = ref();
+
+// View Mode: 'list' | 'new' | 'edit'
+const showView = ref<"list" | "new" | "edit">("list");
+const formInline = ref<any>({});
+const saving = ref(false);
 
 const {
   form,
   loading,
   columns,
   dataList,
-
   selectedNum,
   pagination,
-  deviceDetection,
   onSearch,
   resetForm,
   onbatchDel,
-  openDialog,
-
   handleDelete,
   handleSizeChange,
   onSelectionCancel,
@@ -57,14 +65,12 @@ function parseHostsJSON(hostsJsonStr: string) {
     // ignore
   }
 
-  // Group A (IPv4) domains by IP
   const aGroupMap: Record<string, string[]> = {};
   for (const [domain, ip] of Object.entries(aMap)) {
     if (!aGroupMap[ip]) aGroupMap[ip] = [];
     if (!aGroupMap[ip].includes(domain)) aGroupMap[ip].push(domain);
   }
 
-  // Group AAAA (IPv6) domains by IP
   const aaaaGroupMap: Record<string, string[]> = {};
   for (const [domain, ip] of Object.entries(aaaaMap)) {
     if (!aaaaGroupMap[ip]) aaaaGroupMap[ip] = [];
@@ -112,25 +118,114 @@ function parseUpstreamServers(serversStr: string) {
   }
   return [];
 }
+
+function getDefaultFormInline() {
+  return {
+    title: t("dns.addDns"),
+    id: undefined,
+    address: "0.0.0.0",
+    port: "53",
+    rules: JSON.stringify(["ip_matcher"]),
+    tunnel_type: "quic",
+    tunnel_id: "",
+    tunnel_token: "",
+    upstream_method: "round_robin",
+    upstream_servers: JSON.stringify([{ target: "1.1.1.1:53", weight: 1 }]),
+    hosts_text: "127.0.0.1 localhost\n::1 localhost",
+    hosts_json: JSON.stringify({ A: { localhost: "127.0.0.1" }, AAAA: { localhost: "::1" } }),
+    remark: ""
+  };
+}
+
+function getFormInlineFromRow(row: any) {
+  return {
+    title: `${t("dns.editDns")} [ID: ${row?.Id || row?.id}]`,
+    id: row?.Id ?? row?.id ?? undefined,
+    address: row?.Address ?? row?.address ?? "0.0.0.0",
+    port: row?.Port ?? row?.port ?? "53",
+    rules: row?.Rules ?? row?.rules ?? JSON.stringify(["ip_matcher"]),
+    tunnel_type: row?.TunnelType ?? row?.tunnel_type ?? "quic",
+    tunnel_id: row?.TunnelId ?? row?.tunnel_id ?? "",
+    tunnel_token: row?.TunnelToken ?? row?.tunnel_token ?? "",
+    upstream_method: row?.UpstreamMethod ?? row?.upstream_method ?? "round_robin",
+    upstream_servers: row?.UpstreamServers ?? row?.upstream_servers ?? JSON.stringify([{ target: "1.1.1.1:53", weight: 1 }]),
+    hosts_text: row?.HostsText ?? row?.hosts_text ?? "",
+    hosts_json: row?.HostsJSON ?? row?.hosts_json ?? JSON.stringify({ A: {}, AAAA: {} }),
+    remark: row?.Remark ?? row?.remark ?? ""
+  };
+}
+
+function handleAddPage() {
+  formInline.value = getDefaultFormInline();
+  showView.value = "new";
+}
+
+function handleEditPage(row: any) {
+  formInline.value = getFormInlineFromRow(row);
+  showView.value = "edit";
+}
+
+function handleCancelPage() {
+  showView.value = "list";
+}
+
+async function handleSaveSubmit() {
+  if (!createEditFormRef.value) return;
+  if (createEditFormRef.value.parseHostsTextToJSON) {
+    createEditFormRef.value.parseHostsTextToJSON();
+  }
+  const FormRef = createEditFormRef.value.getRef();
+  if (!FormRef) return;
+
+  FormRef.validate(async (valid: boolean) => {
+    if (valid) {
+      saving.value = true;
+      try {
+        const curData = formInline.value;
+        if (showView.value === "new") {
+          const { code, message: msg } = await createDns(curData);
+          if (code !== 0) {
+            message(msg, { type: "error" });
+            return;
+          }
+          message(`${t("dns.addDns")} ${t("dns.success")}`, { type: "success" });
+        } else {
+          const { code, message: msg } = await updateDns(curData);
+          if (code !== 0) {
+            message(msg, { type: "error" });
+            return;
+          }
+          message(`${t("dns.editDns")} ${t("dns.success")}`, { type: "success" });
+        }
+        showView.value = "list";
+        onSearch();
+      } catch (e: any) {
+        message(e.message || "提交失败", { type: "error" });
+      } finally {
+        saving.value = false;
+      }
+    }
+  });
+}
 </script>
 
 <template>
-  <div :class="['flex', 'justify-between', deviceDetection() && 'flex-wrap']">
-    <div class="w-full">
+  <div class="main">
+    <!-- List View Mode -->
+    <div v-if="showView === 'list'">
       <!-- 顶部的多条件搜索表单 -->
       <el-form
-        ref="formRef"
+        ref="searchFormRef"
         :inline="true"
         :model="form"
-        :size="deviceDetection() ? 'small' : 'default'"
-        class="search-form bg-bg_color w-full px-4 pt-4 mb-2 rounded overflow-auto"
+        class="search-form bg-bg_color w-full px-3 sm:px-6 pt-3 pb-1 overflow-auto mb-3 rounded-xl border border-[var(--el-border-color-lighter)] shadow-2xs"
       >
         <el-form-item :label="t('dns.port')" prop="port">
           <el-input
             v-model="form.port"
             :placeholder="t('dns.searchPortPlaceholder')"
             clearable
-            class="w-36! sm:w-44!"
+            class="w-full sm:!w-[180px]"
             @keyup.enter="onSearch"
             @clear="onSearch"
           />
@@ -141,7 +236,7 @@ function parseUpstreamServers(serversStr: string) {
             v-model="form.address"
             :placeholder="t('dns.searchAddressPlaceholder')"
             clearable
-            class="w-36! sm:w-44!"
+            class="w-full sm:!w-[180px]"
             @keyup.enter="onSearch"
             @clear="onSearch"
           />
@@ -150,15 +245,15 @@ function parseUpstreamServers(serversStr: string) {
         <el-form-item>
           <el-button
             type="primary"
-            :icon="useRenderIcon('ri/search-line')"
+            :icon="useRenderIcon('ri:search-line')"
             :loading="loading"
             @click="onSearch"
           >
             {{ t('dns.search') }}
           </el-button>
           <el-button
-            :icon="useRenderIcon('ri/refresh-line')"
-            @click="resetForm(formRef)"
+            :icon="useRenderIcon('ri:refresh-line')"
+            @click="resetForm(searchFormRef)"
           >
             {{ t('dns.reset') }}
           </el-button>
@@ -175,7 +270,7 @@ function parseUpstreamServers(serversStr: string) {
           <el-button
             type="primary"
             :icon="useRenderIcon(AddFill)"
-            @click="openDialog(t('dns.addDns'))"
+            @click="handleAddPage"
           >
             {{ t('dns.addDns') }}
           </el-button>
@@ -183,59 +278,54 @@ function parseUpstreamServers(serversStr: string) {
         <template v-slot="{ size, dynamicColumns }">
           <div
             v-if="selectedNum > 0"
-            v-motion-fade
-            class="bg-(--el-fill-color-light) w-full h-11.5 mb-2 pl-4 flex items-center"
+            class="bg-[var(--el-color-primary-light-9)] text-[var(--el-color-primary)] border border-[var(--el-color-primary-light-7)] px-4 py-2 rounded-lg text-sm mb-3 flex items-center justify-between"
           >
-            <div class="flex-auto">
-              <span
-                style="font-size: var(--el-font-size-base)"
-                class="text-[rgba(42,46,54,0.5)] dark:text-[rgba(220,220,242,0.5)]"
-              >
-                {{ t('dns.selected') }} {{ selectedNum }} {{ t('dns.items') }}
-              </span>
-              <el-button type="primary" text @click="onSelectionCancel">
+            <span>{{ t('dns.selected') }} {{ selectedNum }} {{ t('dns.items') }}</span>
+            <div>
+              <el-button type="primary" link size="small" @click="onSelectionCancel">
                 {{ t('dns.cancelSelection') }}
               </el-button>
+              <el-popconfirm :title="t('dns.confirmDelete')" @confirm="onbatchDel">
+                <template #reference>
+                  <el-button type="danger" link size="small">
+                    {{ t('dns.batchDelete') }}
+                  </el-button>
+                </template>
+              </el-popconfirm>
             </div>
-            <el-popconfirm :title="t('dns.confirmDelete')" @confirm="onbatchDel">
-              <template #reference>
-                <el-button type="danger" text class="mr-1!">
-                  {{ t('dns.batchDelete') }}
-                </el-button>
-              </template>
-            </el-popconfirm>
           </div>
 
           <pure-table
             ref="tableRef"
-            :row-key="(row) => row.Id || row.id"
-            adaptive
-            :adaptiveConfig="{ offsetBottom: 108 }"
+            row-key="id"
             align-whole="center"
             table-layout="auto"
             :loading="loading"
             :size="size"
+            :adaptive="true"
             :data="dataList"
             :columns="dynamicColumns"
-            :pagination="{ ...pagination, size }"
+            :pagination="pagination"
+            :paginationSmall="size === 'small'"
             :header-cell-style="{
               background: 'var(--el-fill-color-light)',
-              color: 'var(--el-text-color-primary)'
+              color: 'var(--el-text-color-primary)',
+              fontWeight: 'bold'
             }"
             @selection-change="handleSelectionChange"
             @page-size-change="handleSizeChange"
             @page-current-change="handleCurrentChange"
           >
-            <!-- 1. Hosts 域名映射列 (带 Popover 悬浮明细) -->
+            <!-- 1. Hosts 域名映射列 -->
             <template #hosts="{ row }">
               <el-popover placement="top" :width="360" trigger="hover">
                 <template #reference>
                   <div class="inline-flex items-center gap-1.5 cursor-pointer">
                     <template v-if="parseHostsJSON(row.hosts_json || row.HostsJSON).aCount > 0 || parseHostsJSON(row.hosts_json || row.HostsJSON).aaaaCount > 0">
-                      <el-tag size="small" type="primary" effect="light" class="font-mono">
+                      <el-tag size="small" type="primary" effect="light" class="font-mono font-bold">
                         A: {{ parseHostsJSON(row.hosts_json || row.HostsJSON).aCount }}
                       </el-tag>
-                      <el-tag size="small" type="success" effect="light" class="font-mono">
+                      <el-tag size="small" type="success" effect="light" class="font-mono font-bold">
                         AAAA: {{ parseHostsJSON(row.hosts_json || row.HostsJSON).aaaaCount }}
                       </el-tag>
                     </template>
@@ -269,10 +359,10 @@ function parseUpstreamServers(serversStr: string) {
                       <div
                         v-for="item in parseHostsJSON(row.hosts_json || row.HostsJSON).aList"
                         :key="item.ip"
-                        class="p-1.5 bg-gray-50 dark:bg-gray-700/50 rounded font-mono flex items-center justify-between gap-2 border border-gray-100 dark:border-gray-600 text-xs overflow-hidden"
+                        class="p-1.5 bg-[var(--el-fill-color-light)] rounded font-mono flex items-center justify-between gap-2 border border-[var(--el-border-color-lighter)] text-xs overflow-hidden"
                       >
                         <span class="font-semibold text-blue-600 dark:text-blue-400 shrink-0">{{ item.ip }}</span>
-                        <span class="text-gray-700 dark:text-gray-200 font-medium truncate text-right" :title="item.domains.join(' ')">
+                        <span class="text-[var(--el-text-color-primary)] font-medium truncate text-right" :title="item.domains.join(' ')">
                           {{ formatDomains(item.domains) }}
                         </span>
                       </div>
@@ -284,10 +374,10 @@ function parseUpstreamServers(serversStr: string) {
                       <div
                         v-for="item in parseHostsJSON(row.hosts_json || row.HostsJSON).aaaaList"
                         :key="item.ip"
-                        class="p-1.5 bg-gray-50 dark:bg-gray-700/50 rounded font-mono flex items-center justify-between gap-2 border border-gray-100 dark:border-gray-600 text-xs overflow-hidden"
+                        class="p-1.5 bg-[var(--el-fill-color-light)] rounded font-mono flex items-center justify-between gap-2 border border-[var(--el-border-color-lighter)] text-xs overflow-hidden"
                       >
                         <span class="font-semibold text-emerald-600 dark:text-emerald-400 shrink-0">{{ item.ip }}</span>
-                        <span class="text-gray-700 dark:text-gray-200 font-medium truncate text-right" :title="item.domains.join(' ')">
+                        <span class="text-[var(--el-text-color-primary)] font-medium truncate text-right" :title="item.domains.join(' ')">
                           {{ formatDomains(item.domains) }}
                         </span>
                       </div>
@@ -297,12 +387,11 @@ function parseUpstreamServers(serversStr: string) {
               </el-popover>
             </template>
 
-            <!-- 2. 上游 (Backend) 列 (带 Popover 悬浮明细) -->
+            <!-- 2. 上游 (Backend) 列 -->
             <template #backend="{ row }">
               <el-popover placement="top" :width="380" trigger="hover">
                 <template #reference>
                   <div class="inline-flex items-center gap-1.5 flex-wrap cursor-pointer">
-                    <!-- Tunnel 标签 -->
                     <el-tag
                       v-if="row.tunnel_id || row.TunnelId"
                       type="primary"
@@ -314,7 +403,6 @@ function parseUpstreamServers(serversStr: string) {
                       Tunnel #{{ row.tunnel_id || row.TunnelId }} ({{ (row.tunnel_type || row.TunnelType || 'quic').toUpperCase() }})
                     </el-tag>
 
-                    <!-- Upstream 标签 -->
                     <el-tag
                       v-if="parseUpstreamServers(row.upstream_servers || row.UpstreamServers).length > 0"
                       type="success"
@@ -356,7 +444,6 @@ function parseUpstreamServers(serversStr: string) {
                   </div>
 
                   <div v-else class="space-y-2.5 max-h-60 overflow-auto">
-                    <!-- Tunnel 信息 -->
                     <div v-if="row.tunnel_id || row.TunnelId" class="p-2 bg-blue-50/60 dark:bg-blue-900/20 rounded border border-blue-100 dark:border-blue-800/40">
                       <div class="font-semibold text-blue-600 dark:text-blue-400 text-[11px] mb-1 inline-flex items-center gap-1">
                         <IconifyIconOffline icon="ri:route-line" />
@@ -368,7 +455,6 @@ function parseUpstreamServers(serversStr: string) {
                       </div>
                     </div>
 
-                    <!-- Upstream 服务器列表 -->
                     <div v-if="parseUpstreamServers(row.upstream_servers || row.UpstreamServers).length > 0" class="space-y-1">
                       <div class="font-semibold text-emerald-600 dark:text-emerald-400 text-[11px] flex justify-between items-center">
                         <span class="inline-flex items-center gap-1">
@@ -380,7 +466,7 @@ function parseUpstreamServers(serversStr: string) {
                       <div
                         v-for="(s, idx) in parseUpstreamServers(row.upstream_servers || row.UpstreamServers)"
                         :key="idx"
-                        class="p-1.5 bg-gray-50 dark:bg-gray-700/50 rounded font-mono flex justify-between items-center border border-gray-100 dark:border-gray-600"
+                        class="p-1.5 bg-[var(--el-fill-color-light)] rounded font-mono flex justify-between items-center border border-[var(--el-border-color-lighter)]"
                       >
                         <span class="text-blue-600 dark:text-blue-400 font-medium truncate mr-2">{{ s.target }}</span>
                         <el-tag size="small" type="info" effect="plain" class="font-mono scale-90 origin-right">
@@ -393,12 +479,11 @@ function parseUpstreamServers(serversStr: string) {
               </el-popover>
             </template>
 
-            <!-- 3. 折叠展开明细行 (Hosts 配置在前，Upstream 服务器在后) -->
+            <!-- 3. 折叠展开明细行 -->
             <template #expand="{ row }">
-              <div class="p-3 sm:p-4 bg-gray-50/80 dark:bg-gray-800/60 rounded-md my-2 mx-2 sm:mx-4 border border-gray-200/60 dark:border-gray-700 space-y-3 text-xs">
-                <!-- Raw Hosts 文本明细 (置于最前) -->
+              <div class="p-3 sm:p-4 bg-[var(--el-fill-color-light)] rounded-xl my-1 sm:my-2 mx-1 sm:mx-4 border border-[var(--el-border-color-lighter)] space-y-3 text-xs">
                 <div v-if="row.hosts_text || parseHostsJSON(row.hosts_json || row.HostsJSON).aCount > 0 || parseHostsJSON(row.hosts_json || row.HostsJSON).aaaaCount > 0" class="space-y-1.5">
-                  <div class="font-bold text-gray-800 dark:text-gray-200 flex items-center justify-between">
+                  <div class="font-bold text-[var(--el-text-color-primary)] flex items-center justify-between flex-wrap gap-1">
                     <span class="inline-flex items-center gap-1">
                       <IconifyIconOffline icon="ri:file-text-line" />
                       {{ t('dns.hostsTab') }}:
@@ -407,13 +492,12 @@ function parseUpstreamServers(serversStr: string) {
                       A: {{ parseHostsJSON(row.hosts_json || row.HostsJSON).aCount }} / AAAA: {{ parseHostsJSON(row.hosts_json || row.HostsJSON).aaaaCount }}
                     </span>
                   </div>
-                  <pre v-if="row.hosts_text" class="p-2 bg-gray-900 text-gray-100 rounded text-xs font-mono overflow-auto max-h-40 leading-relaxed">{{ row.hosts_text }}</pre>
+                  <pre v-if="row.hosts_text" class="p-3 bg-gray-900 text-gray-100 rounded-lg text-xs font-mono overflow-auto max-h-40 leading-relaxed">{{ row.hosts_text }}</pre>
                   <div v-else class="text-gray-400 text-xs">{{ t('dns.noHostsConfig') }}</div>
                 </div>
 
-                <!-- Upstream 上游服务器明细 (置于 Hosts 之后) -->
                 <div v-if="parseUpstreamServers(row.upstream_servers || row.UpstreamServers).length > 0" class="space-y-1.5">
-                  <div class="font-bold text-gray-800 dark:text-gray-200 flex items-center justify-between">
+                  <div class="font-bold text-[var(--el-text-color-primary)] flex items-center justify-between flex-wrap gap-1">
                     <span class="inline-flex items-center gap-1">
                       <IconifyIconOffline icon="ri:global-line" />
                       {{ t('dns.upstreamServersTitle') }} ({{ t('dns.strategy') }}: {{ row.upstream_method || row.UpstreamMethod || 'round_robin' }})
@@ -432,14 +516,14 @@ function parseUpstreamServers(serversStr: string) {
                         <span class="font-mono text-gray-400">{{ $index + 1 }}</span>
                       </template>
                     </el-table-column>
-                    <el-table-column prop="target" label="服务器 Target (IP/Port 或 DoH)" min-width="240">
+                    <el-table-column prop="target" label="服务器 Target (IP/Port 或 DoH)" min-width="180">
                       <template #default="{ row: s }">
                         <span class="font-mono font-semibold text-blue-600 dark:text-blue-400">
                           {{ s.target }}
                         </span>
                       </template>
                     </el-table-column>
-                    <el-table-column prop="weight" label="权重 Weight" width="100" align="center">
+                    <el-table-column prop="weight" label="权重 Weight" width="90" align="center">
                       <template #default="{ row: s }">
                         <el-tag size="small" type="info" effect="plain" class="font-mono">
                           {{ s.weight }}
@@ -453,14 +537,14 @@ function parseUpstreamServers(serversStr: string) {
 
             <!-- 操作列 -->
             <template #operation="{ row }">
-              <div class="flex items-center justify-center whitespace-nowrap space-x-1">
+              <div class="flex items-center justify-center space-x-1">
                 <el-button
                   class="reset-margin"
                   link
                   type="primary"
                   :size="size"
                   :icon="useRenderIcon(EditPen)"
-                  @click="openDialog(t('dns.editDns'), row)"
+                  @click="handleEditPage(row)"
                 >
                   {{ t('dns.edit') }}
                 </el-button>
@@ -472,7 +556,7 @@ function parseUpstreamServers(serversStr: string) {
                     <el-button
                       class="reset-margin"
                       link
-                      type="primary"
+                      type="danger"
                       :size="size"
                       :icon="useRenderIcon(Delete)"
                     >
@@ -486,38 +570,79 @@ function parseUpstreamServers(serversStr: string) {
         </template>
       </PureTableBar>
     </div>
+
+    <!-- Create / Edit Full Page View Mode -->
+    <div v-else-if="showView === 'new' || showView === 'edit'" class="p-3 sm:p-5 bg-bg_color rounded-xl border border-[var(--el-border-color-lighter)] shadow-2xs">
+      <!-- Full Page Header Bar -->
+      <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-4 mb-4 border-b border-[var(--el-border-color-lighter)]">
+        <div class="flex items-center space-x-3">
+          <el-button
+            circle
+            :icon="useRenderIcon(BackIcon)"
+            title="返回 DNS 列表"
+            @click="handleCancelPage"
+          />
+          <div>
+            <h2 class="text-base sm:text-lg font-bold text-[var(--el-text-color-primary)]">
+              {{ formInline.title }}
+            </h2>
+            <div class="text-xs text-[var(--el-text-color-secondary)] mt-0.5">
+              配置 DNS 代理监听端口、传输层规则过滤 (Rule)、本地 Hosts 静态解析与 Backend 上游服务器
+            </div>
+          </div>
+        </div>
+
+        <div class="flex items-center space-x-2 sm:space-x-3 shrink-0 self-end sm:self-auto">
+          <el-button
+            :icon="useRenderIcon(CloseIcon)"
+            @click="handleCancelPage"
+          >
+            取消
+          </el-button>
+          <el-button
+            type="primary"
+            :loading="saving"
+            :icon="useRenderIcon(CheckIcon)"
+            @click="handleSaveSubmit"
+          >
+            保存
+          </el-button>
+        </div>
+      </div>
+
+      <!-- Form Component Embedded Directly -->
+      <editForm ref="createEditFormRef" :formInline="formInline" />
+
+      <!-- Bottom Action Bar -->
+      <div class="flex items-center justify-end space-x-3 pt-4 mt-4 border-t border-[var(--el-border-color-lighter)]">
+        <el-button
+          :icon="useRenderIcon(CloseIcon)"
+          @click="handleCancelPage"
+        >
+          取消
+        </el-button>
+        <el-button
+          type="primary"
+          :loading="saving"
+          :icon="useRenderIcon(CheckIcon)"
+          @click="handleSaveSubmit"
+        >
+          保存
+        </el-button>
+      </div>
+    </div>
   </div>
 </template>
 
-<style lang="scss" scoped>
-:deep(.el-dropdown-menu__item i) {
-  margin: 0;
+<style scoped>
+.search-form :deep(.el-form-item) {
+  margin-bottom: 12px;
 }
 
-:deep(.el-button:focus-visible) {
-  outline: none;
-}
-
-.search-form {
-  :deep(.el-form-item) {
-    margin-bottom: 12px;
-    margin-right: 16px;
-  }
-  :deep(.el-form-item__label) {
-    font-size: 13px;
-    white-space: nowrap;
-    font-weight: 500;
-    padding-right: 8px;
-    text-align: left;
-    justify-content: flex-start;
-  }
-  :deep(.el-input__inner),
-  :deep(.el-select__wrapper) {
-    font-size: 12px;
-  }
-  :deep(.el-input__inner::placeholder),
-  :deep(.el-select__placeholder) {
-    font-size: 12px;
+@media (max-width: 640px) {
+  .search-form :deep(.el-form-item) {
+    margin-right: 0;
+    width: 100%;
   }
 }
 </style>

@@ -58,7 +58,7 @@ export function useRule(t: any, tableRef: Ref) {
       }
     },
     {
-      label: "包含条目数",
+      label: t("rule.itemCount"),
       minWidth: 160,
       cellRenderer: scope => {
         const itemsStr = scope.row.Items || scope.row.items || "";
@@ -70,7 +70,7 @@ export function useRule(t: any, tableRef: Ref) {
 
         return (
           <el-tag size="small" type="primary" effect="light" class="font-mono font-medium">
-            包含 {count} 条 Matcher+Action 条目
+            {t("rule.itemCountTag", { count })}
           </el-tag>
         );
       }
@@ -84,9 +84,9 @@ export function useRule(t: any, tableRef: Ref) {
     {
       label: t("rule.createTime") || "创建时间",
       minWidth: 160,
-      prop: "CreatedAt",
+      prop: "created_at",
       formatter: (row) => {
-        const timeVal = row.CreatedAt || row.created_at;
+        const timeVal = row.created_at || row.CreatedAt;
         return timeVal && dayjs(timeVal).isValid() && dayjs(timeVal).year() > 1
           ? dayjs(timeVal).format("YYYY-MM-DD HH:mm:ss")
           : "-";

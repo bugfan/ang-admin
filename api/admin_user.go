@@ -314,6 +314,16 @@ func AsyncRoutesHandler(c *gin.Context) {
 							"roles": []string{"admin", "common"},
 						},
 					},
+					{
+						"path":      "/app/http",
+						"name":      "AppHttpProxy",
+						"component": "app/http/index",
+						"meta": gin.H{
+							"icon":  "ri:earth-line",
+							"title": "menus.pureHttpProxy",
+							"roles": []string{"admin", "common"},
+						},
+					},
 				},
 			},
 

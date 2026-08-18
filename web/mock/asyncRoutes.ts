@@ -55,6 +55,16 @@ const appRouter = {
         title: "menus.pureRule",
         roles: ["admin", "common"]
       }
+    },
+    {
+      path: "/app/http",
+      name: "AppHttpProxy",
+      component: "app/http/index",
+      meta: {
+        icon: "ri:earth-line",
+        title: "menus.pureHttpProxy",
+        roles: ["admin", "common"]
+      }
     }
   ]
 };

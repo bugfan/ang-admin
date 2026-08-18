@@ -1,8 +1,9 @@
 <script setup lang="ts">
-import { ref, reactive, watch, computed } from "vue";
+import { ref, reactive, watch } from "vue";
 import ReCol from "@/components/ReCol";
 import { useI18n } from "vue-i18n";
 import { useRenderIcon } from "@/components/ReIcon/src/hooks";
+import { deviceDetection } from "@pureadmin/utils";
 import draggable from "vuedraggable";
 
 import AddFill from "~icons/ri/add-line";
@@ -23,7 +24,7 @@ interface RuleItemConfig {
 
 const props = withDefaults(defineProps<{ formInline: any }>(), {
   formInline: () => ({
-    title: "新增规则",
+    title: "",
     id: undefined,
     name: "",
     items: JSON.stringify([
@@ -36,22 +37,23 @@ const props = withDefaults(defineProps<{ formInline: any }>(), {
   })
 });
 
+const { t } = useI18n();
+
 const ruleFormRef = ref();
 const newFormInline = ref(props.formInline);
-const { t } = useI18n();
 
 // Supported Matcher options
 const matcherOptions = [
   {
-    label: "TCP / L4 IP 匹配器 (ip_matcher)",
+    label: "TCP / L4 IP (ip_matcher)",
     value: "ip_matcher",
-    tag: "L4 传输层",
+    tag: "L4",
     tagType: "primary"
   },
   {
-    label: "HTTP Proxy IP 匹配器 (http_ip_matcher)",
+    label: "HTTP Proxy IP (http_ip_matcher)",
     value: "http_ip_matcher",
-    tag: "HTTP 应用层",
+    tag: "HTTP",
     tagType: "success"
   }
 ];
@@ -59,15 +61,15 @@ const matcherOptions = [
 // Supported Action options
 const actionOptions = [
   {
-    label: "TCP 终止并重置连接 (reset_conn_action)",
+    label: "TCP Reset (reset_conn_action)",
     value: "reset_conn_action",
-    tag: "L4 传输层",
+    tag: "L4",
     tagType: "danger"
   },
   {
-    label: "HTTP 隐藏 Server 版本 (hide_version_action)",
+    label: "HTTP Hide Version (hide_version_action)",
     value: "hide_version_action",
-    tag: "HTTP 应用层",
+    tag: "HTTP",
     tagType: "warning"
   }
 ];
@@ -248,14 +250,14 @@ function getMatcherSummary(item: RuleItemConfig): { name: string; tagType: strin
     return {
       name: "http_ip_matcher",
       tagType: "success",
-      summary: lines.length > 0 ? `${lines[0]}${lines.length > 1 ? ` 等 ${lines.length} 项` : ""}` : "未配置 IP"
+      summary: lines.length > 0 ? `${lines[0]}${lines.length > 1 ? ` (${lines.length})` : ""}` : "No IP"
     };
   }
   const lines = item.ipAddressText.split("\n").filter(s => s.trim());
   return {
     name: "ip_matcher",
     tagType: "primary",
-    summary: lines.length > 0 ? `${lines[0]}${lines.length > 1 ? ` 等 ${lines.length} 项` : ""}` : "未配置 IP"
+    summary: lines.length > 0 ? `${lines[0]}${lines.length > 1 ? ` (${lines.length})` : ""}` : "No IP"
   };
 }
 
@@ -264,20 +266,20 @@ function getActionSummary(item: RuleItemConfig): { name: string; tagType: string
     return {
       name: "hide_version_action",
       tagType: "warning",
-      summary: "隐藏 Server 版本号"
+      summary: "Hide Server Version"
     };
   }
   return {
     name: "reset_conn_action",
     tagType: "danger",
-    summary: item.resetContent ? `重写消息: ${item.resetContent}` : "终止连接"
+    summary: item.resetContent ? `Msg: ${item.resetContent}` : "Reset Connection"
   };
 }
 
 watch(itemList, () => syncToFormJSON(), { deep: true });
 
 const rules = reactive({
-  name: [{ required: true, message: "请输入规则组名称", trigger: "blur" }]
+  name: [{ required: true, message: () => t("rule.nameRequired"), trigger: "blur" }]
 });
 
 function getRef() {
@@ -293,31 +295,31 @@ defineExpose({ getRef });
     :model="newFormInline"
     :rules="rules"
     label-width="110px"
-    class="rule-form px-1 py-1"
+    class="rule-form px-1 sm:px-2 py-1"
   >
     <!-- Section 1: Basic Info -->
-    <el-card shadow="never" class="mb-4 !border-[var(--el-border-color-lighter)] rounded-lg">
+    <el-card shadow="never" class="mb-4 !border-[var(--el-border-color-lighter)] rounded-xl">
       <template #header>
         <div class="flex items-center space-x-2">
-          <div class="w-1 h-3.5 bg-[var(--el-color-primary)] rounded-full"></div>
-          <span class="font-bold text-[var(--el-text-color-primary)] text-sm">1. 规则组基本属性</span>
+          <div class="w-1.5 h-4 bg-[var(--el-color-primary)] rounded-full"></div>
+          <span class="font-bold text-[var(--el-text-color-primary)] text-sm sm:text-base">{{ t("rule.basicAttr") }}</span>
         </div>
       </template>
-      <el-row :gutter="20">
+      <el-row :gutter="16">
         <re-col :value="12" :xs="24">
-          <el-form-item label="规则组名称" prop="name">
+          <el-form-item :label="t('rule.name')" prop="name">
             <el-input
               v-model="newFormInline.name"
-              placeholder="请输入规则组名称 (如: 内网安全与访问控制策略)"
+              :placeholder="t('rule.nameRequired')"
               clearable
             />
           </el-form-item>
         </re-col>
         <re-col :value="12" :xs="24">
-          <el-form-item label="备注说明" prop="remark">
+          <el-form-item :label="t('rule.remark')" prop="remark">
             <el-input
               v-model="newFormInline.remark"
-              placeholder="选填"
+              :placeholder="t('rule.remarkPlaceholder')"
               clearable
             />
           </el-form-item>
@@ -326,43 +328,44 @@ defineExpose({ getRef });
     </el-card>
 
     <!-- Section 2: Compact Item List with Scrollbar & Drag-and-Drop -->
-    <el-card shadow="never" class="mb-4 !border-[var(--el-border-color-lighter)] rounded-lg">
+    <el-card shadow="never" class="mb-4 !border-[var(--el-border-color-lighter)] rounded-xl">
       <template #header>
-        <div class="flex items-center justify-between">
-          <div class="flex items-center space-x-2">
-            <div class="w-1 h-3.5 bg-[var(--el-color-primary)] rounded-full"></div>
-            <span class="font-bold text-[var(--el-text-color-primary)] text-sm">2. 规则条目清单</span>
-            <el-tag size="small" type="primary" effect="plain" class="font-mono">共 {{ itemList.length }} 条</el-tag>
-            <span class="text-xs text-[var(--el-text-color-secondary)] hidden sm:inline-block">(按住拖拽或点击微调图标排序)</span>
+        <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
+          <div class="flex items-center space-x-2 flex-wrap">
+            <div class="w-1.5 h-4 bg-[var(--el-color-primary)] rounded-full"></div>
+            <span class="font-bold text-[var(--el-text-color-primary)] text-sm sm:text-base">{{ t("rule.itemListTitle") }}</span>
+            <el-tag size="small" type="primary" effect="plain" class="font-mono">{{ t("rule.totalItems", { count: itemList.length }) }}</el-tag>
+            <span class="text-xs text-[var(--el-text-color-secondary)] hidden sm:inline-block">{{ t("rule.dragTip") }}</span>
           </div>
           <el-button
             type="primary"
             size="small"
             :icon="useRenderIcon(AddFill)"
+            class="self-start sm:self-auto shrink-0"
             @click="openAddItemDialog"
           >
-            添加规则条目
+            {{ t("rule.addItem") }}
           </el-button>
         </div>
       </template>
 
       <!-- Sleek Custom Scrollbar Container -->
-      <el-scrollbar max-height="280px" class="item-scrollbar pr-1">
+      <el-scrollbar max-height="320px" class="item-scrollbar pr-1">
         <draggable
           v-model="itemList"
           item-key="id"
           handle=".drag-handle"
           ghost-class="opacity-40"
-          class="space-y-2 pr-1"
+          class="space-y-2.5 pr-1"
           @end="syncToFormJSON"
         >
           <template #item="{ element, index }">
             <div
-              class="flex items-center justify-between p-3 rounded-lg border border-[var(--el-border-color-lighter)] bg-[var(--el-bg-color)] hover:border-[var(--el-color-primary-light-5)] transition-all shadow-2xs"
+              class="flex flex-col sm:flex-row sm:items-center justify-between p-3 gap-2.5 rounded-xl border border-[var(--el-border-color-lighter)] bg-[var(--el-bg-color)] hover:border-[var(--el-color-primary-light-5)] transition-all shadow-2xs"
             >
               <!-- Drag Handle & Index Badge -->
               <div class="flex items-center space-x-3">
-                <span class="drag-handle cursor-move text-[var(--el-text-color-placeholder)] hover:text-[var(--el-color-primary)] p-1 rounded" title="按住拖拽调整顺序">
+                <span class="drag-handle cursor-move text-[var(--el-text-color-placeholder)] hover:text-[var(--el-color-primary)] p-1 rounded" title="Drag to reorder">
                   <component :is="useRenderIcon(DragIcon)" class="w-4 h-4" />
                 </span>
                 <el-tag size="small" type="info" effect="plain" class="font-mono font-bold">
@@ -371,7 +374,7 @@ defineExpose({ getRef });
               </div>
 
               <!-- Matcher & Action Summaries -->
-              <div class="flex-1 grid grid-cols-1 sm:grid-cols-2 gap-3 px-4">
+              <div class="flex-1 grid grid-cols-1 sm:grid-cols-2 gap-2 sm:gap-3 px-1 sm:px-3">
                 <!-- Matcher Badge & Text -->
                 <div class="flex items-center space-x-2 overflow-hidden">
                   <el-tag size="small" :type="getMatcherSummary(element).tagType as any" effect="light" class="font-mono shrink-0">
@@ -394,7 +397,7 @@ defineExpose({ getRef });
               </div>
 
               <!-- Item Row Operations -->
-              <div class="flex items-center space-x-1 shrink-0">
+              <div class="flex items-center space-x-1 shrink-0 self-end sm:self-auto border-t sm:border-t-0 border-[var(--el-border-color-lighter)] pt-2 sm:pt-0 w-full sm:w-auto justify-end">
                 <el-button
                   size="small"
                   link
@@ -416,7 +419,7 @@ defineExpose({ getRef });
                   :icon="useRenderIcon(EditPen)"
                   @click="openEditItemDialog(index)"
                 >
-                  编辑
+                  {{ t("rule.edit") }}
                 </el-button>
                 <el-button
                   size="small"
@@ -426,7 +429,7 @@ defineExpose({ getRef });
                   :icon="useRenderIcon(Delete)"
                   @click="removeItem(index)"
                 >
-                  删除
+                  {{ t("rule.delete") }}
                 </el-button>
               </div>
             </div>
@@ -434,18 +437,18 @@ defineExpose({ getRef });
         </draggable>
 
         <div v-if="itemList.length === 0" class="text-center py-6 text-xs text-[var(--el-text-color-placeholder)]">
-          暂无条目，请点击右上角“添加规则条目”
+          {{ t("rule.noItems") }}
         </div>
       </el-scrollbar>
     </el-card>
 
     <!-- Theme-aware JSON Preview Box -->
-    <div class="rounded-lg border border-[var(--el-border-color-lighter)] bg-[var(--el-fill-color-light)] p-3">
+    <div class="rounded-xl border border-[var(--el-border-color-lighter)] bg-[var(--el-fill-color-light)] p-3">
       <div class="flex items-center justify-between mb-2">
-        <span class="text-xs font-semibold text-[var(--el-text-color-secondary)]">规则组 JSON 序列化数据结构预览 (Items 数组)</span>
+        <span class="text-xs font-semibold text-[var(--el-text-color-secondary)]">{{ t("rule.jsonPreview") }}</span>
         <el-tag size="small" type="info" effect="plain" class="font-mono">JSON Preview</el-tag>
       </div>
-      <div class="bg-[var(--el-bg-color)] p-2.5 rounded border border-[var(--el-border-color-lighter)]">
+      <div class="bg-[var(--el-bg-color)] p-2.5 rounded-lg border border-[var(--el-border-color-lighter)]">
         <el-scrollbar max-height="150px" class="item-scrollbar pr-1">
           <pre class="text-[11px] text-[var(--el-text-color-primary)] font-mono whitespace-pre-wrap break-all leading-relaxed">{{ newFormInline.items }}</pre>
         </el-scrollbar>
@@ -455,8 +458,8 @@ defineExpose({ getRef });
     <!-- Nested Sub-Dialog for Adding / Editing a Single Rule Item -->
     <el-dialog
       v-model="itemDialogVisible"
-      :title="editingIndex !== null ? `编辑规则条目 (#${editingIndex + 1})` : '添加规则条目'"
-      width="640px"
+      :title="editingIndex !== null ? `${t('rule.editItem')} (#${editingIndex + 1})` : t('rule.addItem')"
+      :width="deviceDetection() ? '92%' : '640px'"
       append-to-body
       destroy-on-close
       class="item-config-dialog"
@@ -465,11 +468,11 @@ defineExpose({ getRef });
         <!-- Matcher Card -->
         <div class="p-3.5 rounded-lg border border-[var(--el-border-color-lighter)] bg-[var(--el-fill-color-light)]">
           <div class="text-xs font-bold text-[var(--el-color-primary)] mb-3 flex items-center justify-between">
-            <span class="text-sm">1. 匹配条件配置 (Matcher)</span>
+            <span class="text-sm">{{ t("rule.matcherConfigTitle") }}</span>
             <el-tag size="small" type="primary" effect="plain">Matcher</el-tag>
           </div>
 
-          <el-form-item label="选择 Matcher" label-width="110px">
+          <el-form-item :label="t('rule.selectMatcher')">
             <el-select v-model="itemForm.matcherName" class="w-full">
               <el-option
                 v-for="m in matcherOptions"
@@ -480,27 +483,27 @@ defineExpose({ getRef });
             </el-select>
           </el-form-item>
 
-          <div v-if="itemForm.matcherName === 'ip_matcher'" class="mt-2 pl-[110px]">
+          <div v-if="itemForm.matcherName === 'ip_matcher'" class="mt-2">
             <el-input
               v-model="itemForm.ipAddressText"
               type="textarea"
               :rows="3"
-              placeholder="每行一个 IP、CIDR 或 Range，例如:&#10;127.0.0.1&#10;192.168.1.0/24&#10;10.0.0.1-10.0.0.100"
+              placeholder="127.0.0.1&#10;192.168.1.0/24&#10;10.0.0.1-10.0.0.100"
             />
             <div class="text-xs text-[var(--el-text-color-secondary)] mt-1">
-              提示: 用于 TCP/UDP 传输层匹配。支持精确 IP (1.2.3.4)、CIDR (192.168.1.0/24) 或范围 (10.0.0.1-10.0.0.50)
+              {{ t("rule.matcherIpTip") }}
             </div>
           </div>
 
-          <div v-if="itemForm.matcherName === 'http_ip_matcher'" class="mt-2 pl-[110px]">
+          <div v-if="itemForm.matcherName === 'http_ip_matcher'" class="mt-2">
             <el-input
               v-model="itemForm.httpIpAddressText"
               type="textarea"
               :rows="3"
-              placeholder="每行一个 IP、CIDR 或 Range，例如:&#10;127.0.0.1&#10;192.168.1.0/24"
+              placeholder="127.0.0.1&#10;192.168.1.0/24"
             />
             <div class="text-xs text-[var(--el-text-color-secondary)] mt-1">
-              提示: 用于 HTTP 代理应用层匹配。在 ang 中注册为 http_ip_matcher
+              {{ t("rule.matcherHttpIpTip") }}
             </div>
           </div>
         </div>
@@ -508,11 +511,11 @@ defineExpose({ getRef });
         <!-- Action Card -->
         <div class="p-3.5 rounded-lg border border-[var(--el-border-color-lighter)] bg-[var(--el-fill-color-light)]">
           <div class="text-xs font-bold text-[var(--el-color-success)] mb-3 flex items-center justify-between">
-            <span class="text-sm">2. 触发动作配置 (Action)</span>
+            <span class="text-sm">{{ t("rule.actionConfigTitle") }}</span>
             <el-tag size="small" type="success" effect="plain">Action</el-tag>
           </div>
 
-          <el-form-item label="选择 Action" label-width="110px">
+          <el-form-item :label="t('rule.selectAction')">
             <el-select v-model="itemForm.actionName" class="w-full">
               <el-option
                 v-for="a in actionOptions"
@@ -523,19 +526,19 @@ defineExpose({ getRef });
             </el-select>
           </el-form-item>
 
-          <div v-if="itemForm.actionName === 'reset_conn_action'" class="mt-2 pl-[110px]">
+          <div v-if="itemForm.actionName === 'reset_conn_action'" class="mt-2">
             <el-input
               v-model="itemForm.resetContent"
-              placeholder="关闭 TCP 连接前向客户端写入的可选提示文本"
+              placeholder="Connection reset by rule"
             />
             <div class="text-xs text-[var(--el-text-color-secondary)] mt-1">
-              提示: 适用于 TCP 会话，终止连接前可选发送提示消息
+              {{ t("rule.actionResetTip") }}
             </div>
           </div>
 
           <div v-if="itemForm.actionName === 'hide_version_action'" class="mt-2">
             <el-alert
-              title="HTTP 隐藏版本号动作 (hide_version_action) 无需配置额外参数，生效后会自动将 Server 响应头重写为 '***'。"
+              :title="t('rule.actionHideVersionAlert')"
               type="info"
               :closable="false"
               show-icon
@@ -546,8 +549,8 @@ defineExpose({ getRef });
 
       <template #footer>
         <div class="flex justify-end space-x-2">
-          <el-button @click="itemDialogVisible = false">取消</el-button>
-          <el-button type="primary" @click="saveItemFromDialog">确认保存条目</el-button>
+          <el-button @click="itemDialogVisible = false">{{ t("rule.cancel") }}</el-button>
+          <el-button type="primary" @click="saveItemFromDialog">{{ t("rule.saveItem") }}</el-button>
         </div>
       </template>
     </el-dialog>
@@ -560,16 +563,15 @@ defineExpose({ getRef });
   color: var(--el-text-color-regular);
 }
 
-.item-scrollbar :deep(.el-scrollbar__bar.is-vertical) {
-  width: 5px;
-}
-.item-scrollbar :deep(.el-scrollbar__thumb) {
-  background-color: var(--el-border-color);
-  border-radius: 4px;
-  opacity: 0.6;
-}
-.item-scrollbar :deep(.el-scrollbar__thumb:hover) {
-  background-color: var(--el-color-primary);
-  opacity: 0.85;
+@media (max-width: 640px) {
+  .rule-form :deep(.el-form-item) {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+  .rule-form :deep(.el-form-item__label) {
+    justify-content: flex-start;
+    margin-bottom: 4px;
+    width: 100% !important;
+  }
 }
 </style>

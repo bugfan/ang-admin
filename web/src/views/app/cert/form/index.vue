@@ -97,17 +97,19 @@ defineExpose({ getRef });
     ref="ruleFormRef"
     :model="newFormInline"
     :rules="formRules"
-    label-width="auto"
+    label-width="120px"
+    class="cert-form px-1 sm:px-2 py-1"
   >
-    <el-row :gutter="30">
+    <el-row :gutter="16">
       <re-col :value="24" :xs="24" :sm="24">
-        <div class="mb-3 flex justify-between items-center">
-          <span class="text-xs text-gray-500">{{ t('cert.pasteOrGenTip') }}</span>
+        <div class="mb-3 flex flex-col sm:flex-row sm:items-center justify-between gap-2">
+          <span class="text-xs text-[var(--el-text-color-secondary)]">{{ t('cert.pasteOrGenTip') }}</span>
           <el-button
             type="success"
             plain
             size="small"
             :icon="useRenderIcon('ri/magic-line')"
+            class="self-start sm:self-auto shrink-0"
             @click="showGenPanel = !showGenPanel"
           >
             {{ t('cert.autoGenerate') }}
@@ -118,7 +120,7 @@ defineExpose({ getRef });
         <el-card
           v-if="showGenPanel"
           shadow="never"
-          class="mb-4 bg-gray-50 dark:bg-gray-800 border-dashed border-green-300"
+          class="mb-4 bg-gray-50 dark:bg-gray-800 border-dashed border-green-300 rounded-xl"
         >
           <template #header>
             <div class="flex items-center justify-between text-sm font-semibold">
@@ -131,7 +133,7 @@ defineExpose({ getRef });
               </el-button>
             </div>
           </template>
-          <el-form label-width="auto" size="small" class="pt-1">
+          <el-form label-width="100px" size="small" class="pt-1">
             <el-form-item :label="t('cert.genCnLabel')">
               <el-input
                 v-model="genConfig.common_name"
@@ -172,7 +174,7 @@ defineExpose({ getRef });
         </el-card>
       </re-col>
 
-      <re-col :value="24" :xs="24" :sm="24">
+      <re-col :value="12" :xs="24" :sm="12">
         <el-form-item :label="t('cert.certId')" prop="cert_id">
           <el-input
             v-model="newFormInline.cert_id"
@@ -183,7 +185,7 @@ defineExpose({ getRef });
         </el-form-item>
       </re-col>
 
-      <re-col :value="24" :xs="24" :sm="24">
+      <re-col :value="12" :xs="24" :sm="12">
         <el-form-item :label="t('cert.type')" prop="type">
           <el-select
             v-model="newFormInline.type"
@@ -208,6 +210,7 @@ defineExpose({ getRef });
             :rows="5"
             placeholder="-----BEGIN CERTIFICATE----- ... -----END CERTIFICATE-----"
             clearable
+            class="font-mono text-xs"
           />
         </el-form-item>
       </re-col>
@@ -220,6 +223,7 @@ defineExpose({ getRef });
             :rows="5"
             placeholder="-----BEGIN PRIVATE KEY----- ... -----END PRIVATE KEY-----"
             clearable
+            class="font-mono text-xs"
           />
         </el-form-item>
       </re-col>
@@ -238,3 +242,22 @@ defineExpose({ getRef });
     </el-row>
   </el-form>
 </template>
+
+<style scoped>
+.cert-form :deep(.el-form-item__label) {
+  font-weight: 500;
+  color: var(--el-text-color-regular);
+}
+
+@media (max-width: 640px) {
+  .cert-form :deep(.el-form-item) {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+  .cert-form :deep(.el-form-item__label) {
+    justify-content: flex-start;
+    margin-bottom: 4px;
+    width: 100% !important;
+  }
+}
+</style>

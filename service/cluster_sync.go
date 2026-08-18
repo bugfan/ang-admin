@@ -191,18 +191,102 @@ func buildDNSMap(rulesMap map[string]models.Rule) map[string]entity.DNSConfig {
 	return dnsMap
 }
 
+func buildHTTPMap(rulesMap map[string]models.Rule) map[string]entity.HTTPConfig {
+	engine := models.GetEngine()
+	if engine == nil {
+		return nil
+	}
+	var httpList []models.HttpProxy
+	err := engine.Find(&httpList)
+	if err != nil {
+		log.Printf("buildHTTPMap error: %v\n", err)
+		return nil
+	}
+
+	httpMap := make(map[string]entity.HTTPConfig)
+	for _, item := range httpList {
+		keyStr := strconv.FormatInt(item.Id, 10)
+
+		// Parse ProxyHeaders
+		var proxyHeaders []string
+		if item.ProxyHeaders != "" {
+			_ = json.Unmarshal([]byte(item.ProxyHeaders), &proxyHeaders)
+		}
+
+		// Parse Rules
+		var ruleConfigs []entity.RuleConfig
+		if item.Rules != "" {
+			var ruleNames []string
+			_ = json.Unmarshal([]byte(item.Rules), &ruleNames)
+			for _, rName := range ruleNames {
+				rName = strings.TrimSpace(rName)
+				if dbRule, exists := rulesMap[rName]; exists {
+					if dbRule.Items != "" {
+						var items []entity.RuleConfig
+						if err := json.Unmarshal([]byte(dbRule.Items), &items); err == nil {
+							ruleConfigs = append(ruleConfigs, items...)
+						}
+					}
+				}
+			}
+		}
+
+		// Parse Backend Locations
+		var locations []entity.HTTPLocation
+		if item.LocationJSON != "" {
+			_ = json.Unmarshal([]byte(item.LocationJSON), &locations)
+		}
+
+		// Parse Backend Tunnel
+		var backendTunnel *entity.BackendTunnel
+		if item.TunnelId != "" {
+			backendTunnel = &entity.BackendTunnel{
+				Type:  item.TunnelType,
+				ID:    item.TunnelId,
+				Token: item.TunnelToken,
+			}
+		}
+
+		httpMap[keyStr] = entity.HTTPConfig{
+			Front: entity.HTTPFront{
+				Port:         item.Port,
+				Hostname:     item.Hostname,
+				HTTP:         item.HTTP,
+				TLS:          item.TLS,
+				H2:           item.H2,
+				HSTS:         item.HSTS,
+				Certificate:  item.Certificate,
+				ProxyHeaders: proxyHeaders,
+			},
+			Feature: entity.HTTPFeature{
+				Compress: item.Compress,
+			},
+			Rule: ruleConfigs,
+			Backend: entity.HTTPBackend{
+				RealIp:      item.RealIp,
+				Tunnel:      backendTunnel,
+				DNSResolver: item.DNSResolver,
+				Location:    locations,
+			},
+		}
+	}
+	return httpMap
+}
+
 // BuildFullServerConfig builds the combined server.json data structure matching ang engine
 func BuildFullServerConfig() entity.ServerConfig {
 	certMap := buildCertMap()
 	tlsMap, quicMap := buildTunnelMaps()
 	rulesMap := buildRulesDBMap()
 	dnsMap := buildDNSMap(rulesMap)
+	httpMap := buildHTTPMap(rulesMap)
 
 	return entity.ServerConfig{
 		TLSTunnel:   tlsMap,
 		QUICTunnel:  quicMap,
 		DNS:         dnsMap,
 		Certificate: certMap,
+		HTTP:        httpMap,
 	}
 }
 
@@ -236,10 +320,19 @@ func SyncRuleToCluster() {
 	cluster.PrintFullServerConfig(BuildFullServerConfig())
 }
 
+// SyncHTTPToCluster queries all HTTP proxies, updates cluster and prints server.json
+func SyncHTTPToCluster() {
+	rulesMap := buildRulesDBMap()
+	httpMap := buildHTTPMap(rulesMap)
+	cluster.Put("HTTP", httpMap)
+	cluster.PrintFullServerConfig(BuildFullServerConfig())
+}
+
 // SyncAllToCluster syncs all implemented entities to cluster and prints overall server.json
 func SyncAllToCluster() {
 	SyncCertificateToCluster()
 	SyncTunnelToCluster()
 	SyncDNSToCluster()
 	SyncRuleToCluster()
+	SyncHTTPToCluster()
 }

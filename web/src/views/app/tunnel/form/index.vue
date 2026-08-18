@@ -66,7 +66,6 @@ async function fetchCertificates(query = "") {
       cn: item.SubjectCN || item.subject_cn || ""
     }));
 
-    // If current selected certificate value exists but not in searched list, append it
     const curCert = newFormInline.value.certificate;
     if (curCert && !certOptions.value.some(c => c.value === curCert)) {
       certOptions.value.unshift({
@@ -76,7 +75,6 @@ async function fetchCertificates(query = "") {
       });
     }
 
-    // Auto-sync SNI if certificate is set but SNI is empty
     if (newFormInline.value.certificate) {
       handleCertChange(newFormInline.value.certificate);
     }
@@ -85,7 +83,6 @@ async function fetchCertificates(query = "") {
 
 function handleCertChange(val: string) {
   if (!val) {
-    // If cert is cleared, clear SNI
     newFormInline.value.sni = "";
     return;
   }
@@ -116,10 +113,11 @@ defineExpose({ getRef });
     ref="ruleFormRef"
     :model="newFormInline"
     :rules="formRules"
-    label-width="auto"
+    label-width="120px"
+    class="tunnel-form px-1 sm:px-2 py-1"
   >
-    <el-row :gutter="30">
-      <re-col :value="24" :xs="24" :sm="24">
+    <el-row :gutter="16">
+      <re-col :value="12" :xs="24" :sm="12">
         <el-form-item :label="t('tunnel.type')" prop="type">
           <el-select
             v-model="newFormInline.type"
@@ -136,10 +134,19 @@ defineExpose({ getRef });
         </el-form-item>
       </re-col>
 
+      <re-col :value="12" :xs="24" :sm="12">
+        <el-form-item :label="t('tunnel.port')" prop="port">
+          <el-input
+            v-model="newFormInline.port"
+            placeholder="443"
+            clearable
+          />
+        </el-form-item>
+      </re-col>
+
       <re-col :value="24" :xs="24" :sm="24">
         <el-form-item :label="t('tunnel.certificate')" prop="certificate">
           <div class="w-full">
-            <!-- 选中证书后自动在上方展示关联的 SNI (Common Name) -->
             <div
               v-if="newFormInline.sni"
               class="mb-2 flex items-center text-xs text-gray-600 dark:text-gray-300"
@@ -150,7 +157,7 @@ defineExpose({ getRef });
               </el-tag>
             </div>
 
-            <div class="flex items-center w-full space-x-2">
+            <div class="flex flex-wrap sm:flex-nowrap items-center w-full gap-2">
               <el-select
                 v-model="newFormInline.certificate"
                 filterable
@@ -158,7 +165,7 @@ defineExpose({ getRef });
                 remote
                 :remote-method="fetchCertificates"
                 :loading="certLoading"
-                class="flex-1"
+                class="w-full sm:flex-1"
                 :placeholder="t('tunnel.selectCertPlaceholder')"
                 @change="handleCertChange"
               >
@@ -190,16 +197,6 @@ defineExpose({ getRef });
       </re-col>
 
       <re-col :value="24" :xs="24" :sm="24">
-        <el-form-item :label="t('tunnel.port')" prop="port">
-          <el-input
-            v-model="newFormInline.port"
-            placeholder="443"
-            clearable
-          />
-        </el-form-item>
-      </re-col>
-
-      <re-col :value="24" :xs="24" :sm="24">
         <el-form-item :label="t('tunnel.remark')" prop="remark">
           <el-input
             v-model="newFormInline.remark"
@@ -213,3 +210,22 @@ defineExpose({ getRef });
     </el-row>
   </el-form>
 </template>
+
+<style scoped>
+.tunnel-form :deep(.el-form-item__label) {
+  font-weight: 500;
+  color: var(--el-text-color-regular);
+}
+
+@media (max-width: 640px) {
+  .tunnel-form :deep(.el-form-item) {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+  .tunnel-form :deep(.el-form-item__label) {
+    justify-content: flex-start;
+    margin-bottom: 4px;
+    width: 100% !important;
+  }
+}
+</style>

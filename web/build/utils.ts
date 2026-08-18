@@ -83,7 +83,10 @@ const fileListTotal: number[] = [];
 const getPackageSize = options => {
   const { folder = "dist", callback, format = true } = options;
   readdir(folder, (err, files: string[]) => {
-    if (err) throw err;
+    if (err) {
+      callback && callback("0 B");
+      return;
+    }
     let count = 0;
     const checkEnd = () => {
       ++count == files.length &&
@@ -91,7 +94,10 @@ const getPackageSize = options => {
     };
     files.forEach((item: string) => {
       stat(`${folder}/${item}`, async (err, stats) => {
-        if (err) throw err;
+        if (err) {
+          checkEnd();
+          return;
+        }
         if (stats.isFile()) {
           fileListTotal.push(stats.size);
           checkEnd();

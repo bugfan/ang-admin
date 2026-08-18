@@ -126,9 +126,9 @@ export function useTunnel(t: any, tableRef: Ref) {
     {
       label: t("tunnel.createTime"),
       minWidth: 160,
-      prop: "CreatedAt",
+      prop: "created_at",
       formatter: (row) => {
-        const timeVal = row.CreatedAt || row.created_at;
+        const timeVal = row.created_at || row.CreatedAt;
         return timeVal && dayjs(timeVal).isValid() && dayjs(timeVal).year() > 1
           ? dayjs(timeVal).format("YYYY-MM-DD HH:mm:ss")
           : "-";

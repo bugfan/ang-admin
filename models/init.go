@@ -2,6 +2,7 @@ package models
 
 import (
 	"log"
+	"time"
 
 	"github.com/go-xorm/xorm"
 	_ "github.com/mattn/go-sqlite3"
@@ -31,7 +32,7 @@ func InitDB(dsn string) {
 	}
 
 	// Automatically sync database schemas if necessary
-	err = engine.Sync2(new(AdminUser), new(Tunnel), new(Certificate), new(TunnelClient), new(DnsProxy), new(Rule))
+	err = engine.Sync2(new(AdminUser), new(Tunnel), new(Certificate), new(TunnelClient), new(DnsProxy), new(Rule), new(HttpProxy))
 
 	if err != nil {
 		log.Fatalf("Failed to sync database: %v", err)
@@ -45,6 +46,13 @@ func InitDB(dsn string) {
 			_, _ = engine.ID(cert.Id).Cols("subject_cn", "sans", "not_before", "not_after", "issuer", "serial_number").Update(&cert)
 		}
 	}
+
+	// Backfill missing or zero created_at dates across tables
+	nowStr := time.Now().Format("2006-01-02 15:04:05")
+	_, _ = engine.Exec("UPDATE http_proxy SET created_at = ? WHERE created_at IS NULL OR created_at = '' OR created_at LIKE '0001-01-01%'", nowStr)
+	_, _ = engine.Exec("UPDATE rule SET created_at = ? WHERE created_at IS NULL OR created_at = '' OR created_at LIKE '0001-01-01%'", nowStr)
+	_, _ = engine.Exec("UPDATE dns_proxy SET created_at = ? WHERE created_at IS NULL OR created_at = '' OR created_at LIKE '0001-01-01%'", nowStr)
+	_, _ = engine.Exec("UPDATE tunnel SET created_at = ? WHERE created_at IS NULL OR created_at = '' OR created_at LIKE '0001-01-01%'", nowStr)
 
 	// Initialize default admin user
 	admin := &AdminUser{Username: "admin"}
