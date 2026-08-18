@@ -58,7 +58,7 @@ func (t *tunnelHandler) List(c *gin.Context) {
 		session.Where("port LIKE ?", "%"+port+"%")
 	}
 
-	err := session.Find(&tunnels)
+	err := session.Desc("id").Find(&tunnels)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"code": 1, "message": "查询Tunnel列表失败: " + err.Error()})
 		return

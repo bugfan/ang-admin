@@ -50,25 +50,38 @@ export function useHttpProxy(t: any, tableRef: Ref) {
       formatter: (row) => row.Id || row.id
     },
     {
-      label: t("http.name") + " / " + t("http.hostname"),
-      minWidth: 220,
+      label: t("http.name", "名称"),
+      prop: "Name",
+      minWidth: 140,
       cellRenderer: scope => {
-        const name = scope.row.Name || scope.row.name || "App";
+        const name = scope.row.Name || scope.row.name || "-";
+        return (
+          <span class="font-semibold text-[var(--el-text-color-primary)]">{name}</span>
+        );
+      }
+    },
+    {
+      label: t("http.hostname", "Hostname"),
+      prop: "Hostname",
+      minWidth: 160,
+      cellRenderer: scope => {
         const host = scope.row.Hostname || scope.row.hostname || "-";
+        return (
+          <span class="font-mono text-xs text-[var(--el-text-color-regular)]">{host}</span>
+        );
+      }
+    },
+    {
+      label: t("http.port", "监听端口"),
+      prop: "Port",
+      width: 100,
+      align: "center",
+      cellRenderer: scope => {
         const port = scope.row.Port || scope.row.port || "80";
         return (
-          <div class="py-1">
-            <div class="font-bold text-sm text-[var(--el-color-primary)] flex items-center gap-1.5">
-              <span>{name}</span>
-              <el-tag size="small" type="primary" effect="plain" class="font-mono font-bold">
-                :{port}
-              </el-tag>
-            </div>
-            <div class="text-xs text-[var(--el-text-color-secondary)] font-mono mt-0.5 flex items-center gap-1">
-              <span class="inline-block w-1.5 h-1.5 rounded-full bg-emerald-500"></span>
-              {host}
-            </div>
-          </div>
+          <el-tag size="small" type="primary" effect="plain" class="font-mono font-bold">
+            {port}
+          </el-tag>
         );
       }
     },

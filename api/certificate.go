@@ -104,7 +104,7 @@ func (c *certHandler) List(ctx *gin.Context) {
 		session.Where("sans LIKE ?", "%"+sans+"%")
 	}
 
-	err := session.Find(&certs)
+	err := session.Desc("id").Find(&certs)
 	if err != nil {
 		ctx.JSON(http.StatusInternalServerError, gin.H{"code": 1, "message": "查询证书列表失败: " + err.Error()})
 		return

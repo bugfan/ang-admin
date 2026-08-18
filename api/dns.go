@@ -141,3 +141,49 @@ func (d *dnsHandler) After(g *gin.Context, x *xorm.Engine, args ...interface{}) 
 		service.SyncDNSToCluster()
 	}
 }
+
+func (d *dnsHandler) List(c *gin.Context) {
+	var list []models.DnsProxy
+	session := models.GetEngine().NewSession()
+	defer session.Close()
+
+	if name := c.Query("name"); name != "" {
+		session.Where("name LIKE ?", "%"+name+"%")
+	}
+	if port := c.Query("port"); port != "" {
+		session.Where("port LIKE ?", "%"+port+"%")
+	}
+	if address := c.Query("address"); address != "" {
+		session.Where("address LIKE ?", "%"+address+"%")
+	}
+
+	err := session.Desc("id").Find(&list)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"code": 1, "message": "查询 DNS 代理列表失败: " + err.Error()})
+		return
+	}
+
+	resList := make([]dnsHandler, 0, len(list))
+	for _, item := range list {
+		resList = append(resList, dnsHandler{
+			Id:              item.Id,
+			Name:            item.Name,
+			Address:         item.Address,
+			Port:            item.Port,
+			Rules:           item.Rules,
+			HostsText:       item.HostsText,
+			HostsJSON:       item.HostsJSON,
+			BackendType:     item.BackendType,
+			TunnelType:      item.TunnelType,
+			TunnelId:        item.TunnelId,
+			TunnelToken:     item.TunnelToken,
+			UpstreamMethod:  item.UpstreamMethod,
+			UpstreamServers: item.UpstreamServers,
+			Remark:          item.Remark,
+			CreatedAt:       item.CreatedAt,
+			UpdatedAt:       item.UpdatedAt,
+		})
+	}
+
+	c.JSON(http.StatusOK, resList)
+}

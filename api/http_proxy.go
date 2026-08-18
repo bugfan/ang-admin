@@ -60,3 +60,54 @@ func (h *httpProxyHandler) After(g *gin.Context, x *xorm.Engine, args ...interfa
 		service.SyncHTTPToCluster()
 	}
 }
+
+func (h *httpProxyHandler) List(c *gin.Context) {
+	var list []models.HttpProxy
+	session := models.GetEngine().NewSession()
+	defer session.Close()
+
+	if name := c.Query("name"); name != "" {
+		session.Where("name LIKE ?", "%"+name+"%")
+	}
+	if hostname := c.Query("hostname"); hostname != "" {
+		session.Where("hostname LIKE ?", "%"+hostname+"%")
+	}
+	if port := c.Query("port"); port != "" {
+		session.Where("port LIKE ?", "%"+port+"%")
+	}
+
+	err := session.Desc("id").Find(&list)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"code": 1, "message": "查询 HTTP 代理列表失败: " + err.Error()})
+		return
+	}
+
+	resList := make([]httpProxyHandler, 0, len(list))
+	for _, item := range list {
+		resList = append(resList, httpProxyHandler{
+			Id:           item.Id,
+			Name:         item.Name,
+			Port:         item.Port,
+			Hostname:     item.Hostname,
+			HTTP:         item.HTTP,
+			TLS:          item.TLS,
+			H2:           item.H2,
+			HSTS:         item.HSTS,
+			Certificate:  item.Certificate,
+			ProxyHeaders: item.ProxyHeaders,
+			Compress:     item.Compress,
+			Rules:        item.Rules,
+			RealIp:       item.RealIp,
+			TunnelType:   item.TunnelType,
+			TunnelId:     item.TunnelId,
+			TunnelToken:  item.TunnelToken,
+			DNSResolver:  item.DNSResolver,
+			LocationJSON: item.LocationJSON,
+			Remark:       item.Remark,
+			CreatedAt:    item.CreatedAt,
+			UpdatedAt:    item.UpdatedAt,
+		})
+	}
+
+	c.JSON(http.StatusOK, resList)
+}

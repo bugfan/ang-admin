@@ -43,3 +43,33 @@ func (r *ruleHandler) After(g *gin.Context, x *xorm.Engine, args ...interface{})
 		service.SyncRuleToCluster()
 	}
 }
+
+func (r *ruleHandler) List(c *gin.Context) {
+	var list []models.Rule
+	session := models.GetEngine().NewSession()
+	defer session.Close()
+
+	if name := c.Query("name"); name != "" {
+		session.Where("name LIKE ?", "%"+name+"%")
+	}
+
+	err := session.Desc("id").Find(&list)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"code": 1, "message": "查询规则列表失败: " + err.Error()})
+		return
+	}
+
+	resList := make([]ruleHandler, 0, len(list))
+	for _, item := range list {
+		resList = append(resList, ruleHandler{
+			Id:        item.Id,
+			Name:      item.Name,
+			Items:     item.Items,
+			Remark:    item.Remark,
+			CreatedAt: item.CreatedAt,
+			UpdatedAt: item.UpdatedAt,
+		})
+	}
+
+	c.JSON(http.StatusOK, resList)
+}

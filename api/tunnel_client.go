@@ -97,7 +97,7 @@ func (t *tunnelClientHandler) List(c *gin.Context) {
 		session.Where("token LIKE ?", "%"+token+"%")
 	}
 
-	err := session.Find(&clients)
+	err := session.Desc("id").Find(&clients)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"code": 1, "message": "查询TunnelClient列表失败: " + err.Error()})
 		return
