@@ -3,6 +3,7 @@ import { ref } from "vue";
 import { useI18n } from "vue-i18n";
 import { useRule } from "./utils/hook";
 import editForm from "./form/index.vue";
+import PageHeader from "@/components/PageHeader/index.vue";
 import { PureTableBar } from "@/components/RePureTableBar";
 import { useRenderIcon } from "@/components/ReIcon/src/hooks";
 import { message } from "@/utils/message";
@@ -288,25 +289,13 @@ async function handleSaveSubmit() {
     <!-- Create / Edit Full Page View Mode -->
     <div v-else-if="showView === 'new' || showView === 'edit'" class="p-3 sm:p-5 bg-bg_color rounded-xl border border-[var(--el-border-color-lighter)] shadow-2xs">
       <!-- Full Page Header Bar -->
-      <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-4 mb-4 border-b border-[var(--el-border-color-lighter)]">
-        <div class="flex items-center space-x-3">
-          <el-button
-            circle
-            :icon="useRenderIcon(BackIcon)"
-            :title="t('rule.backToList')"
-            @click="handleCancelPage"
-          />
-          <div>
-            <h2 class="text-base sm:text-lg font-bold text-[var(--el-text-color-primary)]">
-              {{ formInline.title }}
-            </h2>
-            <div class="text-xs text-[var(--el-text-color-secondary)] mt-0.5">
-              {{ t('rule.headerDesc') }}
-            </div>
-          </div>
-        </div>
-
-        <div class="flex items-center space-x-2 sm:space-x-3 shrink-0 self-end sm:self-auto">
+      <PageHeader
+        :title="formInline.title"
+        :description="t('rule.headerDesc')"
+        :backTitle="t('rule.backToList')"
+        @back="handleCancelPage"
+      >
+        <template #actions>
           <el-button
             :icon="useRenderIcon(CloseIcon)"
             @click="handleCancelPage"
@@ -321,8 +310,8 @@ async function handleSaveSubmit() {
           >
             {{ t("rule.save") }}
           </el-button>
-        </div>
-      </div>
+        </template>
+      </PageHeader>
 
       <!-- Form Component Embedded Directly -->
       <editForm ref="createEditFormRef" :formInline="formInline" />
