@@ -47,14 +47,15 @@ const {
   handleSelectionChange
 } = useTunnel(t, tableRef);
 
-function parseClientsJSON(clientsJsonStr: string) {
-  try {
-    if (clientsJsonStr) {
-      const parsed = JSON.parse(clientsJsonStr);
+function getClientNodes(row: any): any[] {
+  if (!row) return [];
+  if (Array.isArray(row.client_nodes)) return row.client_nodes;
+  if (Array.isArray(row.ClientNodes)) return row.ClientNodes;
+  if (row.clients_json || row.ClientsJSON) {
+    try {
+      const parsed = JSON.parse(row.clients_json || row.ClientsJSON);
       if (Array.isArray(parsed)) return parsed;
-    }
-  } catch (e) {
-    // ignore
+    } catch (e) {}
   }
   return [];
 }
@@ -244,19 +245,19 @@ async function handleSaveSubmit() {
             @page-current-change="handleCurrentChange"
           >
             <!-- 1. 动态挂载客户端节点 (Client Nodes) Popover 浮层列 -->
-            <template #clients="{ row }">
+            <template #clientNodes="{ row }">
               <el-popover placement="top" :width="380" trigger="hover">
                 <template #reference>
                   <div class="inline-flex items-center gap-1.5 cursor-pointer">
                     <el-tag
-                      v-if="parseClientsJSON(row.clients_json || row.ClientsJSON).length > 0"
+                      v-if="getClientNodes(row).length > 0"
                       type="success"
                       effect="light"
                       size="small"
                       class="font-mono font-bold"
                     >
                       <IconifyIconOffline icon="ri:router-line" class="mr-1" />
-                      {{ parseClientsJSON(row.clients_json || row.ClientsJSON).length }} Client(s)
+                      {{ getClientNodes(row).length }} Node(s)
                     </el-tag>
                     <el-tag v-else type="info" size="small" effect="plain" class="text-gray-400">
                       {{ t('tunnel.noClients') }}
@@ -275,7 +276,7 @@ async function handleSaveSubmit() {
                   </div>
 
                   <div
-                    v-if="parseClientsJSON(row.clients_json || row.ClientsJSON).length === 0"
+                    v-if="getClientNodes(row).length === 0"
                     class="text-gray-400 text-center py-2"
                   >
                     {{ t('tunnel.noClientsConfig') }}
@@ -283,17 +284,18 @@ async function handleSaveSubmit() {
 
                   <div v-else class="space-y-1.5 max-h-60 overflow-auto">
                     <div
-                      v-for="(c, idx) in parseClientsJSON(row.clients_json || row.ClientsJSON)"
+                      v-for="(c, idx) in getClientNodes(row)"
                       :key="idx"
                       class="p-2 bg-[var(--el-fill-color-light)] rounded font-mono border border-[var(--el-border-color-lighter)] text-xs space-y-1"
                     >
                       <div class="flex justify-between items-center">
                         <span class="font-bold text-blue-600 dark:text-blue-400">{{ c.name || c.id || 'Node' }}</span>
-                        <el-tag size="small" :type="c.status === 'online' ? 'success' : 'info'" effect="light">
-                          {{ c.status || 'active' }}
+                        <el-tag size="small" :type="c.is_online ? 'success' : 'info'" effect="light">
+                          {{ c.is_online ? '在线 (online)' : '离线 (offline)' }}
                         </el-tag>
                       </div>
                       <div class="text-[11px] text-gray-500 truncate">Token: {{ c.token || '-' }}</div>
+                      <div v-if="c.remote_addr" class="text-[11px] text-gray-400">Addr: {{ c.remote_addr }}</div>
                     </div>
                   </div>
                 </div>
@@ -309,13 +311,13 @@ async function handleSaveSubmit() {
                     {{ t('tunnel.clientNodes') }} 明细列表:
                   </span>
                   <span class="text-gray-400 font-mono">
-                    Total Nodes: {{ parseClientsJSON(row.clients_json || row.ClientsJSON).length }}
+                    Total Nodes: {{ getClientNodes(row).length }}
                   </span>
                 </div>
 
-                <div v-if="parseClientsJSON(row.clients_json || row.ClientsJSON).length > 0">
+                <div v-if="getClientNodes(row).length > 0">
                   <el-table
-                    :data="parseClientsJSON(row.clients_json || row.ClientsJSON)"
+                    :data="getClientNodes(row)"
                     border
                     size="small"
                     class="w-full"
@@ -340,10 +342,17 @@ async function handleSaveSubmit() {
                         </span>
                       </template>
                     </el-table-column>
-                    <el-table-column prop="status" label="状态 Status" width="100" align="center">
+                    <el-table-column prop="remote_addr" label="客户端地址 Remote Addr" min-width="150">
                       <template #default="{ row: c }">
-                        <el-tag size="small" :type="c.status === 'online' ? 'success' : 'info'" effect="light">
-                          {{ c.status || 'active' }}
+                        <span class="font-mono text-gray-500">
+                          {{ c.remote_addr || '-' }}
+                        </span>
+                      </template>
+                    </el-table-column>
+                    <el-table-column prop="is_online" label="状态 Status" width="120" align="center">
+                      <template #default="{ row: c }">
+                        <el-tag size="small" :type="c.is_online ? 'success' : 'info'" effect="light">
+                          {{ c.is_online ? '在线 (online)' : '离线 (offline)' }}
                         </el-tag>
                       </template>
                     </el-table-column>

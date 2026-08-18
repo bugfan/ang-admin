@@ -490,12 +490,12 @@ defineExpose({ getRef, syncLocationJSON });
           <!-- General Backend Fields -->
           <el-row :gutter="16">
             <re-col :value="12" :xs="24">
-              <el-form-item :label="t('http.tunnelNode', 'Tunnel Node')">
+              <el-form-item :label="t('http.assocTunnel', 'Tunnel')">
                 <el-select
                   v-model="selectedTunnelNodeKey"
                   clearable
                   filterable
-                  :placeholder="t('http.tunnelNodePlaceholder', '选择关联的 Tunnel 客户端节点')"
+                  :placeholder="t('http.assocTunnelPlaceholder', '选择关联的 Tunnel 客户端节点')"
                   class="w-full"
                   @change="handleTunnelNodeChange"
                 >
