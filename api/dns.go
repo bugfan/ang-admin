@@ -23,6 +23,7 @@ func init() {
 
 type dnsHandler struct {
 	Id              int64  `json:"id"`
+	Name            string `json:"name"`
 	Address         string `json:"address"`
 	Port            string `json:"port"`
 	Rules           string `json:"rules"`

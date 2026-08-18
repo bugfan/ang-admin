@@ -196,7 +196,7 @@ export function useHttpProxy(t: any, tableRef: Ref) {
     const targetId = row.Id || row.id;
     const { code, message: msg } = await deleteHttpProxy({ id: targetId });
     if (code === 0) {
-      message(`Delete HTTP Proxy ID: ${targetId} success`, { type: "success" });
+      message(`${t("http.delete", "删除")} ID: ${targetId} ${t("http.success", "成功")}`, { type: "success" });
       onSearch();
     } else {
       message(msg, { type: "error" });
@@ -230,7 +230,7 @@ export function useHttpProxy(t: any, tableRef: Ref) {
     const ids = curSelected.map((item: any) => item.Id || item.id);
     const { code, message: msg } = await deleteHttpProxy({ ids });
     if (code === 0) {
-      message("Batch delete HTTP proxies success", { type: "success" });
+      message(`${t("http.batchDelete", "批量删除")} ${t("http.success", "成功")}`, { type: "success" });
       tableRef.value.getTableRef().clearSelection();
       onSearch();
     } else {
@@ -326,7 +326,7 @@ export function useHttpProxy(t: any, tableRef: Ref) {
                 return;
               }
             }
-            message(`${title} success`, { type: "success" });
+            message(`${title} ${t("http.success", "成功")}`, { type: "success" });
             done();
             onSearch();
           }

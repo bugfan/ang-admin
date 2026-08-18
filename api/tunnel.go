@@ -19,6 +19,7 @@ func init() {
 
 type tunnelHandler struct {
 	Id           int64                 `json:"id"`
+	Name         string                `json:"name"`
 	Type         string                `json:"type"`
 	Port         string                `json:"port"`
 	SNI          string                `json:"sni"`
@@ -163,6 +164,7 @@ func (t *tunnelHandler) List(c *gin.Context) {
 
 		resList = append(resList, tunnelHandler{
 			Id:           item.Id,
+			Name:         item.Name,
 			Type:         item.Type,
 			Port:         item.Port,
 			SNI:          item.SNI,

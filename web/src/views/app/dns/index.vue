@@ -124,6 +124,7 @@ function getDefaultFormInline() {
   return {
     title: t("dns.addDns"),
     id: undefined,
+    name: "",
     address: "0.0.0.0",
     port: "53",
     rules: JSON.stringify(["ip_matcher"]),
@@ -142,6 +143,7 @@ function getFormInlineFromRow(row: any) {
   return {
     title: `${t("dns.editDns")} [ID: ${row?.Id || row?.id}]`,
     id: row?.Id ?? row?.id ?? undefined,
+    name: row?.Name ?? row?.name ?? "",
     address: row?.Address ?? row?.address ?? "0.0.0.0",
     port: row?.Port ?? row?.port ?? "53",
     rules: row?.Rules ?? row?.rules ?? JSON.stringify(["ip_matcher"]),
@@ -189,14 +191,14 @@ async function handleSaveSubmit() {
             message(msg, { type: "error" });
             return;
           }
-          message(`${t("dns.addDns")} ${t("dns.success")}`, { type: "success" });
+          message(`${t("dns.addDns")} ${t("dns.success", "成功")}`, { type: "success" });
         } else {
           const { code, message: msg } = await updateDns(curData);
           if (code !== 0) {
             message(msg, { type: "error" });
             return;
           }
-          message(`${t("dns.editDns")} ${t("dns.success")}`, { type: "success" });
+          message(`${t("dns.editDns")} ${t("dns.success", "成功")}`, { type: "success" });
         }
         showView.value = "list";
         onSearch();

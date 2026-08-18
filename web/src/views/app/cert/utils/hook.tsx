@@ -170,7 +170,7 @@ export function useCert(t: any, tableRef: Ref) {
     const targetId = row.Id || row.id;
     const { code, message: msg } = await deleteCert({ id: targetId });
     if (code === 0) {
-      message(`${t("cert.delete")} ID: ${targetId} success`, { type: "success" });
+      message(`${t("cert.delete")} ID: ${targetId} ${t("cert.success", "成功")}`, { type: "success" });
       onSearch();
     } else {
       message(msg, { type: "error" });
@@ -204,7 +204,7 @@ export function useCert(t: any, tableRef: Ref) {
     const ids = curSelected.map((item: any) => item.Id || item.id);
     const { code, message: msg } = await deleteCert({ ids });
     if (code === 0) {
-      message(`${t("cert.batchDelete")} success`, { type: "success" });
+      message(`${t("cert.batchDelete")} ${t("cert.success", "成功")}`, { type: "success" });
       tableRef.value.getTableRef().clearSelection();
       onSearch();
     } else {
@@ -271,7 +271,7 @@ export function useCert(t: any, tableRef: Ref) {
                 return;
               }
             }
-            message(`${title} success`, { type: "success" });
+            message(`${title} ${t("cert.success", "成功")}`, { type: "success" });
             done();
             onSearch();
           }

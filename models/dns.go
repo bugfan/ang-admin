@@ -4,6 +4,7 @@ import "time"
 
 type DnsProxy struct {
 	Id              int64     `xorm:"pk autoincr 'id'" json:"id"`
+	Name            string    `xorm:"varchar(255) 'name'" json:"name"`
 	Address         string    `xorm:"varchar(255) 'address'" json:"address"`
 	Port            string    `xorm:"varchar(50) 'port'" json:"port"`
 	Rules           string    `xorm:"text 'rules'" json:"rules"`                       // JSON string array e.g. ["rule1", "rule2"]

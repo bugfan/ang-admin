@@ -101,14 +101,14 @@ async function handleSaveSubmit() {
             message(msg, { type: "error" });
             return;
           }
-          message(`${t("cert.addCert")} ${t("cert.success")}`, { type: "success" });
+          message(`${t("cert.addCert")} ${t("cert.success", "成功")}`, { type: "success" });
         } else {
           const { code, message: msg } = await updateCert(curData);
           if (code !== 0) {
             message(msg, { type: "error" });
             return;
           }
-          message(`${t("cert.editCert")} ${t("cert.success")}`, { type: "success" });
+          message(`${t("cert.editCert")} ${t("cert.success", "成功")}`, { type: "success" });
         }
         showView.value = "list";
         onSearch();

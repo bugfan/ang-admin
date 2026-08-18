@@ -49,6 +49,17 @@ export function useDnsProxy(t: any, tableRef: Ref) {
       formatter: (row) => row.Id || row.id
     },
     {
+      label: t("dns.name", "名称"),
+      prop: "Name",
+      minWidth: 140,
+      cellRenderer: scope => {
+        const name = scope.row.Name || scope.row.name || "-";
+        return (
+          <span class="font-semibold text-[var(--el-text-color-primary)]">{name}</span>
+        );
+      }
+    },
+    {
       label: t("dns.listenAddressPort"),
       minWidth: 170,
       cellRenderer: scope => {
@@ -125,7 +136,7 @@ export function useDnsProxy(t: any, tableRef: Ref) {
     const targetId = row.Id || row.id;
     const { code, message: msg } = await deleteDns({ id: targetId });
     if (code === 0) {
-      message(`${t("dns.delete")} ID: ${targetId} success`, { type: "success" });
+      message(`${t("dns.delete")} ID: ${targetId} ${t("dns.success", "成功")}`, { type: "success" });
       onSearch();
     } else {
       message(msg, { type: "error" });
@@ -159,7 +170,7 @@ export function useDnsProxy(t: any, tableRef: Ref) {
     const ids = curSelected.map((item: any) => item.Id || item.id);
     const { code, message: msg } = await deleteDns({ ids });
     if (code === 0) {
-      message(`${t("dns.batchDelete")} success`, { type: "success" });
+      message(`${t("dns.batchDelete")} ${t("dns.success", "成功")}`, { type: "success" });
       tableRef.value.getTableRef().clearSelection();
       onSearch();
     } else {
@@ -235,7 +246,7 @@ export function useDnsProxy(t: any, tableRef: Ref) {
                 return;
               }
             }
-            message(`${title} 成功`, { type: "success" });
+            message(`${title} ${t("dns.success", "成功")}`, { type: "success" });
             done();
             onSearch();
           }

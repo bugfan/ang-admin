@@ -15,6 +15,7 @@ const props = withDefaults(defineProps<{ formInline: any }>(), {
   formInline: () => ({
     title: "新增 DNS",
     id: undefined,
+    name: "",
     address: "",
     port: "5656",
     rules: "[]",
@@ -268,6 +269,9 @@ const hostsSummary = computed(() => {
 });
 
 const formRules = reactive({
+  name: [
+    { required: true, message: () => t("dns.nameRequired", "请输入名称"), trigger: "blur" }
+  ],
   port: [
     { required: true, message: () => t("dns.portRequired"), trigger: "blur" },
     {
@@ -342,6 +346,16 @@ defineExpose({ getRef });
       </template>
 
       <el-row :gutter="16">
+        <re-col :value="24" :xs="24">
+          <el-form-item :label="t('dns.name', '名称')" prop="name">
+            <el-input
+              v-model="newFormInline.name"
+              :placeholder="t('dns.namePlaceholder', '请输入 DNS 名称')"
+              clearable
+            />
+          </el-form-item>
+        </re-col>
+
         <re-col :value="12" :xs="24" :sm="12">
           <el-form-item :label="t('dns.port')" prop="port">
             <el-input

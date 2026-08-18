@@ -64,6 +64,7 @@ function getDefaultFormInline() {
   return {
     title: t("tunnel.addTunnel"),
     id: undefined,
+    name: "",
     type: "TLS-TUNNEL",
     port: "",
     sni: "",
@@ -76,6 +77,7 @@ function getFormInlineFromRow(row: any) {
   return {
     title: `${t("tunnel.editTunnel")} [ID: ${row?.Id || row?.id}]`,
     id: row?.Id ?? row?.id ?? undefined,
+    name: row?.Name ?? row?.name ?? "",
     type: row?.Type ?? row?.type ?? "TLS-TUNNEL",
     port: row?.Port ?? row?.port ?? "",
     sni: row?.SNI ?? row?.sni ?? "",
@@ -114,14 +116,14 @@ async function handleSaveSubmit() {
             message(msg, { type: "error" });
             return;
           }
-          message(`${t("tunnel.addTunnel")} ${t("tunnel.success")}`, { type: "success" });
+          message(`${t("tunnel.addTunnel")} ${t("tunnel.success", "成功")}`, { type: "success" });
         } else {
           const { code, message: msg } = await updateTunnel(curData);
           if (code !== 0) {
             message(msg, { type: "error" });
             return;
           }
-          message(`${t("tunnel.editTunnel")} ${t("tunnel.success")}`, { type: "success" });
+          message(`${t("tunnel.editTunnel")} ${t("tunnel.success", "成功")}`, { type: "success" });
         }
         showView.value = "list";
         onSearch();

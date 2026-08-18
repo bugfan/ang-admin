@@ -10,6 +10,7 @@ const props = withDefaults(defineProps<{ formInline: any }>(), {
   formInline: () => ({
     title: "新增",
     id: undefined,
+    name: "",
     type: "TLS-TUNNEL",
     port: "",
     sni: "",
@@ -32,6 +33,9 @@ const typeOptions = [
 ];
 
 const formRules = reactive({
+  name: [
+    { required: true, message: () => t("tunnel.nameRequired", "请输入名称"), trigger: "blur" }
+  ],
   type: [
     { required: true, message: () => t("tunnel.typeRequired"), trigger: "change" }
   ],
@@ -117,6 +121,16 @@ defineExpose({ getRef });
     class="tunnel-form px-1 sm:px-2 py-1"
   >
     <el-row :gutter="16">
+      <re-col :value="24" :xs="24">
+        <el-form-item :label="t('tunnel.name', '名称')" prop="name">
+          <el-input
+            v-model="newFormInline.name"
+            :placeholder="t('tunnel.namePlaceholder', '请输入 Tunnel 名称')"
+            clearable
+          />
+        </el-form-item>
+      </re-col>
+
       <re-col :value="12" :xs="24" :sm="12">
         <el-form-item :label="t('tunnel.type')" prop="type">
           <el-select
