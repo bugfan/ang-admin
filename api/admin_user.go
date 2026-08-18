@@ -279,7 +279,7 @@ func AsyncRoutesHandler(c *gin.Context) {
 						"name":      "AppCert",
 						"component": "app/cert/index",
 						"meta": gin.H{
-							"icon":  "ri:shield-keyhole-line",
+							"icon":  "ri:lock-line",
 							"title": "menus.pureCert",
 							"roles": []string{"admin", "common"},
 						},
@@ -309,7 +309,7 @@ func AsyncRoutesHandler(c *gin.Context) {
 						"name":      "AppRule",
 						"component": "app/rule/index",
 						"meta": gin.H{
-							"icon":  "ri:shield-flash-line",
+							"icon":  "ri:filter-3-line",
 							"title": "menus.pureRule",
 							"roles": []string{"admin", "common"},
 						},
@@ -319,7 +319,7 @@ func AsyncRoutesHandler(c *gin.Context) {
 						"name":      "AppHttpProxy",
 						"component": "app/http/index",
 						"meta": gin.H{
-							"icon":  "ri:earth-line",
+							"icon":  "ri:links-line",
 							"title": "menus.pureHttpProxy",
 							"roles": []string{"admin", "common"},
 						},

@@ -279,10 +279,10 @@ export function useHttpProxy(t: any, tableRef: Ref) {
           compress: row?.Compress ?? row?.compress ?? false,
           rules: row?.Rules ?? row?.rules ?? JSON.stringify([]),
           real_ip: row?.RealIp ?? row?.real_ip ?? "",
-          tunnel_type: row?.TunnelType ?? row?.tunnel_type ?? "quic",
+          tunnel_type: row?.TunnelType ?? row?.tunnel_type ?? "",
           tunnel_id: row?.TunnelId ?? row?.tunnel_id ?? "",
           tunnel_token: row?.TunnelToken ?? row?.tunnel_token ?? "",
-          dns_resolver: row?.DNSResolver ?? row?.dns_resolver ?? "dns1",
+          dns_resolver: row?.DNSResolver ?? row?.dns_resolver ?? "",
           location_json: row?.LocationJSON ?? row?.location_json ?? JSON.stringify([
             {
               Path: "/",

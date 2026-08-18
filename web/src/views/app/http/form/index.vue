@@ -157,20 +157,82 @@ async function fetchCertificates() {
 async function fetchTunnels() {
   try {
     const res = await getTunnelList();
-    if (res?.code === 0 && res?.data?.list) {
-      tunnelOptions.value = res.data.list.map((tItem: any) => {
-        const idVal = String(tItem.Id || tItem.id);
-        const tType = tItem.Type || tItem.type || "TLS";
-        const sni = tItem.SNI || tItem.sni || "";
-        const port = tItem.Port || tItem.port || "";
-        return {
-          label: `Tunnel #${idVal} (${tType} | Port: ${port} ${sni ? '| SNI: ' + sni : ''})`,
-          value: idVal,
-          type: tType.toLowerCase().includes("quic") ? "quic" : "tls"
-        };
+    if (res?.code === 0 && res?.data) {
+      const list = res.data.list || res.data || [];
+      const opts: TunnelNodeOption[] = [];
+      list.forEach((tItem: any) => {
+        const tidStr = String(tItem.Id || tItem.id);
+        const tType = (tItem.Type || tItem.type || "TLS").toLowerCase().includes("quic") ? "quic" : "tls";
+        const cNodes = tItem.client_nodes || tItem.ClientNodes || [];
+
+        if (Array.isArray(cNodes) && cNodes.length > 0) {
+          cNodes.forEach((c: any) => {
+            const isOnline = c.IsOnline ?? c.is_online ?? false;
+            const cName = c.Name || c.name || "Node";
+            const token = c.Token || c.token || "";
+            const key = `${tidStr}|${token}`;
+            opts.push({
+              label: `[${isOnline ? '在线' : '离线'}] ${cName} (Tunnel #${tidStr} ${tType.toUpperCase()} | Token: ${token || '-'})`,
+              value: key,
+              tunnel_id: tidStr,
+              tunnel_token: token,
+              tunnel_type: tType
+            });
+          });
+        } else {
+          const key = `${tidStr}||${tType}`;
+          opts.push({
+            label: `Tunnel #${tidStr} Server (${tType.toUpperCase()} | Port: ${tItem.Port || tItem.port || ''})`,
+            value: key,
+            tunnel_id: tidStr,
+            tunnel_token: "",
+            tunnel_type: tType
+          });
+        }
       });
+      tunnelNodeOptions.value = opts;
+      syncSelectedTunnelNodeKey();
     }
   } catch (e) {}
+}
+
+function syncSelectedTunnelNodeKey() {
+  const tid = newFormInline.value.tunnel_id;
+  const token = newFormInline.value.tunnel_token;
+  if (!tid) {
+    selectedTunnelNodeKey.value = "";
+    return;
+  }
+  const match = tunnelNodeOptions.value.find(o => o.tunnel_id === String(tid) && o.tunnel_token === (token || ''));
+  if (match) {
+    selectedTunnelNodeKey.value = match.value;
+  } else {
+    const fallbackKey = `${tid}|${token || ''}`;
+    const tType = newFormInline.value.tunnel_type || "tls";
+    tunnelNodeOptions.value.push({
+      label: `Tunnel #${tid} Node (Token: ${token || '-'})`,
+      value: fallbackKey,
+      tunnel_id: String(tid),
+      tunnel_token: token || "",
+      tunnel_type: tType
+    });
+    selectedTunnelNodeKey.value = fallbackKey;
+  }
+}
+
+function handleTunnelNodeChange(val: string) {
+  if (!val) {
+    newFormInline.value.tunnel_id = "";
+    newFormInline.value.tunnel_token = "";
+    newFormInline.value.tunnel_type = "";
+    return;
+  }
+  const match = tunnelNodeOptions.value.find(o => o.value === val);
+  if (match) {
+    newFormInline.value.tunnel_id = match.tunnel_id;
+    newFormInline.value.tunnel_token = match.tunnel_token;
+    newFormInline.value.tunnel_type = match.tunnel_type;
+  }
 }
 
 async function fetchRules() {
@@ -428,39 +490,30 @@ defineExpose({ getRef, syncLocationJSON });
           <!-- General Backend Fields -->
           <el-row :gutter="16">
             <re-col :value="12" :xs="24">
-              <el-form-item :label="t('http.assocTunnel')">
+              <el-form-item :label="t('http.tunnelNode', 'Tunnel Node')">
                 <el-select
-                  v-model="newFormInline.tunnel_id"
+                  v-model="selectedTunnelNodeKey"
                   clearable
-                  :placeholder="t('http.assocTunnelPlaceholder')"
+                  filterable
+                  :placeholder="t('http.tunnelNodePlaceholder', '选择关联的 Tunnel 客户端节点')"
                   class="w-full"
-                  @change="handleTunnelChange"
+                  @change="handleTunnelNodeChange"
                 >
                   <el-option
-                    v-for="tItem in tunnelOptions"
-                    :key="tItem.value"
-                    :label="tItem.label"
-                    :value="tItem.value"
+                    v-for="item in tunnelNodeOptions"
+                    :key="item.value"
+                    :label="item.label"
+                    :value="item.value"
                   />
                 </el-select>
               </el-form-item>
             </re-col>
 
             <re-col :value="12" :xs="24">
-              <el-form-item :label="t('http.dnsResolver')">
+              <el-form-item :label="t('http.dnsResolver', 'DNS 解析器')">
                 <el-input
                   v-model="newFormInline.dns_resolver"
-                  placeholder="dns1"
-                  clearable
-                />
-              </el-form-item>
-            </re-col>
-
-            <re-col :value="12" :xs="24">
-              <el-form-item :label="t('http.tunnelToken')">
-                <el-input
-                  v-model="newFormInline.tunnel_token"
-                  placeholder="Token"
+                  :placeholder="t('http.dnsResolverPlaceholder', '8.8.8.8:53 (留空使用系统默认 DNS)')"
                   clearable
                 />
               </el-form-item>

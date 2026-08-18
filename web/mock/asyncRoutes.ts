@@ -21,7 +21,7 @@ const appRouter = {
       name: "AppCert",
       component: "app/cert/index",
       meta: {
-        icon: "ri:shield-keyhole-line",
+        icon: "ri:lock-line",
         title: "menus.pureCert",
         roles: ["admin", "common"]
       }
@@ -51,7 +51,7 @@ const appRouter = {
       name: "AppRule",
       component: "app/rule/index",
       meta: {
-        icon: "ri:shield-flash-line",
+        icon: "ri:filter-3-line",
         title: "menus.pureRule",
         roles: ["admin", "common"]
       }
@@ -61,7 +61,7 @@ const appRouter = {
       name: "AppHttpProxy",
       component: "app/http/index",
       meta: {
-        icon: "ri:earth-line",
+        icon: "ri:links-line",
         title: "menus.pureHttpProxy",
         roles: ["admin", "common"]
       }
