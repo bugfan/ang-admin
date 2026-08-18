@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import { onMounted, onUnmounted } from "vue";
 import { useRenderIcon } from "@/components/ReIcon/src/hooks";
 import BackIcon from "~icons/ep/back";
 
@@ -11,6 +12,25 @@ defineProps<{
 const emit = defineEmits<{
   (e: "back"): void;
 }>();
+
+const handleKeyDown = (e: KeyboardEvent) => {
+  if (e.key === "Escape" || e.code === "Escape") {
+    // If an Element Plus overlay (e.g. dialog, popconfirm, select dropdown) is active, prioritize closing it
+    const activeOverlay = document.querySelector(".el-overlay:not([style*='display: none'])");
+    if (activeOverlay) {
+      return;
+    }
+    emit("back");
+  }
+};
+
+onMounted(() => {
+  window.addEventListener("keydown", handleKeyDown);
+});
+
+onUnmounted(() => {
+  window.removeEventListener("keydown", handleKeyDown);
+});
 </script>
 
 <template>
@@ -20,7 +40,7 @@ const emit = defineEmits<{
         circle
         class="!mr-3 shrink-0 shadow-2xs hover:scale-105 transition-transform"
         :icon="useRenderIcon(BackIcon)"
-        :title="backTitle || '返回'"
+        :title="backTitle || '返回 (Esc)'"
         @click="emit('back')"
       />
       <div>
