@@ -47,13 +47,11 @@ export function useCert(t: any, tableRef: Ref) {
     {
       label: t("cert.certId"),
       prop: "CertId",
-      minWidth: 100,
+      minWidth: 140,
       cellRenderer: scope => {
-        const certId = scope.row.CertId || scope.row.cert_id || "";
+        const certId = scope.row.CertId || scope.row.cert_id || "-";
         return (
-          <el-tag type="primary" effect="plain" class="font-bold">
-            {certId}
-          </el-tag>
+          <span class="font-semibold text-[var(--el-text-color-primary)]">{certId}</span>
         );
       }
     },

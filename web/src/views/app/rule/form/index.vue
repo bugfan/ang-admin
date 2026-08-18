@@ -294,7 +294,7 @@ defineExpose({ getRef });
     ref="ruleFormRef"
     :model="newFormInline"
     :rules="rules"
-    label-width="110px"
+    label-width="auto"
     class="rule-form px-1 sm:px-2 py-1"
   >
     <!-- Section 1: Basic Info -->
@@ -561,6 +561,7 @@ defineExpose({ getRef });
 .rule-form :deep(.el-form-item__label) {
   font-weight: 500;
   color: var(--el-text-color-regular);
+  white-space: nowrap;
 }
 
 @media (max-width: 640px) {

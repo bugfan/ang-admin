@@ -338,7 +338,7 @@ defineExpose({ getRef, syncLocationJSON });
     ref="httpFormRef"
     :model="newFormInline"
     :rules="formRules"
-    label-width="120px"
+    label-width="auto"
     class="http-form px-1 sm:px-2 py-1"
   >
     <div class="space-y-4">
@@ -666,6 +666,7 @@ defineExpose({ getRef, syncLocationJSON });
 .http-form :deep(.el-form-item__label) {
   font-weight: 500;
   color: var(--el-text-color-regular);
+  white-space: nowrap;
 }
 
 @media (max-width: 640px) {

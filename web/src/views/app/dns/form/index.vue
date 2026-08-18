@@ -331,7 +331,7 @@ defineExpose({ getRef });
     ref="ruleFormRef"
     :model="newFormInline"
     :rules="formRules"
-    label-width="120px"
+    label-width="auto"
     class="dns-form py-1 px-1 sm:px-2 space-y-4"
   >
     <!-- 板块 1: 基础监听与规则 -->

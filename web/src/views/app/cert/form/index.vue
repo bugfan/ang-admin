@@ -97,7 +97,7 @@ defineExpose({ getRef });
     ref="ruleFormRef"
     :model="newFormInline"
     :rules="formRules"
-    label-width="120px"
+    label-width="auto"
     class="cert-form px-1 sm:px-2 py-1"
   >
     <el-row :gutter="16">
@@ -247,6 +247,7 @@ defineExpose({ getRef });
 .cert-form :deep(.el-form-item__label) {
   font-weight: 500;
   color: var(--el-text-color-regular);
+  white-space: nowrap;
 }
 
 @media (max-width: 640px) {
