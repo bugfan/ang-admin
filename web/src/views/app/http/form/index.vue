@@ -26,13 +26,13 @@ const props = withDefaults(defineProps<{ formInline: any }>(), {
     id: undefined,
     name: "",
     port: "443",
-    hostname: "*.local.i443.cn",
+    hostname: "",
     http: true,
     tls: true,
     h2: true,
     hsts: false,
     certificate: "",
-    proxy_headers: JSON.stringify(["X-Forwarded-For"]),
+    proxy_headers: JSON.stringify([]),
     compress: false,
     rules: JSON.stringify([]),
     real_ip: "",
@@ -61,6 +61,24 @@ const { t } = useI18n();
 const httpFormRef = ref();
 const newFormInline = ref(props.formInline);
 
+// Common Forward / Proxy Header options
+const commonHeaderOptions = [
+  { label: "Host", value: "Host" },
+  { label: "X-Forwarded-For", value: "X-Forwarded-For" },
+  { label: "X-Forwarded-Proto", value: "X-Forwarded-Proto" },
+  { label: "X-Forwarded-Host", value: "X-Forwarded-Host" },
+  { label: "X-Real-IP", value: "X-Real-IP" },
+  { label: "Connection", value: "Connection" },
+  { label: "Upgrade", value: "Upgrade" },
+  { label: "Keep-Alive", value: "Keep-Alive" },
+  { label: "Proxy-Authenticate", value: "Proxy-Authenticate" },
+  { label: "Proxy-Authorization", value: "Proxy-Authorization" },
+  { label: "TE", value: "TE" },
+  { label: "Trailers", value: "Trailers" },
+  { label: "Transfer-Encoding", value: "Transfer-Encoding" }
+];
+const selectedProxyHeaders = ref<string[]>([]);
+
 // Certificate options
 const certOptions = ref<Array<{ label: string; value: string }>>([]);
 // Tunnel options
@@ -80,6 +98,14 @@ onMounted(() => {
 });
 
 function initFormState() {
+  try {
+    if (newFormInline.value.proxy_headers) {
+      const parsed = typeof newFormInline.value.proxy_headers === "string"
+        ? JSON.parse(newFormInline.value.proxy_headers)
+        : newFormInline.value.proxy_headers;
+      if (Array.isArray(parsed)) selectedProxyHeaders.value = parsed;
+    }
+  } catch (e) {}
   try {
     if (newFormInline.value.rules) {
       const parsed = typeof newFormInline.value.rules === "string"
@@ -159,6 +185,10 @@ async function fetchRules() {
   } catch (e) {}
 }
 
+function handleProxyHeadersChange(vals: string[]) {
+  newFormInline.value.proxy_headers = JSON.stringify(vals);
+}
+
 function handleRulesChange(vals: string[]) {
   newFormInline.value.rules = JSON.stringify(vals);
 }
@@ -206,6 +236,7 @@ function syncLocationJSON() {
 }
 
 const formRules = reactive({
+  name: [{ required: true, message: () => t("http.nameRequired", "请输入应用名称"), trigger: "blur" }],
   hostname: [{ required: true, message: () => t("http.hostname"), trigger: "blur" }],
   port: [{ required: true, message: () => t("http.port"), trigger: "blur" }]
 });
@@ -259,12 +290,35 @@ defineExpose({ getRef, syncLocationJSON });
             <el-form-item :label="t('http.hostname')" prop="hostname">
               <el-input
                 v-model="newFormInline.hostname"
-                placeholder="*.local.i443.cn"
+                :placeholder="t('http.hostnamePlaceholder', '例如 foo.com 或 *.example.com')"
                 clearable
               />
               <div class="text-xs text-[var(--el-text-color-secondary)] mt-1.5">
                 {{ t("http.hostnameTip") }}
               </div>
+            </el-form-item>
+          </re-col>
+
+          <re-col :value="24" :xs="24">
+            <el-form-item :label="t('http.proxyHeaders', '转发头')" prop="proxy_headers">
+              <el-select
+                v-model="selectedProxyHeaders"
+                multiple
+                filterable
+                allow-create
+                default-first-option
+                clearable
+                class="w-full"
+                :placeholder="t('http.proxyHeadersPlaceholder', '请选择或输入转发头 (如 Host, X-Forwarded-For)')"
+                @change="handleProxyHeadersChange"
+              >
+                <el-option
+                  v-for="item in commonHeaderOptions"
+                  :key="item.value"
+                  :label="item.label"
+                  :value="item.value"
+                />
+              </el-select>
             </el-form-item>
           </re-col>
 
@@ -373,16 +427,6 @@ defineExpose({ getRef, syncLocationJSON });
         <div class="space-y-4">
           <!-- General Backend Fields -->
           <el-row :gutter="16">
-            <re-col :value="12" :xs="24">
-              <el-form-item :label="t('http.realIp')">
-                <el-input
-                  v-model="newFormInline.real_ip"
-                  placeholder="X-Real-IP"
-                  clearable
-                />
-              </el-form-item>
-            </re-col>
-
             <re-col :value="12" :xs="24">
               <el-form-item :label="t('http.assocTunnel')">
                 <el-select
