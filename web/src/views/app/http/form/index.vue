@@ -21,12 +21,21 @@ export interface LocationItem {
   };
 }
 
-export interface TunnelNodeOption {
+export interface TunnelGroupOption {
   label: string;
   value: string;
   tunnel_id: string;
   tunnel_token: string;
   tunnel_type: string;
+  cName?: string;
+  isOnline?: boolean;
+  disabled?: boolean;
+}
+
+export interface TunnelGroup {
+  tunnel_id: string;
+  groupLabel: string;
+  options: TunnelGroupOption[];
 }
 
 const props = withDefaults(defineProps<{ formInline: any }>(), {
@@ -92,7 +101,7 @@ const selectedProxyHeaders = ref<string[]>([]);
 const certOptions = ref<Array<{ label: string; value: string }>>([]);
 // Tunnel options
 const tunnelOptions = ref<Array<{ label: string; value: string; type: string }>>([]);
-const tunnelNodeOptions = ref<TunnelNodeOption[]>([]);
+const tunnelNodeGroups = ref<TunnelGroup[]>([]);
 const selectedTunnelNodeKey = ref<string>("");
 // Rule options
 const availableRules = ref<Array<{ label: string; value: string }>>([]);
@@ -205,7 +214,7 @@ async function fetchTunnels() {
       list = res;
     }
 
-    const opts: TunnelNodeOption[] = [];
+    const groups: TunnelGroup[] = [];
     list.forEach((tItem: any) => {
       const tidStr = String(tItem.Id || tItem.id);
       const tName = tItem.Name || tItem.name || "";
@@ -213,37 +222,51 @@ async function fetchTunnels() {
       const tSni = tItem.SNI || tItem.sni || "";
       const tType = (tItem.Type || tItem.type || "TLS").toLowerCase().includes("quic") ? "quic" : "tls";
 
-      // 1. Add Tunnel Server Option
-      const serverLabel = `${tName ? '[' + tName + '] ' : ''}Tunnel #${tidStr} (${tType.toUpperCase()} | Port: ${tPort}${tSni ? ' | SNI: ' + tSni : ''})`;
-      const serverKey = `${tidStr}||${tType}`;
-      opts.push({
-        label: serverLabel,
-        value: serverKey,
-        tunnel_id: tidStr,
-        tunnel_token: "",
-        tunnel_type: tType
-      });
+      const portLabel = `${t("tunnel.port", "端口")}: ${tPort}`;
+      const groupLabel = `${tName ? '[' + tName + '] ' : ''}Tunnel #${tidStr} (${tType.toUpperCase()} | ${portLabel}${tSni ? ' | SNI: ' + tSni : ''})`;
 
-      // 2. Add Client Node Options if present
+      const nodeOpts: TunnelGroupOption[] = [];
       const cNodes = tItem.client_nodes || tItem.ClientNodes || [];
+
       if (Array.isArray(cNodes) && cNodes.length > 0) {
         cNodes.forEach((c: any) => {
           const isOnline = c.IsOnline ?? c.is_online ?? false;
           const cName = c.Name || c.name || "Node";
           const token = c.Token || c.token || "";
+          const statusText = isOnline ? t("tunnelClient.online", "在线") : t("tunnelClient.offline", "离线");
           const key = `${tidStr}|${token}`;
-          opts.push({
-            label: `  ↳ [${isOnline ? '在线' : '离线'}] ${cName} (Token: ${token || '-'})`,
+          const nodeLabel = `[${statusText}] ${cName}`;
+          nodeOpts.push({
+            label: nodeLabel,
             value: key,
             tunnel_id: tidStr,
             tunnel_token: token,
-            tunnel_type: tType
+            tunnel_type: tType,
+            cName,
+            isOnline,
+            disabled: false
           });
         });
+      } else {
+        nodeOpts.push({
+          label: t("tunnel.noClients", "暂无节点"),
+          value: `${tidStr}||no_nodes`,
+          tunnel_id: tidStr,
+          tunnel_token: "",
+          tunnel_type: tType,
+          cName: t("tunnel.noClients", "暂无节点"),
+          disabled: true
+        });
       }
+
+      groups.push({
+        tunnel_id: tidStr,
+        groupLabel,
+        options: nodeOpts
+      });
     });
 
-    tunnelNodeOptions.value = opts;
+    tunnelNodeGroups.value = groups;
     syncSelectedTunnelNodeKey();
   } catch (e) {}
 }
@@ -255,19 +278,43 @@ function syncSelectedTunnelNodeKey() {
     selectedTunnelNodeKey.value = "";
     return;
   }
-  const match = tunnelNodeOptions.value.find(o => o.tunnel_id === String(tid) && o.tunnel_token === (token || ''));
+
+  let allOpts: TunnelGroupOption[] = [];
+  tunnelNodeGroups.value.forEach(g => {
+    allOpts = allOpts.concat(g.options);
+  });
+
+  const match = allOpts.find(
+    o => !o.disabled && String(o.tunnel_id) === String(tid) && String(o.tunnel_token || "") === String(token || "")
+  );
+
   if (match) {
     selectedTunnelNodeKey.value = match.value;
   } else {
-    const fallbackKey = `${tid}|${token || ''}`;
+    const groupMatch = tunnelNodeGroups.value.find(g => String(g.tunnel_id) === String(tid));
+    const fallbackKey = `${tid}|${token || ""}`;
     const tType = newFormInline.value.tunnel_type || "tls";
-    tunnelNodeOptions.value.push({
-      label: `Tunnel #${tid} Node (Token: ${token || '-'})`,
+    const fallbackName = token ? `Node-${token.length > 6 ? token.slice(-6) : token}` : t("tunnelClient.nodeRef", "节点");
+    const fallbackOption: TunnelGroupOption = {
+      label: `[${t("tunnelClient.unsavedId", "未存库")}] ${fallbackName}`,
       value: fallbackKey,
       tunnel_id: String(tid),
       tunnel_token: token || "",
-      tunnel_type: tType
-    });
+      tunnel_type: tType,
+      cName: fallbackName,
+      isOnline: false,
+      disabled: false
+    };
+
+    if (groupMatch) {
+      groupMatch.options.push(fallbackOption);
+    } else {
+      tunnelNodeGroups.value.push({
+        tunnel_id: String(tid),
+        groupLabel: `Tunnel #${tid} (${t("tunnel.invalidAssoc", "失效")})`,
+        options: [fallbackOption]
+      });
+    }
     selectedTunnelNodeKey.value = fallbackKey;
   }
 }
@@ -279,8 +326,12 @@ function handleTunnelNodeChange(val: string) {
     newFormInline.value.tunnel_type = "";
     return;
   }
-  const match = tunnelNodeOptions.value.find(o => o.value === val);
-  if (match) {
+  let allOpts: TunnelGroupOption[] = [];
+  tunnelNodeGroups.value.forEach(g => {
+    allOpts = allOpts.concat(g.options);
+  });
+  const match = allOpts.find(o => o.value === val);
+  if (match && !match.disabled) {
     newFormInline.value.tunnel_id = match.tunnel_id;
     newFormInline.value.tunnel_token = match.tunnel_token;
     newFormInline.value.tunnel_type = match.tunnel_type;
@@ -641,12 +692,29 @@ defineExpose({ getRef, syncLocationJSON });
                   class="w-full"
                   @change="handleTunnelNodeChange"
                 >
-                  <el-option
-                    v-for="item in tunnelNodeOptions"
-                    :key="item.value"
-                    :label="item.label"
-                    :value="item.value"
-                  />
+                  <el-option-group
+                    v-for="group in tunnelNodeGroups"
+                    :key="group.tunnel_id"
+                    :label="group.groupLabel"
+                  >
+                    <el-option
+                      v-for="item in group.options"
+                      :key="item.value"
+                      :label="item.label"
+                      :value="item.value"
+                      :disabled="item.disabled"
+                    >
+                      <div v-if="!item.disabled" class="flex items-center space-x-2 py-0.5 text-xs">
+                        <el-tag size="small" :type="item.isOnline ? 'success' : 'info'" effect="light" class="font-medium">
+                          {{ item.isOnline ? t('tunnelClient.online', '在线') : t('tunnelClient.offline', '离线') }}
+                        </el-tag>
+                        <span class="font-semibold text-[var(--el-text-color-primary)] font-mono">{{ item.cName || 'Node' }}</span>
+                      </div>
+                      <div v-else class="text-xs text-gray-400 py-0.5">
+                        {{ item.cName }}
+                      </div>
+                    </el-option>
+                  </el-option-group>
                 </el-select>
               </el-form-item>
             </re-col>

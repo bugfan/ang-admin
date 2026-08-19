@@ -135,60 +135,165 @@ function syncRulesJSON() {
 }
 
 // Tunnel selection
-const tunnelOptions = ref<Array<any>>([]);
-const tunnelLoading = ref(false);
-const selectedTunnelKey = ref("");
-
-function formatTunnelLabel(tItem: any) {
-  if (!tItem) return "";
-  const type = (tItem.type || tItem.Type || "QUIC").toUpperCase();
-  const port = tItem.port ?? tItem.Port ?? "";
-  const sni = tItem.sni ?? tItem.SNI ?? "";
-  const id = tItem.id ?? tItem.Id ?? "";
-  const sniText = sni ? ` | SNI: ${sni}` : "";
-  return `[${type}] 端口: ${port}${sniText} (ID: ${id})`;
+export interface DnsTunnelOption {
+  label: string;
+  value: string;
+  tunnel_id: string;
+  tunnel_token: string;
+  tunnel_type: string;
+  cName?: string;
+  isOnline?: boolean;
+  disabled?: boolean;
 }
 
-// Filter tunnel options for DNS mode (currently QUIC only; extensible for future DoH features)
-const allowedTunnelTypes = ["quic"];
-const filteredTunnelOptions = computed(() => {
-  return tunnelOptions.value.filter(tItem => {
-    const rawType = (tItem.type || tItem.Type || "").toLowerCase();
-    return allowedTunnelTypes.some(allowed => rawType.includes(allowed));
-  });
-});
+export interface DnsTunnelGroup {
+  tunnel_id: string;
+  groupLabel: string;
+  options: DnsTunnelOption[];
+}
+
+const tunnelNodeGroups = ref<DnsTunnelGroup[]>([]);
+const tunnelLoading = ref(false);
+const selectedTunnelNodeKey = ref("");
 
 async function fetchTunnels() {
   tunnelLoading.value = true;
-  const res = await getTunnelList();
-  tunnelLoading.value = false;
-  if (res?.code === 0 && Array.isArray(res?.data?.list)) {
-    tunnelOptions.value = res.data.list;
+  try {
+    const res = await getTunnelList();
+    let list: any[] = [];
+    if (Array.isArray(res?.data?.list)) list = res.data.list;
+    else if (Array.isArray(res?.data)) list = res.data;
+    else if (Array.isArray(res)) list = res;
 
-    if (newFormInline.value.tunnel_id) {
-      const matched = tunnelOptions.value.find(
-        t => String(t.id || t.Id) === String(newFormInline.value.tunnel_id)
-      );
-      if (matched) {
-        selectedTunnelKey.value = String(matched.id || matched.Id);
+    // Filter ONLY QUIC tunnels for DNS proxy (DNS runs over UDP / QUIC)
+    list = list.filter((tItem: any) => {
+      const rawType = (tItem.Type || tItem.type || "").toLowerCase();
+      return rawType.includes("quic");
+    });
+
+    const groups: DnsTunnelGroup[] = [];
+    list.forEach((tItem: any) => {
+      const tidStr = String(tItem.Id || tItem.id);
+      const tName = tItem.Name || tItem.name || "";
+      const tPort = tItem.Port || tItem.port || "";
+      const tSni = tItem.SNI || tItem.sni || "";
+      const tType = "quic";
+
+      const portLabel = `${t("tunnel.port", "端口")}: ${tPort}`;
+      const groupLabel = `${tName ? '[' + tName + '] ' : ''}Tunnel #${tidStr} (${tType.toUpperCase()} | ${portLabel}${tSni ? ' | SNI: ' + tSni : ''})`;
+
+      const nodeOpts: DnsTunnelOption[] = [];
+      const cNodes = tItem.client_nodes || tItem.ClientNodes || [];
+
+      if (Array.isArray(cNodes) && cNodes.length > 0) {
+        cNodes.forEach((c: any) => {
+          const isOnline = c.IsOnline ?? c.is_online ?? false;
+          const cName = c.Name || c.name || "Node";
+          const token = c.Token || c.token || "";
+          const statusText = isOnline ? t("tunnelClient.online", "在线") : t("tunnelClient.offline", "离线");
+          const key = `${tidStr}|${token}`;
+          const nodeLabel = `[${statusText}] ${cName}`;
+          nodeOpts.push({
+            label: nodeLabel,
+            value: key,
+            tunnel_id: tidStr,
+            tunnel_token: token,
+            tunnel_type: tType,
+            cName,
+            isOnline,
+            disabled: false
+          });
+        });
+      } else {
+        nodeOpts.push({
+          label: t("tunnel.noClients", "暂无节点"),
+          value: `${tidStr}||no_nodes`,
+          tunnel_id: tidStr,
+          tunnel_token: "",
+          tunnel_type: tType,
+          cName: t("tunnel.noClients", "暂无节点"),
+          disabled: true
+        });
       }
-    }
+
+      groups.push({
+        tunnel_id: tidStr,
+        groupLabel,
+        options: nodeOpts
+      });
+    });
+
+    tunnelNodeGroups.value = groups;
+    syncSelectedTunnelNodeKey();
+  } catch (e) {} finally {
+    tunnelLoading.value = false;
   }
 }
 
-function handleSelectTunnel(val: string) {
+function syncSelectedTunnelNodeKey() {
+  const tid = newFormInline.value.tunnel_id;
+  const token = newFormInline.value.tunnel_token;
+  if (!tid) {
+    selectedTunnelNodeKey.value = "";
+    return;
+  }
+
+  let allOpts: DnsTunnelOption[] = [];
+  tunnelNodeGroups.value.forEach(g => {
+    allOpts = allOpts.concat(g.options);
+  });
+
+  const match = allOpts.find(
+    o => !o.disabled && String(o.tunnel_id) === String(tid) && String(o.tunnel_token || "") === String(token || "")
+  );
+
+  if (match) {
+    selectedTunnelNodeKey.value = match.value;
+  } else {
+    const groupMatch = tunnelNodeGroups.value.find(g => String(g.tunnel_id) === String(tid));
+    const fallbackKey = `${tid}|${token || ""}`;
+    const tType = newFormInline.value.tunnel_type || "quic";
+    const fallbackName = token ? `Node-${token.length > 6 ? token.slice(-6) : token}` : t("tunnelClient.nodeRef", "节点");
+    const fallbackOption: DnsTunnelOption = {
+      label: `[${t("tunnelClient.unsavedId", "未存库")}] ${fallbackName}`,
+      value: fallbackKey,
+      tunnel_id: String(tid),
+      tunnel_token: token || "",
+      tunnel_type: tType,
+      cName: fallbackName,
+      isOnline: false,
+      disabled: false
+    };
+
+    if (groupMatch) {
+      groupMatch.options.push(fallbackOption);
+    } else {
+      tunnelNodeGroups.value.push({
+        tunnel_id: String(tid),
+        groupLabel: `Tunnel #${tid} (${t("tunnel.invalidAssoc", "失效")})`,
+        options: [fallbackOption]
+      });
+    }
+    selectedTunnelNodeKey.value = fallbackKey;
+  }
+}
+
+function handleTunnelNodeChange(val: string) {
   if (!val) {
     newFormInline.value.tunnel_id = "";
+    newFormInline.value.tunnel_token = "";
     newFormInline.value.tunnel_type = "";
     return;
   }
-  const matched = tunnelOptions.value.find(
-    t => String(t.id || t.Id) === String(val)
-  );
-  if (matched) {
-    const rawType = matched.type || matched.Type || "quic";
-    newFormInline.value.tunnel_type = rawType.toLowerCase().includes("tls") ? "tls" : "quic";
-    newFormInline.value.tunnel_id = String(matched.id || matched.Id);
+  let allOpts: DnsTunnelOption[] = [];
+  tunnelNodeGroups.value.forEach(g => {
+    allOpts = allOpts.concat(g.options);
+  });
+  const match = allOpts.find(o => o.value === val);
+  if (match && !match.disabled) {
+    newFormInline.value.tunnel_id = match.tunnel_id;
+    newFormInline.value.tunnel_token = match.tunnel_token;
+    newFormInline.value.tunnel_type = match.tunnel_type;
   }
 }
 
@@ -509,20 +614,37 @@ defineExpose({ getRef });
         <el-form-item :label="t('dns.tunnel')" prop="tunnel_id">
           <div class="w-full space-y-1">
             <el-select
-              v-model="selectedTunnelKey"
+              v-model="selectedTunnelNodeKey"
               clearable
               filterable
               :loading="tunnelLoading"
               class="w-full"
               :placeholder="t('dns.selectTunnelPlaceholder')"
-              @change="handleSelectTunnel"
+              @change="handleTunnelNodeChange"
             >
-              <el-option
-                v-for="tItem in filteredTunnelOptions"
-                :key="tItem.id || tItem.Id"
-                :label="formatTunnelLabel(tItem)"
-                :value="String(tItem.id || tItem.Id)"
-              />
+              <el-option-group
+                v-for="group in tunnelNodeGroups"
+                :key="group.tunnel_id"
+                :label="group.groupLabel"
+              >
+                <el-option
+                  v-for="item in group.options"
+                  :key="item.value"
+                  :label="item.label"
+                  :value="item.value"
+                  :disabled="item.disabled"
+                >
+                  <div v-if="!item.disabled" class="flex items-center space-x-2 py-0.5 text-xs">
+                    <el-tag size="small" :type="item.isOnline ? 'success' : 'info'" effect="light" class="font-medium">
+                      {{ item.isOnline ? t('tunnelClient.online', '在线') : t('tunnelClient.offline', '离线') }}
+                    </el-tag>
+                    <span class="font-semibold text-[var(--el-text-color-primary)] font-mono">{{ item.cName || 'Node' }}</span>
+                  </div>
+                  <div v-else class="text-xs text-gray-400 py-0.5">
+                    {{ item.cName }}
+                  </div>
+                </el-option>
+              </el-option-group>
             </el-select>
             <div class="text-xs text-[var(--el-text-color-secondary)] font-medium inline-flex items-center gap-1">
               <IconifyIconOffline icon="ri:information-line" class="text-blue-500" />
