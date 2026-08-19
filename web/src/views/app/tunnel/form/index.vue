@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import { deviceDetection } from "@pureadmin/utils";
 import { ref, reactive, onMounted } from "vue";
 import { useRouter } from "vue-router";
 import ReCol from "@/components/ReCol";
@@ -128,6 +129,7 @@ defineExpose({ getRef });
 
 <template>
   <el-form
+    :label-position="deviceDetection() ? 'top' : 'right'"
     ref="ruleFormRef"
     :model="newFormInline"
     :rules="formRules"
@@ -253,17 +255,5 @@ defineExpose({ getRef });
   font-weight: 500;
   color: var(--el-text-color-regular);
   white-space: nowrap;
-}
-
-@media (max-width: 640px) {
-  .tunnel-form :deep(.el-form-item) {
-    flex-direction: column;
-    align-items: flex-start;
-  }
-  .tunnel-form :deep(.el-form-item__label) {
-    justify-content: flex-start;
-    margin-bottom: 4px;
-    width: 100% !important;
-  }
 }
 </style>

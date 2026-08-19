@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import { deviceDetection } from "@pureadmin/utils";
 import { ref, reactive, onMounted } from "vue";
 import ReCol from "@/components/ReCol";
 import { useI18n } from "vue-i18n";
@@ -145,6 +146,7 @@ defineExpose({ getRef });
 
 <template>
   <el-form
+    :label-position="deviceDetection() ? 'top' : 'right'"
     ref="ruleFormRef"
     :model="newFormInline"
     :rules="formRules"
@@ -211,7 +213,7 @@ defineExpose({ getRef });
                 clearable
                 filterable
                 :loading="activeLoading"
-                class="flex-1"
+                class="w-full flex-1"
                 :placeholder="t('tunnelClient.selectActivePlaceholder')"
                 @change="handleSelectActiveConn"
               >

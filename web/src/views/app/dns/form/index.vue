@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import { deviceDetection } from "@pureadmin/utils";
 import { ref, reactive, onMounted, computed, watch } from "vue";
 import ReCol from "@/components/ReCol";
 import { useI18n } from "vue-i18n";
@@ -470,6 +471,7 @@ defineExpose({ getRef });
 
 <template>
   <el-form
+    :label-position="deviceDetection() ? 'top' : 'right'"
     ref="ruleFormRef"
     :model="newFormInline"
     :rules="formRules"
@@ -850,17 +852,5 @@ defineExpose({ getRef });
 <style scoped lang="scss">
 .dns-form :deep(.el-form-item) {
   margin-bottom: 14px;
-}
-
-@media (max-width: 640px) {
-  .dns-form :deep(.el-form-item) {
-    flex-direction: column;
-    align-items: flex-start;
-  }
-  .dns-form :deep(.el-form-item__label) {
-    justify-content: flex-start;
-    margin-bottom: 4px;
-    width: 100% !important;
-  }
 }
 </style>

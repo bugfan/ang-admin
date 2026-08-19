@@ -330,6 +330,7 @@ defineExpose({ getRef });
 
 <template>
   <el-form
+    :label-position="deviceDetection() ? 'top' : 'right'"
     ref="ruleFormRef"
     :model="newFormInline"
     :rules="rules"
@@ -676,17 +677,5 @@ defineExpose({ getRef });
   font-weight: 500;
   color: var(--el-text-color-regular);
   white-space: nowrap;
-}
-
-@media (max-width: 640px) {
-  .rule-form :deep(.el-form-item) {
-    flex-direction: column;
-    align-items: flex-start;
-  }
-  .rule-form :deep(.el-form-item__label) {
-    justify-content: flex-start;
-    margin-bottom: 4px;
-    width: 100% !important;
-  }
 }
 </style>

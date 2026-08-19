@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import { deviceDetection } from "@pureadmin/utils";
 import { ref, reactive } from "vue";
 import ReCol from "@/components/ReCol";
 import { useI18n } from "vue-i18n";
@@ -98,6 +99,7 @@ defineExpose({ getRef });
 
 <template>
   <el-form
+    :label-position="deviceDetection() ? 'top' : 'right'"
     ref="ruleFormRef"
     :model="newFormInline"
     :rules="formRules"
@@ -148,7 +150,7 @@ defineExpose({ getRef });
               </el-button>
             </div>
           </template>
-          <el-form label-width="100px" size="small" class="pt-1">
+          <el-form :label-position="deviceDetection() ? 'top' : 'right'" label-width="100px" size="small" class="pt-1">
             <el-form-item :label="t('cert.genCnLabel')">
               <el-input
                 v-model="genConfig.common_name"
@@ -263,17 +265,5 @@ defineExpose({ getRef });
   font-weight: 500;
   color: var(--el-text-color-regular);
   white-space: nowrap;
-}
-
-@media (max-width: 640px) {
-  .cert-form :deep(.el-form-item) {
-    flex-direction: column;
-    align-items: flex-start;
-  }
-  .cert-form :deep(.el-form-item__label) {
-    justify-content: flex-start;
-    margin-bottom: 4px;
-    width: 100% !important;
-  }
 }
 </style>
