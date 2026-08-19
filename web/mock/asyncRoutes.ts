@@ -37,22 +37,22 @@ const appRouter = {
       }
     },
     {
-      path: "/app/dns",
-      name: "AppDns",
-      component: "app/dns/index",
-      meta: {
-        icon: "ri:global-line",
-        title: "menus.pureDns",
-        roles: ["admin", "common"]
-      }
-    },
-    {
       path: "/app/rule",
       name: "AppRule",
       component: "app/rule/index",
       meta: {
         icon: "ri:filter-3-line",
         title: "menus.pureRule",
+        roles: ["admin", "common"]
+      }
+    },
+    {
+      path: "/app/dns",
+      name: "AppDns",
+      component: "app/dns/index",
+      meta: {
+        icon: "ri:global-line",
+        title: "menus.pureDns",
         roles: ["admin", "common"]
       }
     },
