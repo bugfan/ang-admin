@@ -594,6 +594,7 @@ http:
   hsts: "HSTS Security"
   selectCert: "Certificate"
   selectCertPlaceholder: "Select associated TLS cert from Cert Management"
+  certRequiredForTls: "Certificate is required when HTTPS (TLS) is enabled"
   hostnameTip: "Please resolve domain to local IP. Wildcards supported."
   compress: "Gzip / Zstd / Brotli / Deflate Response Compression"
   compressTip: "The engine will compress HTML/CSS/JS/JSON text streams via Gzip, Zstd, Brotli (br), or Deflate to save bandwidth."

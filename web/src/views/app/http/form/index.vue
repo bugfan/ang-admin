@@ -419,10 +419,29 @@ function syncLocationJSON() {
   newFormInline.value.location_json = JSON.stringify(cleanedLocations, null, 2);
 }
 
+const validateCertificate = (_rule: any, _value: any, callback: any) => {
+  if (newFormInline.value.tls && !newFormInline.value.certificate) {
+    callback(new Error(t("http.certRequiredForTls", "开启 HTTPS (TLS) 必须选择关联证书")));
+  } else {
+    callback();
+  }
+};
+
+function handleTlsChange(val: boolean) {
+  if (!val) {
+    newFormInline.value.h2 = false;
+    newFormInline.value.hsts = false;
+  }
+  if (httpFormRef.value) {
+    httpFormRef.value.validateField("certificate");
+  }
+}
+
 const formRules = reactive({
   name: [{ required: true, message: () => t("http.nameRequired", "请输入应用名称"), trigger: "blur" }],
   hostname: [{ required: true, message: () => t("http.hostname"), trigger: "blur" }],
-  port: [{ required: true, message: () => t("http.port"), trigger: "blur" }]
+  port: [{ required: true, message: () => t("http.port"), trigger: "blur" }],
+  certificate: [{ validator: validateCertificate, trigger: ["change", "blur"] }]
 });
 
 function getRef() {
@@ -511,18 +530,19 @@ defineExpose({ getRef, syncLocationJSON });
               <div class="p-3 rounded-lg border border-[var(--el-border-color-lighter)] bg-[var(--el-fill-color-light)] w-full space-y-3">
                 <div class="flex flex-wrap gap-4 sm:gap-6 items-center">
                   <el-checkbox v-model="newFormInline.http" :label="t('http.enableHttp')" />
-                  <el-checkbox v-model="newFormInline.tls" :label="t('http.enableTls')" />
+                  <el-checkbox v-model="newFormInline.tls" :label="t('http.enableTls')" @change="handleTlsChange" />
                   <el-switch v-show="newFormInline.tls" v-model="newFormInline.h2" :active-text="t('http.http2')" inactive-text="" />
                   <el-switch v-show="newFormInline.tls" v-model="newFormInline.hsts" :active-text="t('http.hsts')" inactive-text="" />
                 </div>
 
                 <div v-show="newFormInline.tls" class="pt-2 border-t border-[var(--el-border-color-lighter)]">
-                  <el-form-item :label="t('http.selectCert')" label-width="110px" class="!mb-0">
+                  <el-form-item :label="t('http.selectCert')" label-width="110px" class="!mb-0" prop="certificate">
                     <el-select
                       v-model="newFormInline.certificate"
                       clearable
                       :placeholder="t('http.selectCertPlaceholder')"
                       class="w-full"
+                      @change="() => httpFormRef?.validateField('certificate')"
                     >
                       <el-option
                         v-for="c in certOptions"

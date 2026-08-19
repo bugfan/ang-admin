@@ -86,17 +86,16 @@ export function useHttpProxy(t: any, tableRef: Ref) {
         const featureTags: any[] = [];
         if (isHttp) {
           featureTags.push(
-            <el-tooltip content="HTTP ON" placement="top">
-              <el-tag size="small" type="primary" effect="light" class="font-bold">
-                HTTP
-              </el-tag>
-            </el-tooltip>
+            <el-tag size="small" type="info" effect="plain" class="font-mono font-bold text-[11px]">
+              HTTP
+            </el-tag>
           );
         }
         if (isTls) {
+          const tlsTip = cert ? `${t("http.selectCert", "证书")}: ${cert}` : "HTTPS (TLS)";
           featureTags.push(
-            <el-tooltip content="HTTPS (TLS) ON" placement="top">
-              <el-tag size="small" type="success" effect="dark" class="font-bold">
+            <el-tooltip content={tlsTip} placement="top">
+              <el-tag size="small" type="success" effect="light" class="font-mono font-bold text-[11px] cursor-pointer">
                 HTTPS
               </el-tag>
             </el-tooltip>
@@ -104,41 +103,33 @@ export function useHttpProxy(t: any, tableRef: Ref) {
         }
         if (!isHttp && !isTls) {
           featureTags.push(
-            <el-tooltip content="OFF" placement="top">
-              <el-tag size="small" type="info" effect="plain">
-                -
-              </el-tag>
-            </el-tooltip>
+            <el-tag size="small" type="info" effect="plain" class="font-mono text-[11px]">
+              -
+            </el-tag>
           );
         }
         if (isH2) {
+          const h2Tip = cert ? `${t("http.selectCert", "证书")}: ${cert}` : "HTTP/2 (H2)";
           featureTags.push(
-            <el-tooltip content="HTTP/2 Enabled" placement="top">
-              <el-tag size="small" type="warning" effect="light" class="font-bold">H2</el-tag>
+            <el-tooltip content={h2Tip} placement="top">
+              <el-tag size="small" type="primary" effect="plain" class="font-mono font-bold text-[11px] cursor-pointer">
+                H2
+              </el-tag>
             </el-tooltip>
           );
         }
         if (isHsts) {
           featureTags.push(
-            <el-tooltip content="HSTS Security" placement="top">
-              <el-tag size="small" type="danger" effect="light" class="font-bold">HSTS</el-tag>
-            </el-tooltip>
+            <el-tag size="small" type="warning" effect="plain" class="font-mono font-bold text-[11px]">
+              HSTS
+            </el-tag>
           );
         }
         if (isCompress) {
           featureTags.push(
-            <el-tooltip content="Compression Enabled" placement="top">
-              <el-tag size="small" type="primary" effect="plain" class="font-bold">Compress</el-tag>
-            </el-tooltip>
-          );
-        }
-        if (cert) {
-          featureTags.push(
-            <el-tooltip content={`Cert: ${cert}`} placement="top">
-              <el-tag size="small" type="info" effect="plain" class="font-mono">
-                Cert: {cert}
-              </el-tag>
-            </el-tooltip>
+            <el-tag size="small" type="info" effect="light" class="font-mono font-medium text-[11px]">
+              Compress
+            </el-tag>
           );
         }
 

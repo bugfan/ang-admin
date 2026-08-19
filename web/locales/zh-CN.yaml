@@ -594,6 +594,7 @@ http:
   hsts: "HSTS 强安全"
   selectCert: "证书"
   selectCertPlaceholder: "选择关联的 TLS 证书 (来自证书管理)"
+  certRequiredForTls: "开启 HTTPS (TLS) 必须选择关联证书"
   hostnameTip: "请把域名解析到本机 IP。支持通配符格式 (如 *.local.i443.cn)。"
   compress: "Gzip / Zstd / Brotli / Deflate 响应数据压缩"
   compressTip: "开启后引擎将自动对 HTML/CSS/JS/JSON 等文本流进行实时 Gzip、Zstd、Brotli (br)、Deflate 传输数据压缩，显著节省网络带宽。"
