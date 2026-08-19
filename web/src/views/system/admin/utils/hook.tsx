@@ -5,7 +5,12 @@ import { message } from "@/utils/message";
 import { addDialog } from "@/components/ReDialog";
 import type { PaginationProps } from "@pureadmin/table";
 import { getKeyList, deviceDetection } from "@pureadmin/utils";
-import { getUserList, registerUser, updateUser, deleteUser } from "@/api/system";
+import {
+  getUserList,
+  registerUser,
+  updateUser,
+  deleteUser
+} from "@/api/system";
 import { ElMessageBox } from "element-plus";
 import { type Ref, h, ref, toRaw, computed, reactive, onMounted } from "vue";
 import { useRenderIcon } from "@/components/ReIcon/src/hooks";
@@ -27,47 +32,47 @@ export function useAdmin(t: any, tableRef: Ref) {
     currentPage: 1,
     background: true,
     size: deviceDetection() ? "small" : "default",
-    layout: deviceDetection() ? "prev, pager, next" : "total, sizes, prev, pager, next, jumper"
+    layout: deviceDetection()
+      ? "prev, pager, next"
+      : "total, sizes, prev, pager, next, jumper"
   });
   const columns = computed<TableColumnList>(() => [
     {
-      label: t('admin.selectionColumn'),
+      label: t("admin.selectionColumn"),
       type: "selection",
       fixed: "left",
       reserveSelection: true,
       hide: !useUserStoreHook().is_super_admin
     },
     {
-      label: t('admin.id'),
+      label: t("admin.id"),
       prop: "Id",
       width: 90
     },
     {
-      label: t('admin.username'),
+      label: t("admin.username"),
       prop: "Username",
       minWidth: 130
     },
     {
-      label: t('admin.isSuperAdmin'),
+      label: t("admin.isSuperAdmin"),
       prop: "is_super_admin",
       minWidth: 100,
       cellRenderer: scope => {
-        const isSuper = scope.row.is_super_admin ?? scope.row.IsSuperAdmin ?? false;
+        const isSuper =
+          scope.row.is_super_admin ?? scope.row.IsSuperAdmin ?? false;
         return (
-          <el-tag
-            type={isSuper ? "success" : "info"}
-            effect="plain"
-          >
-            {isSuper ? t('admin.isSuperAdmin') : t('admin.commonAdmin')}
+          <el-tag type={isSuper ? "success" : "info"} effect="plain">
+            {isSuper ? t("admin.isSuperAdmin") : t("admin.commonAdmin")}
           </el-tag>
         );
       }
     },
     {
-      label: t('admin.createTime'),
+      label: t("admin.createTime"),
       minWidth: 160,
       prop: "CreatedAt",
-      formatter: (row) => {
+      formatter: row => {
         const timeVal = row.CreatedAt || row.created_at;
         return timeVal && dayjs(timeVal).isValid() && dayjs(timeVal).year() > 1
           ? dayjs(timeVal).format("YYYY-MM-DD HH:mm:ss")
@@ -75,7 +80,7 @@ export function useAdmin(t: any, tableRef: Ref) {
       }
     },
     {
-      label: t('admin.operation'),
+      label: t("admin.operation"),
       fixed: "right",
       width: 180,
       slot: "operation"
@@ -86,7 +91,9 @@ export function useAdmin(t: any, tableRef: Ref) {
     const targetId = row.Id || row.id;
     const { code, message: msg } = await deleteUser({ id: targetId });
     if (code === 0) {
-      message(`${t('admin.delete')} ID: ${targetId} success`, { type: "success" });
+      message(`${t("admin.delete")} ID: ${targetId} success`, {
+        type: "success"
+      });
       onSearch();
     } else {
       message(msg, { type: "error" });
@@ -116,7 +123,7 @@ export function useAdmin(t: any, tableRef: Ref) {
     const ids = curSelected.map(item => item.Id || item.id);
     const { code, message: msg } = await deleteUser({ ids });
     if (code === 0) {
-      message(`${t('admin.batchDelete')} ID: ${ids.join(",")} success`, {
+      message(`${t("admin.batchDelete")} ID: ${ids.join(",")} success`, {
         type: "success"
       });
       tableRef.value.getTableRef().clearSelection();
@@ -145,7 +152,7 @@ export function useAdmin(t: any, tableRef: Ref) {
     if (!formEl) return;
     formEl.resetFields();
     onSearch();
-  }
+  };
 
   function openDialog(title = "", row?: any) {
     addDialog({
@@ -172,7 +179,7 @@ export function useAdmin(t: any, tableRef: Ref) {
         const curData = options.props.formInline;
         FormRef.validate(async valid => {
           if (valid) {
-            if (title === t('admin.addAdmin')) {
+            if (title === t("admin.addAdmin")) {
               const { code, message: msg } = await registerUser(curData);
               if (code !== 0) {
                 message(msg, { type: "error" });

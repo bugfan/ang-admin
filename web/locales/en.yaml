@@ -614,8 +614,12 @@ http:
   assocTunnelPlaceholder: "Select associated Tunnel client node"
   tunnelNode: "Tunnel"
   tunnelNodePlaceholder: "Select associated Tunnel client node"
-  dnsResolver: "DNS Resolver"
+  dnsResolver: "DNS"
   dnsResolverPlaceholder: "8.8.8.8:53 (Leave empty for system default DNS)"
+  dragToReorder: "Drag to reorder"
+  addDns: "Add DNS"
+
+
   locationTitle: "Path Mapping & Load Balancing"
   locationTip: "Configure Location path mappings for reverse proxy (proxy_pass), static root (root), or static alias (alias)."
   addLocation: "Add Path Mapping"

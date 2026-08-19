@@ -18,7 +18,8 @@ import { type DataInfo, setToken, removeToken, userKey } from "@/utils/auth";
 
 export const useUserStore = defineStore("pure-user", {
   state: (): userType => {
-    let avatar = storageLocal().getItem<DataInfo<number>>(userKey)?.avatar ?? "";
+    let avatar =
+      storageLocal().getItem<DataInfo<number>>(userKey)?.avatar ?? "";
     if (avatar && avatar.startsWith("/api/avatar.png")) {
       avatar = avatar.replace("/api/avatar.png", "/avatar.png");
     }
@@ -26,12 +27,15 @@ export const useUserStore = defineStore("pure-user", {
       // 头像
       avatar,
       // 用户名
-      username: storageLocal().getItem<DataInfo<number>>(userKey)?.username ?? "",
+      username:
+        storageLocal().getItem<DataInfo<number>>(userKey)?.username ?? "",
       // 昵称
-      nickname: storageLocal().getItem<DataInfo<number>>(userKey)?.nickname ?? "",
+      nickname:
+        storageLocal().getItem<DataInfo<number>>(userKey)?.nickname ?? "",
       // 是否超级管理员
       is_super_admin:
-        storageLocal().getItem<DataInfo<number>>(userKey)?.is_super_admin ?? false,
+        storageLocal().getItem<DataInfo<number>>(userKey)?.is_super_admin ??
+        false,
       // 页面级别权限
       roles: storageLocal().getItem<DataInfo<number>>(userKey)?.roles ?? [],
       // 按钮级别权限

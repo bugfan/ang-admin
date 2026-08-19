@@ -43,8 +43,6 @@ function queryEmail(queryString, callback) {
   callback(results);
 }
 
-
-
 // 更新信息
 const onSubmit = async (formEl: FormInstance) => {
   await formEl.validate((valid, fields) => {
@@ -111,6 +109,5 @@ onMounted(async () => {
         更新信息
       </el-button>
     </el-form>
-
   </div>
 </template>

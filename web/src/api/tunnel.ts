@@ -65,7 +65,7 @@ export const deleteTunnel = async (param: any) => {
         await http.request<any>("delete", `/api/tunnel/${id}`);
       }
     } else {
-      const id = typeof param === "object" ? (param.id || param.Id) : param;
+      const id = typeof param === "object" ? param.id || param.Id : param;
       await http.request<any>("delete", `/api/tunnel/${id}`);
     }
     return { code: 0, message: "success" };

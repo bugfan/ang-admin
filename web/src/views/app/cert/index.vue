@@ -101,14 +101,18 @@ async function handleSaveSubmit() {
             message(msg, { type: "error" });
             return;
           }
-          message(`${t("cert.addCert")} ${t("cert.success", "成功")}`, { type: "success" });
+          message(`${t("cert.addCert")} ${t("cert.success", "成功")}`, {
+            type: "success"
+          });
         } else {
           const { code, message: msg } = await updateCert(curData);
           if (code !== 0) {
             message(msg, { type: "error" });
             return;
           }
-          message(`${t("cert.editCert")} ${t("cert.success", "成功")}`, { type: "success" });
+          message(`${t("cert.editCert")} ${t("cert.success", "成功")}`, {
+            type: "success"
+          });
         }
         showView.value = "list";
         onSearch();
@@ -131,14 +135,14 @@ async function handleSaveSubmit() {
         ref="searchFormRef"
         :inline="true"
         :model="form"
-        class="search-form bg-bg_color w-full px-3 sm:px-6 pt-3 pb-1 overflow-auto mb-3 rounded-xl border border-[var(--el-border-color-lighter)] shadow-2xs"
+        class="search-form bg-bg_color w-full px-3 sm:px-6 pt-3 pb-1 overflow-auto mb-3 rounded-xl border border-(--el-border-color-lighter) shadow-2xs"
       >
         <el-form-item :label="t('cert.certId')" prop="cert_id">
           <el-input
             v-model="form.cert_id"
             :placeholder="t('cert.searchCertIdPlaceholder')"
             clearable
-            class="w-full sm:!w-[180px]"
+            class="w-full sm:w-45!"
             @keyup.enter="onSearch"
             @clear="onSearch"
           />
@@ -149,7 +153,7 @@ async function handleSaveSubmit() {
             v-model="form.type"
             :placeholder="t('cert.searchTypePlaceholder', '请选择类型')"
             clearable
-            class="w-full sm:!w-[180px]"
+            class="w-full sm:w-45!"
             @change="onSearch"
           >
             <el-option label="STD" value="STD" />
@@ -165,13 +169,13 @@ async function handleSaveSubmit() {
             :loading="loading"
             @click="onSearch"
           >
-            {{ t('cert.search') }}
+            {{ t("cert.search") }}
           </el-button>
           <el-button
             :icon="useRenderIcon('ri:refresh-line')"
             @click="resetForm(searchFormRef)"
           >
-            {{ t('cert.reset') }}
+            {{ t("cert.reset") }}
           </el-button>
         </el-form-item>
       </el-form>
@@ -188,23 +192,34 @@ async function handleSaveSubmit() {
             :icon="useRenderIcon(AddFill)"
             @click="handleAddPage"
           >
-            {{ t('cert.addCert') }}
+            {{ t("cert.addCert") }}
           </el-button>
         </template>
         <template v-slot="{ size, dynamicColumns }">
           <div
             v-if="selectedNum > 0"
-            class="bg-[var(--el-color-primary-light-9)] text-[var(--el-color-primary)] border border-[var(--el-color-primary-light-7)] px-4 py-2 rounded-lg text-sm mb-3 flex items-center justify-between"
+            class="bg-(--el-color-primary-light-9) text-(--el-color-primary) border border-(--el-color-primary-light-7) px-4 py-2 rounded-lg text-sm mb-3 flex-bc"
           >
-            <span>{{ t('cert.selected') }} {{ selectedNum }} {{ t('cert.items') }}</span>
+            <span
+              >{{ t("cert.selected") }} {{ selectedNum }}
+              {{ t("cert.items") }}</span
+            >
             <div>
-              <el-button type="primary" link size="small" @click="onSelectionCancel">
-                {{ t('cert.cancelSelection') }}
+              <el-button
+                type="primary"
+                link
+                size="small"
+                @click="onSelectionCancel"
+              >
+                {{ t("cert.cancelSelection") }}
               </el-button>
-              <el-popconfirm :title="t('cert.confirmDelete')" @confirm="onbatchDel">
+              <el-popconfirm
+                :title="t('cert.confirmDelete')"
+                @confirm="onbatchDel"
+              >
                 <template #reference>
                   <el-button type="danger" link size="small">
-                    {{ t('cert.batchDelete') }}
+                    {{ t("cert.batchDelete") }}
                   </el-button>
                 </template>
               </el-popconfirm>
@@ -234,30 +249,58 @@ async function handleSaveSubmit() {
           >
             <!-- 展开明细: 公钥/私钥文本结构与状态校验 -->
             <template #expand="{ row }">
-              <div class="p-3 sm:p-4 bg-[var(--el-fill-color-light)] rounded-xl my-1 sm:my-2 mx-1 sm:mx-4 border border-[var(--el-border-color-lighter)] space-y-3 text-xs">
+              <div
+                class="p-3 sm:p-4 bg-(--el-fill-color-light) rounded-xl m-1 sm:my-2 sm:mx-4 border border-(--el-border-color-lighter) space-y-3 text-xs"
+              >
                 <div class="grid grid-cols-1 md:grid-cols-2 gap-3 sm:gap-4">
                   <!-- 证书公钥 (Public Cert) -->
                   <div>
-                    <div class="font-bold text-[var(--el-text-color-primary)] mb-1 flex justify-between items-center">
+                    <div
+                      class="font-bold text-(--el-text-color-primary) mb-1 flex-bc"
+                    >
                       <span class="inline-flex items-center gap-1">
                         <IconifyIconOffline icon="ri:shield-keyhole-line" />
-                        {{ t('cert.certContent') }} (Public Key / Certificate)
+                        {{ t("cert.certContent") }} (Public Key / Certificate)
                       </span>
-                      <el-tag size="small" type="success" effect="plain" class="font-mono">CRT / PEM</el-tag>
+                      <el-tag
+                        size="small"
+                        type="success"
+                        effect="plain"
+                        class="font-mono"
+                        >CRT / PEM</el-tag
+                      >
                     </div>
-                    <pre class="p-2.5 bg-gray-900 text-green-400 rounded-lg font-mono text-[11px] overflow-auto max-h-40 leading-relaxed border border-gray-800">{{ row.cert_content || row.CertContent || t('cert.noContent') }}</pre>
+                    <pre
+                      class="p-2.5 bg-gray-900 text-green-400 rounded-lg font-mono text-[11px] overflow-auto max-h-40 leading-relaxed border border-gray-800"
+                      >{{
+                        row.cert_content ||
+                        row.CertContent ||
+                        t("cert.noContent")
+                      }}</pre>
                   </div>
 
                   <!-- 证书私钥 (Private Key) -->
                   <div>
-                    <div class="font-bold text-[var(--el-text-color-primary)] mb-1 flex justify-between items-center">
+                    <div
+                      class="font-bold text-(--el-text-color-primary) mb-1 flex-bc"
+                    >
                       <span class="inline-flex items-center gap-1">
                         <IconifyIconOffline icon="ri:lock-line" />
-                        {{ t('cert.keyContent') }} (Private Key)
+                        {{ t("cert.keyContent") }} (Private Key)
                       </span>
-                      <el-tag size="small" type="warning" effect="plain" class="font-mono">KEY / RSA</el-tag>
+                      <el-tag
+                        size="small"
+                        type="warning"
+                        effect="plain"
+                        class="font-mono"
+                        >KEY / RSA</el-tag
+                      >
                     </div>
-                    <pre class="p-2.5 bg-gray-900 text-amber-300 rounded-lg font-mono text-[11px] overflow-auto max-h-40 leading-relaxed border border-gray-800">{{ row.key_content || row.KeyContent || t('cert.noContent') }}</pre>
+                    <pre
+                      class="p-2.5 bg-gray-900 text-amber-300 rounded-lg font-mono text-[11px] overflow-auto max-h-40 leading-relaxed border border-gray-800"
+                      >{{
+                        row.key_content || row.KeyContent || t("cert.noContent")
+                      }}</pre>
                   </div>
                 </div>
               </div>
@@ -265,7 +308,7 @@ async function handleSaveSubmit() {
 
             <!-- 操作列 -->
             <template #operation="{ row }">
-              <div class="flex items-center justify-center space-x-1">
+              <div class="flex-c space-x-1">
                 <el-button
                   class="reset-margin"
                   link
@@ -274,7 +317,7 @@ async function handleSaveSubmit() {
                   :icon="useRenderIcon(EditPen)"
                   @click="handleEditPage(row)"
                 >
-                  {{ t('cert.edit') }}
+                  {{ t("cert.edit") }}
                 </el-button>
                 <el-popconfirm
                   :title="t('cert.confirmDelete')"
@@ -288,7 +331,7 @@ async function handleSaveSubmit() {
                       :size="size"
                       :icon="useRenderIcon(Delete)"
                     >
-                      {{ t('cert.delete') }}
+                      {{ t("cert.delete") }}
                     </el-button>
                   </template>
                 </el-popconfirm>
@@ -300,7 +343,10 @@ async function handleSaveSubmit() {
     </div>
 
     <!-- Create / Edit Full Page View Mode -->
-    <div v-else-if="showView === 'new' || showView === 'edit'" class="p-3 sm:p-5 bg-bg_color rounded-xl border border-[var(--el-border-color-lighter)] shadow-2xs">
+    <div
+      v-else-if="showView === 'new' || showView === 'edit'"
+      class="p-3 sm:p-5 bg-bg_color rounded-xl border border-(--el-border-color-lighter) shadow-2xs"
+    >
       <!-- Full Page Header Bar -->
       <PageHeader
         :title="formInline.title"
@@ -309,10 +355,7 @@ async function handleSaveSubmit() {
         @back="handleCancelPage"
       >
         <template #actions>
-          <el-button
-            :icon="useRenderIcon(CloseIcon)"
-            @click="handleCancelPage"
-          >
+          <el-button :icon="useRenderIcon(CloseIcon)" @click="handleCancelPage">
             取消
           </el-button>
           <el-button
@@ -330,11 +373,10 @@ async function handleSaveSubmit() {
       <editForm ref="createEditFormRef" :formInline="formInline" />
 
       <!-- Bottom Action Bar -->
-      <div class="flex items-center justify-end space-x-3 pt-4 mt-4 border-t border-[var(--el-border-color-lighter)]">
-        <el-button
-          :icon="useRenderIcon(CloseIcon)"
-          @click="handleCancelPage"
-        >
+      <div
+        class="flex items-center justify-end space-x-3 pt-4 mt-4 border-t border-(--el-border-color-lighter)"
+      >
+        <el-button :icon="useRenderIcon(CloseIcon)" @click="handleCancelPage">
           取消
         </el-button>
         <el-button

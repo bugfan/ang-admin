@@ -24,7 +24,9 @@ const ruleFormRef = ref();
 const newFormInline = ref(props.formInline);
 const { t } = useI18n();
 
-const certOptions = ref<Array<{ label: string; value: string; cn: string }>>([]);
+const certOptions = ref<Array<{ label: string; value: string; cn: string }>>(
+  []
+);
 const certLoading = ref(false);
 
 const typeOptions = [
@@ -34,13 +36,25 @@ const typeOptions = [
 
 const formRules = reactive({
   name: [
-    { required: true, message: () => t("tunnel.nameRequired", "请输入名称"), trigger: "blur" }
+    {
+      required: true,
+      message: () => t("tunnel.nameRequired", "请输入名称"),
+      trigger: "blur"
+    }
   ],
   type: [
-    { required: true, message: () => t("tunnel.typeRequired"), trigger: "change" }
+    {
+      required: true,
+      message: () => t("tunnel.typeRequired"),
+      trigger: "change"
+    }
   ],
   port: [
-    { required: true, message: () => t("tunnel.portRequired"), trigger: "blur" },
+    {
+      required: true,
+      message: () => t("tunnel.portRequired"),
+      trigger: "blur"
+    },
     {
       validator: (rule: any, value: string, callback: any) => {
         if (!value) {
@@ -118,7 +132,7 @@ defineExpose({ getRef });
     :model="newFormInline"
     :rules="formRules"
     label-width="auto"
-    class="tunnel-form px-1 sm:px-2 py-1"
+    class="tunnel-form p-1 sm:px-2"
   >
     <el-row :gutter="16">
       <re-col :value="24" :xs="24">
@@ -150,11 +164,7 @@ defineExpose({ getRef });
 
       <re-col :value="12" :xs="24" :sm="12">
         <el-form-item :label="t('tunnel.port')" prop="port">
-          <el-input
-            v-model="newFormInline.port"
-            placeholder="443"
-            clearable
-          />
+          <el-input v-model="newFormInline.port" placeholder="443" clearable />
         </el-form-item>
       </re-col>
 
@@ -165,13 +175,22 @@ defineExpose({ getRef });
               v-if="newFormInline.sni"
               class="mb-2 flex items-center text-xs text-gray-600 dark:text-gray-300"
             >
-              <span class="mr-2 font-medium">{{ t('tunnel.associatedSni') }}</span>
-              <el-tag size="small" type="success" effect="plain" class="font-mono font-bold">
+              <span class="mr-2 font-medium">{{
+                t("tunnel.associatedSni")
+              }}</span>
+              <el-tag
+                size="small"
+                type="success"
+                effect="plain"
+                class="font-mono font-bold"
+              >
                 {{ newFormInline.sni }}
               </el-tag>
             </div>
 
-            <div class="flex flex-wrap sm:flex-nowrap items-center w-full gap-2">
+            <div
+              class="flex flex-wrap sm:flex-nowrap items-center w-full gap-2"
+            >
               <el-select
                 v-model="newFormInline.certificate"
                 filterable
@@ -189,9 +208,13 @@ defineExpose({ getRef });
                   :label="item.value"
                   :value="item.value"
                 >
-                  <div class="flex justify-between items-center w-full pr-2">
+                  <div class="flex-bc w-full pr-2">
                     <span class="font-medium">{{ item.value }}</span>
-                    <span v-if="item.cn" class="text-xs text-gray-400 font-mono ml-4">{{ item.cn }}</span>
+                    <span
+                      v-if="item.cn"
+                      class="text-xs text-gray-400 font-mono ml-4"
+                      >{{ item.cn }}</span
+                    >
                   </div>
                 </el-option>
               </el-select>
@@ -203,7 +226,7 @@ defineExpose({ getRef });
                 class="whitespace-nowrap font-medium"
                 @click="goToCertPage"
               >
-                {{ t('tunnel.goCertPage') }} &gt;
+                {{ t("tunnel.goCertPage") }} &gt;
               </el-button>
             </div>
           </div>

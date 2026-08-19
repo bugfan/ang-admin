@@ -614,8 +614,12 @@ http:
   assocTunnelPlaceholder: "选择关联的 Tunnel 客户端节点"
   tunnelNode: "Tunnel"
   tunnelNodePlaceholder: "选择关联的 Tunnel 客户端节点"
-  dnsResolver: "DNS 解析器"
+  dnsResolver: "DNS"
   dnsResolverPlaceholder: "8.8.8.8:53 (留空使用系统默认 DNS)"
+  dragToReorder: "拖动改变顺序"
+  addDns: "添加 DNS"
+
+
   locationTitle: "路径映射与负载均衡"
   locationTip: "支持配置多条 Location 路径映射，可挂载反向代理 (proxy_pass)、静态目录 (root) 或静态别名 (alias)。"
   addLocation: "添加路径映射"

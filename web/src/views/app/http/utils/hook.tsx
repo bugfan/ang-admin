@@ -27,7 +27,9 @@ export function useHttpProxy(t: any, tableRef: Ref) {
     currentPage: 1,
     background: true,
     size: deviceDetection() ? "small" : "default",
-    layout: deviceDetection() ? "prev, pager, next" : "total, sizes, prev, pager, next, jumper"
+    layout: deviceDetection()
+      ? "prev, pager, next"
+      : "total, sizes, prev, pager, next, jumper"
   });
 
   const columns = computed<TableColumnList>(() => [
@@ -45,11 +47,13 @@ export function useHttpProxy(t: any, tableRef: Ref) {
       label: t("http.name", "名称"),
       prop: "Name",
       minWidth: 120,
-      headerRenderer: () => <span class="whitespace-nowrap">{t("http.name", "名称")}</span>,
+      headerRenderer: () => (
+        <span class="whitespace-nowrap">{t("http.name", "名称")}</span>
+      ),
       cellRenderer: scope => {
         const name = scope.row.Name || scope.row.name || "-";
         return (
-          <span class="font-semibold text-sm text-[var(--el-text-color-primary)] break-words inline-block leading-snug py-1">
+          <span class="font-semibold text-sm/snug text-(--el-text-color-primary) wrap-break-word inline-block  py-1">
             {name}
           </span>
         );
@@ -58,12 +62,14 @@ export function useHttpProxy(t: any, tableRef: Ref) {
     {
       label: t("http.hostAndPort", "监听"),
       minWidth: 160,
-      headerRenderer: () => <span class="whitespace-nowrap">{t("http.hostAndPort", "监听")}</span>,
+      headerRenderer: () => (
+        <span class="whitespace-nowrap">{t("http.hostAndPort", "监听")}</span>
+      ),
       cellRenderer: scope => {
         const host = scope.row.Hostname || scope.row.hostname || "-";
         const port = scope.row.Port || scope.row.port || "80";
         return (
-          <div class="font-mono text-xs font-normal text-[var(--el-text-color-secondary)] py-1 inline-flex items-center gap-0.5">
+          <div class="font-mono text-xs font-normal text-(--el-text-color-secondary) py-1 inline-flex items-center gap-0.5">
             <span>{host}</span>
             <span>:{port}</span>
           </div>
@@ -86,16 +92,28 @@ export function useHttpProxy(t: any, tableRef: Ref) {
         const featureTags: any[] = [];
         if (isHttp) {
           featureTags.push(
-            <el-tag size="small" type="info" effect="plain" class="font-mono font-bold text-[11px]">
+            <el-tag
+              size="small"
+              type="info"
+              effect="plain"
+              class="font-mono font-bold text-[11px]"
+            >
               HTTP
             </el-tag>
           );
         }
         if (isTls) {
-          const tlsTip = cert ? `${t("http.selectCert", "证书")}: ${cert}` : "HTTPS (TLS)";
+          const tlsTip = cert
+            ? `${t("http.selectCert", "证书")}: ${cert}`
+            : "HTTPS (TLS)";
           featureTags.push(
             <el-tooltip content={tlsTip} placement="top">
-              <el-tag size="small" type="success" effect="light" class="font-mono font-bold text-[11px] cursor-pointer">
+              <el-tag
+                size="small"
+                type="success"
+                effect="light"
+                class="font-mono font-bold text-[11px] cursor-pointer"
+              >
                 HTTPS
               </el-tag>
             </el-tooltip>
@@ -103,16 +121,28 @@ export function useHttpProxy(t: any, tableRef: Ref) {
         }
         if (!isHttp && !isTls) {
           featureTags.push(
-            <el-tag size="small" type="info" effect="plain" class="font-mono text-[11px]">
+            <el-tag
+              size="small"
+              type="info"
+              effect="plain"
+              class="font-mono text-[11px]"
+            >
               -
             </el-tag>
           );
         }
         if (isH2) {
-          const h2Tip = cert ? `${t("http.selectCert", "证书")}: ${cert}` : "HTTP/2 (H2)";
+          const h2Tip = cert
+            ? `${t("http.selectCert", "证书")}: ${cert}`
+            : "HTTP/2 (H2)";
           featureTags.push(
             <el-tooltip content={h2Tip} placement="top">
-              <el-tag size="small" type="primary" effect="plain" class="font-mono font-bold text-[11px] cursor-pointer">
+              <el-tag
+                size="small"
+                type="primary"
+                effect="plain"
+                class="font-mono font-bold text-[11px] cursor-pointer"
+              >
                 H2
               </el-tag>
             </el-tooltip>
@@ -120,14 +150,24 @@ export function useHttpProxy(t: any, tableRef: Ref) {
         }
         if (isHsts) {
           featureTags.push(
-            <el-tag size="small" type="warning" effect="plain" class="font-mono font-bold text-[11px]">
+            <el-tag
+              size="small"
+              type="warning"
+              effect="plain"
+              class="font-mono font-bold text-[11px]"
+            >
               HSTS
             </el-tag>
           );
         }
         if (isCompress) {
           featureTags.push(
-            <el-tag size="small" type="info" effect="light" class="font-mono font-medium text-[11px]">
+            <el-tag
+              size="small"
+              type="info"
+              effect="light"
+              class="font-mono font-medium text-[11px]"
+            >
               Compress
             </el-tag>
           );
@@ -141,7 +181,7 @@ export function useHttpProxy(t: any, tableRef: Ref) {
         return (
           <div class="space-y-1 py-1">
             {tagChunks.map((chunk: any[], cIdx: number) => (
-              <div key={cIdx} class="flex items-center justify-center gap-1.5 flex-wrap">
+              <div key={cIdx} class="flex-c   gap-1.5 flex-wrap">
                 {chunk}
               </div>
             ))}
@@ -157,11 +197,17 @@ export function useHttpProxy(t: any, tableRef: Ref) {
         const rulesStr = scope.row.Rules || scope.row.rules || "";
         let count = 0;
         try {
-          const parsed = typeof rulesStr === "string" ? JSON.parse(rulesStr) : rulesStr;
+          const parsed =
+            typeof rulesStr === "string" ? JSON.parse(rulesStr) : rulesStr;
           if (Array.isArray(parsed)) count = parsed.length;
         } catch (e) {}
         return (
-          <el-tag size="small" type="primary" effect="light" class="font-mono font-bold">
+          <el-tag
+            size="small"
+            type="primary"
+            effect="light"
+            class="font-mono font-bold"
+          >
             {count} Rules
           </el-tag>
         );
@@ -174,11 +220,15 @@ export function useHttpProxy(t: any, tableRef: Ref) {
         let locations: any[] = [];
         try {
           const locStr = scope.row.LocationJSON || scope.row.location_json;
-          if (locStr) locations = typeof locStr === "string" ? JSON.parse(locStr) : locStr;
+          if (locStr)
+            locations =
+              typeof locStr === "string" ? JSON.parse(locStr) : locStr;
         } catch (e) {}
 
         if (!locations || locations.length === 0) {
-          return <span class="text-[var(--el-text-color-placeholder)] text-xs">-</span>;
+          return (
+            <span class="text-(--el-text-color-placeholder) text-xs">-</span>
+          );
         }
 
         return (
@@ -190,14 +240,27 @@ export function useHttpProxy(t: any, tableRef: Ref) {
               if (uType === "root" || uType === "alias") {
                 const dir = loc.Upstream?.Data?.Dir || "./static";
                 return (
-                  <div key={idx} class="p-1.5 rounded-lg border border-[var(--el-border-color-lighter)] bg-[var(--el-fill-color-light)] flex flex-wrap items-center gap-1.5">
-                    <el-tag size="small" type="info" effect="dark" class="font-mono font-bold">
+                  <div
+                    key={idx}
+                    class="p-1.5 rounded-lg border border-(--el-border-color-lighter) bg-(--el-fill-color-light) flex flex-wrap items-center gap-1.5"
+                  >
+                    <el-tag
+                      size="small"
+                      type="info"
+                      effect="dark"
+                      class="font-mono font-bold"
+                    >
                       {path}
                     </el-tag>
-                    <el-tag size="small" type={uType === "root" ? "success" : "warning"} effect="plain" class="font-bold font-mono">
+                    <el-tag
+                      size="small"
+                      type={uType === "root" ? "success" : "warning"}
+                      effect="plain"
+                      class="font-bold font-mono"
+                    >
                       {uType}
                     </el-tag>
-                    <span class="font-mono text-xs text-[var(--el-text-color-regular)] bg-[var(--el-bg-color)] px-2 py-0.5 rounded border border-[var(--el-border-color-lighter)] truncate max-w-[200px]">
+                    <span class="font-mono text-xs text-(--el-text-color-regular) bg-(--el-bg-color) px-2 py-0.5 rounded border border-(--el-border-color-lighter) truncate max-w-50">
                       ➔ {dir}
                     </span>
                   </div>
@@ -213,29 +276,54 @@ export function useHttpProxy(t: any, tableRef: Ref) {
               }
 
               return (
-                <div key={idx} class="p-1.5 rounded-lg border border-[var(--el-border-color-lighter)] bg-[var(--el-fill-color-light)] space-y-1">
+                <div
+                  key={idx}
+                  class="p-1.5 rounded-lg border border-(--el-border-color-lighter) bg-(--el-fill-color-light) space-y-1"
+                >
                   <div class="flex items-center gap-1.5 flex-wrap">
-                    <el-tag size="small" type="info" effect="dark" class="font-mono font-bold">
+                    <el-tag
+                      size="small"
+                      type="info"
+                      effect="dark"
+                      class="font-mono font-bold"
+                    >
                       {path}
                     </el-tag>
-                    <el-tag size="small" type="primary" effect="plain" class="font-bold font-mono">
+                    <el-tag
+                      size="small"
+                      type="primary"
+                      effect="plain"
+                      class="font-bold font-mono"
+                    >
                       proxy_pass
                     </el-tag>
-                    <el-tag size="small" type="info" effect="plain" class="text-[11px] font-mono">
+                    <el-tag
+                      size="small"
+                      type="info"
+                      effect="plain"
+                      class="text-[11px] font-mono"
+                    >
                       {method}
                     </el-tag>
                   </div>
 
                   <div class="space-y-1 pt-0.5">
                     {serverChunks.map((chunk: any[], cIdx: number) => (
-                      <div key={cIdx} class="flex items-center gap-1.5 flex-wrap">
+                      <div
+                        key={cIdx}
+                        class="flex items-center gap-1.5 flex-wrap"
+                      >
                         {chunk.map((srv: any, sIdx: number) => (
                           <span
                             key={sIdx}
-                            class="inline-flex items-center gap-1 font-mono text-[11px] bg-[var(--el-bg-color)] px-1.5 py-0.5 rounded border border-[var(--el-border-color-lighter)] shrink-0"
+                            class="inline-flex items-center gap-1 font-mono text-[11px] bg-(--el-bg-color) px-1.5 py-0.5 rounded border border-(--el-border-color-lighter) shrink-0"
                           >
-                            <span class="font-medium text-[var(--el-text-color-primary)]">{srv.Target}</span>
-                            <span class="text-[10px] text-gray-400 font-normal">({srv.Weight || 1})</span>
+                            <span class="font-medium text-(--el-text-color-primary)">
+                              {srv.Target}
+                            </span>
+                            <span class="text-[10px] text-gray-400 font-normal">
+                              ({srv.Weight || 1})
+                            </span>
                           </span>
                         ))}
                       </div>
@@ -253,14 +341,18 @@ export function useHttpProxy(t: any, tableRef: Ref) {
       prop: "Remark",
       minWidth: 110,
       align: "center",
-      headerRenderer: () => <span class="whitespace-nowrap">{t("http.remark", "备注")}</span>,
+      headerRenderer: () => (
+        <span class="whitespace-nowrap">{t("http.remark", "备注")}</span>
+      ),
       cellRenderer: scope => {
         const remark = scope.row.Remark || scope.row.remark || "-";
         if (!remark || remark === "-") {
-          return <span class="text-xs text-[var(--el-text-color-placeholder)]">-</span>;
+          return (
+            <span class="text-xs text-(--el-text-color-placeholder)">-</span>
+          );
         }
         return (
-          <span class="text-xs text-[var(--el-text-color-regular)] break-words inline-block leading-snug py-1">
+          <span class="text-xs/snug text-(--el-text-color-regular) wrap-break-word inline-block  py-1">
             {remark}
           </span>
         );
@@ -270,7 +362,7 @@ export function useHttpProxy(t: any, tableRef: Ref) {
       label: t("admin.createTime", "创建时间"),
       minWidth: 160,
       prop: "created_at",
-      formatter: (row) => {
+      formatter: row => {
         const timeVal = row.created_at || row.CreatedAt;
         return timeVal && dayjs(timeVal).isValid() && dayjs(timeVal).year() > 1
           ? dayjs(timeVal).format("YYYY-MM-DD HH:mm:ss")
@@ -289,7 +381,10 @@ export function useHttpProxy(t: any, tableRef: Ref) {
     const targetId = row.Id || row.id;
     const { code, message: msg } = await deleteHttpProxy({ id: targetId });
     if (code === 0) {
-      message(`${t("http.delete", "删除")} ID: ${targetId} ${t("http.success", "成功")}`, { type: "success" });
+      message(
+        `${t("http.delete", "删除")} ID: ${targetId} ${t("http.success", "成功")}`,
+        { type: "success" }
+      );
       onSearch();
     } else {
       message(msg, { type: "error" });
@@ -323,7 +418,10 @@ export function useHttpProxy(t: any, tableRef: Ref) {
     const ids = curSelected.map((item: any) => item.Id || item.id);
     const { code, message: msg } = await deleteHttpProxy({ ids });
     if (code === 0) {
-      message(`${t("http.batchDelete", "批量删除")} ${t("http.success", "成功")}`, { type: "success" });
+      message(
+        `${t("http.batchDelete", "批量删除")} ${t("http.success", "成功")}`,
+        { type: "success" }
+      );
       tableRef.value.getTableRef().clearSelection();
       onSearch();
     } else {
@@ -368,7 +466,8 @@ export function useHttpProxy(t: any, tableRef: Ref) {
           h2: row?.H2 ?? row?.h2 ?? true,
           hsts: row?.HSTS ?? row?.hsts ?? false,
           certificate: row?.Certificate ?? row?.certificate ?? "",
-          proxy_headers: row?.ProxyHeaders ?? row?.proxy_headers ?? JSON.stringify([]),
+          proxy_headers:
+            row?.ProxyHeaders ?? row?.proxy_headers ?? JSON.stringify([]),
           compress: row?.Compress ?? row?.compress ?? false,
           rules: row?.Rules ?? row?.rules ?? JSON.stringify([]),
           real_ip: row?.RealIp ?? row?.real_ip ?? "",
@@ -376,18 +475,25 @@ export function useHttpProxy(t: any, tableRef: Ref) {
           tunnel_id: row?.TunnelId ?? row?.tunnel_id ?? "",
           tunnel_token: row?.TunnelToken ?? row?.tunnel_token ?? "",
           dns_resolver: row?.DNSResolver ?? row?.dns_resolver ?? "",
-          location_json: row?.LocationJSON ?? row?.location_json ?? JSON.stringify([
-            {
-              Path: "/",
-              Upstream: {
-                Type: "proxy_pass",
-                Data: {
-                  Method: "round_robin",
-                  Servers: [{ Target: "http://127.0.0.1:8080", Weight: 1 }]
+          location_json:
+            row?.LocationJSON ??
+            row?.location_json ??
+            JSON.stringify(
+              [
+                {
+                  Path: "/",
+                  Upstream: {
+                    Type: "proxy_pass",
+                    Data: {
+                      Method: "round_robin",
+                      Servers: [{ Target: "http://127.0.0.1:8080", Weight: 1 }]
+                    }
+                  }
                 }
-              }
-            }
-          ], null, 2),
+              ],
+              null,
+              2
+            ),
           remark: row?.Remark ?? row?.remark ?? ""
         }
       },
@@ -419,7 +525,9 @@ export function useHttpProxy(t: any, tableRef: Ref) {
                 return;
               }
             }
-            message(`${title} ${t("http.success", "成功")}`, { type: "success" });
+            message(`${title} ${t("http.success", "成功")}`, {
+              type: "success"
+            });
             done();
             onSearch();
           }

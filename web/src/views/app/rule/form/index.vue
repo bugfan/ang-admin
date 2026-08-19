@@ -27,12 +27,19 @@ const props = withDefaults(defineProps<{ formInline: any }>(), {
     title: "",
     id: undefined,
     name: "",
-    items: JSON.stringify([
-      {
-        Matcher: { Name: "ip_matcher", Config: { Address: ["127.0.0.1"] } },
-        Action: { Name: "reset_conn_action", Config: { Content: "Connection reset by rule" } }
-      }
-    ], null, 2),
+    items: JSON.stringify(
+      [
+        {
+          Matcher: { Name: "ip_matcher", Config: { Address: ["127.0.0.1"] } },
+          Action: {
+            Name: "reset_conn_action",
+            Config: { Content: "Connection reset by rule" }
+          }
+        }
+      ],
+      null,
+      2
+    ),
     remark: ""
   })
 });
@@ -106,9 +113,10 @@ function onInitForm() {
   itemList.value = [];
   try {
     if (newFormInline.value.items) {
-      const parsed = typeof newFormInline.value.items === "string"
-        ? JSON.parse(newFormInline.value.items)
-        : newFormInline.value.items;
+      const parsed =
+        typeof newFormInline.value.items === "string"
+          ? JSON.parse(newFormInline.value.items)
+          : newFormInline.value.items;
 
       if (Array.isArray(parsed) && parsed.length > 0) {
         for (const item of parsed) {
@@ -130,10 +138,14 @@ function onInitForm() {
 
           itemList.value.push({
             id: String(Math.random()),
-            matcherName: mName === "http_ip_matcher" ? "http_ip_matcher" : "ip_matcher",
+            matcherName:
+              mName === "http_ip_matcher" ? "http_ip_matcher" : "ip_matcher",
             ipAddressText: ipText,
             httpIpAddressText: httpIpText,
-            actionName: aName === "hide_version_action" ? "hide_version_action" : "reset_conn_action",
+            actionName:
+              aName === "hide_version_action"
+                ? "hide_version_action"
+                : "reset_conn_action",
             resetContent: aCfg.Content ?? "Connection reset by rule"
           });
         }
@@ -221,10 +233,16 @@ function syncToFormJSON() {
   for (const item of itemList.value) {
     let matcherObj: any = {};
     if (item.matcherName === "http_ip_matcher") {
-      const addrs = item.httpIpAddressText.split("\n").map(s => s.trim()).filter(Boolean);
+      const addrs = item.httpIpAddressText
+        .split("\n")
+        .map(s => s.trim())
+        .filter(Boolean);
       matcherObj = { Name: "http_ip_matcher", Config: { Address: addrs } };
     } else {
-      const addrs = item.ipAddressText.split("\n").map(s => s.trim()).filter(Boolean);
+      const addrs = item.ipAddressText
+        .split("\n")
+        .map(s => s.trim())
+        .filter(Boolean);
       matcherObj = { Name: "ip_matcher", Config: { Address: addrs } };
     }
 
@@ -232,7 +250,10 @@ function syncToFormJSON() {
     if (item.actionName === "hide_version_action") {
       actionObj = { Name: "hide_version_action", Config: {} };
     } else {
-      actionObj = { Name: "reset_conn_action", Config: { Content: item.resetContent } };
+      actionObj = {
+        Name: "reset_conn_action",
+        Config: { Content: item.resetContent }
+      };
     }
 
     result.push({
@@ -244,24 +265,38 @@ function syncToFormJSON() {
   newFormInline.value.items = JSON.stringify(result, null, 2);
 }
 
-function getMatcherSummary(item: RuleItemConfig): { name: string; tagType: string; summary: string } {
+function getMatcherSummary(item: RuleItemConfig): {
+  name: string;
+  tagType: string;
+  summary: string;
+} {
   if (item.matcherName === "http_ip_matcher") {
     const lines = item.httpIpAddressText.split("\n").filter(s => s.trim());
     return {
       name: "http_ip_matcher",
       tagType: "success",
-      summary: lines.length > 0 ? `${lines[0]}${lines.length > 1 ? ` (${lines.length})` : ""}` : "No IP"
+      summary:
+        lines.length > 0
+          ? `${lines[0]}${lines.length > 1 ? ` (${lines.length})` : ""}`
+          : "No IP"
     };
   }
   const lines = item.ipAddressText.split("\n").filter(s => s.trim());
   return {
     name: "ip_matcher",
     tagType: "primary",
-    summary: lines.length > 0 ? `${lines[0]}${lines.length > 1 ? ` (${lines.length})` : ""}` : "No IP"
+    summary:
+      lines.length > 0
+        ? `${lines[0]}${lines.length > 1 ? ` (${lines.length})` : ""}`
+        : "No IP"
   };
 }
 
-function getActionSummary(item: RuleItemConfig): { name: string; tagType: string; summary: string } {
+function getActionSummary(item: RuleItemConfig): {
+  name: string;
+  tagType: string;
+  summary: string;
+} {
   if (item.actionName === "hide_version_action") {
     return {
       name: "hide_version_action",
@@ -272,14 +307,18 @@ function getActionSummary(item: RuleItemConfig): { name: string; tagType: string
   return {
     name: "reset_conn_action",
     tagType: "danger",
-    summary: item.resetContent ? `Msg: ${item.resetContent}` : "Reset Connection"
+    summary: item.resetContent
+      ? `Msg: ${item.resetContent}`
+      : "Reset Connection"
   };
 }
 
 watch(itemList, () => syncToFormJSON(), { deep: true });
 
 const rules = reactive({
-  name: [{ required: true, message: () => t("rule.nameRequired"), trigger: "blur" }]
+  name: [
+    { required: true, message: () => t("rule.nameRequired"), trigger: "blur" }
+  ]
 });
 
 function getRef() {
@@ -295,14 +334,20 @@ defineExpose({ getRef });
     :model="newFormInline"
     :rules="rules"
     label-width="auto"
-    class="rule-form px-1 sm:px-2 py-1"
+    class="rule-form p-1 sm:px-2"
   >
     <!-- Section 1: Basic Info -->
-    <el-card shadow="never" class="mb-4 !border-[var(--el-border-color-lighter)] rounded-xl">
+    <el-card
+      shadow="never"
+      class="mb-4 border-(--el-border-color-lighter)! rounded-xl"
+    >
       <template #header>
         <div class="flex items-center space-x-2">
-          <div class="w-1.5 h-4 bg-[var(--el-color-primary)] rounded-full"></div>
-          <span class="font-bold text-[var(--el-text-color-primary)] text-sm sm:text-base">{{ t("rule.basicAttr") }}</span>
+          <div class="w-1.5 h-4 bg-(--el-color-primary) rounded-full" />
+          <span
+            class="font-bold text-(--el-text-color-primary) text-sm sm:text-base"
+            >{{ t("rule.basicAttr") }}</span
+          >
         </div>
       </template>
       <el-row :gutter="16">
@@ -328,14 +373,31 @@ defineExpose({ getRef });
     </el-card>
 
     <!-- Section 2: Compact Item List with Scrollbar & Drag-and-Drop -->
-    <el-card shadow="never" class="mb-4 !border-[var(--el-border-color-lighter)] rounded-xl">
+    <el-card
+      shadow="never"
+      class="mb-4 border-(--el-border-color-lighter)! rounded-xl"
+    >
       <template #header>
-        <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
+        <div
+          class="flex flex-col sm:flex-row sm:items-center justify-between gap-2"
+        >
           <div class="flex items-center space-x-2 flex-wrap">
-            <div class="w-1.5 h-4 bg-[var(--el-color-primary)] rounded-full"></div>
-            <span class="font-bold text-[var(--el-text-color-primary)] text-sm sm:text-base">{{ t("rule.itemListTitle") }}</span>
-            <el-tag size="small" type="primary" effect="plain" class="font-mono">{{ t("rule.totalItems", { count: itemList.length }) }}</el-tag>
-            <span class="text-xs text-[var(--el-text-color-secondary)] hidden sm:inline-block">{{ t("rule.dragTip") }}</span>
+            <div class="w-1.5 h-4 bg-(--el-color-primary) rounded-full" />
+            <span
+              class="font-bold text-(--el-text-color-primary) text-sm sm:text-base"
+              >{{ t("rule.itemListTitle") }}</span
+            >
+            <el-tag
+              size="small"
+              type="primary"
+              effect="plain"
+              class="font-mono"
+              >{{ t("rule.totalItems", { count: itemList.length }) }}</el-tag
+            >
+            <span
+              class="text-xs text-(--el-text-color-secondary) hidden sm:inline-block"
+              >{{ t("rule.dragTip") }}</span
+            >
           </div>
           <el-button
             type="primary"
@@ -361,43 +423,67 @@ defineExpose({ getRef });
         >
           <template #item="{ element, index }">
             <div
-              class="flex flex-col sm:flex-row sm:items-center justify-between p-3 gap-2.5 rounded-xl border border-[var(--el-border-color-lighter)] bg-[var(--el-bg-color)] hover:border-[var(--el-color-primary-light-5)] transition-all shadow-2xs"
+              class="flex flex-col sm:flex-row sm:items-center justify-between p-3 gap-2.5 rounded-xl border border-(--el-border-color-lighter) bg-(--el-bg-color) hover:border-(--el-color-primary-light-5) transition-all shadow-2xs"
             >
               <!-- Drag Handle & Index Badge -->
               <div class="flex items-center space-x-3">
-                <span class="drag-handle cursor-move text-[var(--el-text-color-placeholder)] hover:text-[var(--el-color-primary)] p-1 rounded" title="Drag to reorder">
-                  <component :is="useRenderIcon(DragIcon)" class="w-4 h-4" />
+                <span
+                  class="drag-handle cursor-move text-(--el-text-color-placeholder) hover:text-(--el-color-primary) p-1 rounded"
+                  title="Drag to reorder"
+                >
+                  <component :is="useRenderIcon(DragIcon)" class="size-4" />
                 </span>
-                <el-tag size="small" type="info" effect="plain" class="font-mono font-bold">
+                <el-tag
+                  size="small"
+                  type="info"
+                  effect="plain"
+                  class="font-mono font-bold"
+                >
                   #{{ index + 1 }}
                 </el-tag>
               </div>
 
               <!-- Matcher & Action Summaries -->
-              <div class="flex-1 grid grid-cols-1 sm:grid-cols-2 gap-2 sm:gap-3 px-1 sm:px-3">
+              <div
+                class="flex-1 grid grid-cols-1 sm:grid-cols-2 gap-2 sm:gap-3 px-1 sm:px-3"
+              >
                 <!-- Matcher Badge & Text -->
                 <div class="flex items-center space-x-2 overflow-hidden">
-                  <el-tag size="small" :type="getMatcherSummary(element).tagType as any" effect="light" class="font-mono shrink-0">
+                  <el-tag
+                    size="small"
+                    :type="getMatcherSummary(element).tagType as any"
+                    effect="light"
+                    class="font-mono shrink-0"
+                  >
                     {{ getMatcherSummary(element).name }}
                   </el-tag>
-                  <span class="text-xs text-[var(--el-text-color-regular)] truncate font-mono">
+                  <span
+                    class="text-xs text-(--el-text-color-regular) truncate font-mono"
+                  >
                     {{ getMatcherSummary(element).summary }}
                   </span>
                 </div>
 
                 <!-- Action Badge & Text -->
                 <div class="flex items-center space-x-2 overflow-hidden">
-                  <el-tag size="small" :type="getActionSummary(element).tagType as any" effect="light" class="font-mono shrink-0">
+                  <el-tag
+                    size="small"
+                    :type="getActionSummary(element).tagType as any"
+                    effect="light"
+                    class="font-mono shrink-0"
+                  >
                     {{ getActionSummary(element).name }}
                   </el-tag>
-                  <span class="text-xs text-[var(--el-text-color-regular)] truncate">
+                  <span class="text-xs text-(--el-text-color-regular) truncate">
                     {{ getActionSummary(element).summary }}
                   </span>
                 </div>
               </div>
 
               <!-- Item Row Operations -->
-              <div class="flex items-center space-x-1 shrink-0 self-end sm:self-auto border-t sm:border-t-0 border-[var(--el-border-color-lighter)] pt-2 sm:pt-0 w-full sm:w-auto justify-end">
+              <div
+                class="flex items-center space-x-1 shrink-0 self-end sm:self-auto border-t sm:border-t-0 border-(--el-border-color-lighter) pt-2 sm:pt-0 w-full sm:w-auto justify-end"
+              >
                 <el-button
                   size="small"
                   link
@@ -436,21 +522,34 @@ defineExpose({ getRef });
           </template>
         </draggable>
 
-        <div v-if="itemList.length === 0" class="text-center py-6 text-xs text-[var(--el-text-color-placeholder)]">
+        <div
+          v-if="itemList.length === 0"
+          class="text-center py-6 text-xs text-(--el-text-color-placeholder)"
+        >
           {{ t("rule.noItems") }}
         </div>
       </el-scrollbar>
     </el-card>
 
     <!-- Theme-aware JSON Preview Box -->
-    <div class="rounded-xl border border-[var(--el-border-color-lighter)] bg-[var(--el-fill-color-light)] p-3">
-      <div class="flex items-center justify-between mb-2">
-        <span class="text-xs font-semibold text-[var(--el-text-color-secondary)]">{{ t("rule.jsonPreview") }}</span>
-        <el-tag size="small" type="info" effect="plain" class="font-mono">JSON Preview</el-tag>
+    <div
+      class="rounded-xl border border-(--el-border-color-lighter) bg-(--el-fill-color-light) p-3"
+    >
+      <div class="flex-bc mb-2">
+        <span class="text-xs font-semibold text-(--el-text-color-secondary)">{{
+          t("rule.jsonPreview")
+        }}</span>
+        <el-tag size="small" type="info" effect="plain" class="font-mono"
+          >JSON Preview</el-tag
+        >
       </div>
-      <div class="bg-[var(--el-bg-color)] p-2.5 rounded-lg border border-[var(--el-border-color-lighter)]">
+      <div
+        class="bg-(--el-bg-color) p-2.5 rounded-lg border border-(--el-border-color-lighter)"
+      >
         <el-scrollbar max-height="150px" class="item-scrollbar pr-1">
-          <pre class="text-[11px] text-[var(--el-text-color-primary)] font-mono whitespace-pre-wrap break-all leading-relaxed">{{ newFormInline.items }}</pre>
+          <pre
+            class="text-[11px] text-(--el-text-color-primary) font-mono whitespace-pre-wrap break-all leading-relaxed"
+            >{{ newFormInline.items }}</pre>
         </el-scrollbar>
       </div>
     </div>
@@ -458,7 +557,11 @@ defineExpose({ getRef });
     <!-- Nested Sub-Dialog for Adding / Editing a Single Rule Item -->
     <el-dialog
       v-model="itemDialogVisible"
-      :title="editingIndex !== null ? `${t('rule.editItem')} (#${editingIndex + 1})` : t('rule.addItem')"
+      :title="
+        editingIndex !== null
+          ? `${t('rule.editItem')} (#${editingIndex + 1})`
+          : t('rule.addItem')
+      "
       :width="deviceDetection() ? '92%' : '640px'"
       append-to-body
       destroy-on-close
@@ -466,8 +569,10 @@ defineExpose({ getRef });
     >
       <div class="space-y-4 py-1">
         <!-- Matcher Card -->
-        <div class="p-3.5 rounded-lg border border-[var(--el-border-color-lighter)] bg-[var(--el-fill-color-light)]">
-          <div class="text-xs font-bold text-[var(--el-color-primary)] mb-3 flex items-center justify-between">
+        <div
+          class="p-3.5 rounded-lg border border-(--el-border-color-lighter) bg-(--el-fill-color-light)"
+        >
+          <div class="text-xs font-bold text-(--el-color-primary) mb-3 flex-bc">
             <span class="text-sm">{{ t("rule.matcherConfigTitle") }}</span>
             <el-tag size="small" type="primary" effect="plain">Matcher</el-tag>
           </div>
@@ -490,7 +595,7 @@ defineExpose({ getRef });
               :rows="3"
               placeholder="127.0.0.1&#10;192.168.1.0/24&#10;10.0.0.1-10.0.0.100"
             />
-            <div class="text-xs text-[var(--el-text-color-secondary)] mt-1">
+            <div class="text-xs text-(--el-text-color-secondary) mt-1">
               {{ t("rule.matcherIpTip") }}
             </div>
           </div>
@@ -502,15 +607,17 @@ defineExpose({ getRef });
               :rows="3"
               placeholder="127.0.0.1&#10;192.168.1.0/24"
             />
-            <div class="text-xs text-[var(--el-text-color-secondary)] mt-1">
+            <div class="text-xs text-(--el-text-color-secondary) mt-1">
               {{ t("rule.matcherHttpIpTip") }}
             </div>
           </div>
         </div>
 
         <!-- Action Card -->
-        <div class="p-3.5 rounded-lg border border-[var(--el-border-color-lighter)] bg-[var(--el-fill-color-light)]">
-          <div class="text-xs font-bold text-[var(--el-color-success)] mb-3 flex items-center justify-between">
+        <div
+          class="p-3.5 rounded-lg border border-(--el-border-color-lighter) bg-(--el-fill-color-light)"
+        >
+          <div class="text-xs font-bold text-(--el-color-success) mb-3 flex-bc">
             <span class="text-sm">{{ t("rule.actionConfigTitle") }}</span>
             <el-tag size="small" type="success" effect="plain">Action</el-tag>
           </div>
@@ -531,12 +638,15 @@ defineExpose({ getRef });
               v-model="itemForm.resetContent"
               placeholder="Connection reset by rule"
             />
-            <div class="text-xs text-[var(--el-text-color-secondary)] mt-1">
+            <div class="text-xs text-(--el-text-color-secondary) mt-1">
               {{ t("rule.actionResetTip") }}
             </div>
           </div>
 
-          <div v-if="itemForm.actionName === 'hide_version_action'" class="mt-2">
+          <div
+            v-if="itemForm.actionName === 'hide_version_action'"
+            class="mt-2"
+          >
             <el-alert
               :title="t('rule.actionHideVersionAlert')"
               type="info"
@@ -549,8 +659,12 @@ defineExpose({ getRef });
 
       <template #footer>
         <div class="flex justify-end space-x-2">
-          <el-button @click="itemDialogVisible = false">{{ t("rule.cancel") }}</el-button>
-          <el-button type="primary" @click="saveItemFromDialog">{{ t("rule.saveItem") }}</el-button>
+          <el-button @click="itemDialogVisible = false">{{
+            t("rule.cancel")
+          }}</el-button>
+          <el-button type="primary" @click="saveItemFromDialog">{{
+            t("rule.saveItem")
+          }}</el-button>
         </div>
       </template>
     </el-dialog>

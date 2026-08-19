@@ -50,7 +50,9 @@ export const createCert = async (data?: object) => {
 export const updateCert = async (data: any) => {
   try {
     const id = data.id || data.Id;
-    const res = await http.request<any>("put", `/api/certificate/${id}`, { data });
+    const res = await http.request<any>("put", `/api/certificate/${id}`, {
+      data
+    });
     return { code: 0, message: "success", data: res };
   } catch (err: any) {
     return { code: 1, message: getErrorMessage(err, "update failed") };
@@ -65,7 +67,7 @@ export const deleteCert = async (param: any) => {
         await http.request<any>("delete", `/api/certificate/${id}`);
       }
     } else {
-      const id = typeof param === "object" ? (param.id || param.Id) : param;
+      const id = typeof param === "object" ? param.id || param.Id : param;
       await http.request<any>("delete", `/api/certificate/${id}`);
     }
     return { code: 0, message: "success" };
@@ -81,7 +83,9 @@ export const generateSelfSignedCert = async (data: {
   valid_days: number;
 }) => {
   try {
-    const res = await http.request<any>("post", "/api/certificate/generate", { data });
+    const res = await http.request<any>("post", "/api/certificate/generate", {
+      data
+    });
     return res;
   } catch (err: any) {
     return { code: 1, message: getErrorMessage(err, "generate failed") };

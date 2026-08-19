@@ -35,13 +35,16 @@ const newFormInline = ref(props.formInline);
 const { t } = useI18n();
 
 // Rules multi-select & ordering (L4 rules only for DNS Proxy)
-const availableRules = ref<Array<{ label: string; value: string; desc?: string }>>([]);
+const availableRules = ref<
+  Array<{ label: string; value: string; desc?: string }>
+>([]);
 
 function isL4Rule(r: any): boolean {
   try {
     const itemsStr = r.Items || r.items;
     if (!itemsStr) return true;
-    const items = typeof itemsStr === "string" ? JSON.parse(itemsStr) : itemsStr;
+    const items =
+      typeof itemsStr === "string" ? JSON.parse(itemsStr) : itemsStr;
     if (!Array.isArray(items)) return true;
 
     for (const item of items) {
@@ -56,13 +59,22 @@ function isL4Rule(r: any): boolean {
         return false;
       }
       // Exclude HTTP application layer actions
-      if ([
-        "hide_version_action", "auth_portal_action", "response_text_action",
-        "modify_status_action", "forward_request_action", "replace_request_body_action",
-        "replace_response_body_action", "replace_request_header_action",
-        "replace_response_header_action", "auth_guard_action", "insert_data_action",
-        "subdomain_webvpn_action"
-      ].includes(aName)) {
+      if (
+        [
+          "hide_version_action",
+          "auth_portal_action",
+          "response_text_action",
+          "modify_status_action",
+          "forward_request_action",
+          "replace_request_body_action",
+          "replace_response_body_action",
+          "replace_request_header_action",
+          "replace_response_header_action",
+          "auth_guard_action",
+          "insert_data_action",
+          "subdomain_webvpn_action"
+        ].includes(aName)
+      ) {
         return false;
       }
     }
@@ -76,7 +88,8 @@ function isL4Rule(r: any): boolean {
 async function fetchCustomRules() {
   try {
     const res = await getRuleList();
-    const rulesList: Array<{ label: string; value: string; desc?: string }> = [];
+    const rulesList: Array<{ label: string; value: string; desc?: string }> =
+      [];
 
     if (res?.code === 0 && res?.data?.list) {
       for (const r of res.data.list) {
@@ -99,7 +112,10 @@ async function fetchCustomRules() {
 const selectedRules = ref<string[]>([]);
 
 try {
-  if (typeof newFormInline.value.rules === "string" && newFormInline.value.rules) {
+  if (
+    typeof newFormInline.value.rules === "string" &&
+    newFormInline.value.rules
+  ) {
     const parsed = JSON.parse(newFormInline.value.rules);
     if (Array.isArray(parsed)) selectedRules.value = parsed;
   } else if (Array.isArray(newFormInline.value.rules)) {
@@ -180,7 +196,7 @@ async function fetchTunnels() {
       const tType = "quic";
 
       const portLabel = `${t("tunnel.port", "端口")}: ${tPort}`;
-      const groupLabel = `${tName ? '[' + tName + '] ' : ''}Tunnel #${tidStr} (${tType.toUpperCase()} | ${portLabel}${tSni ? ' | SNI: ' + tSni : ''})`;
+      const groupLabel = `${tName ? "[" + tName + "] " : ""}Tunnel #${tidStr} (${tType.toUpperCase()} | ${portLabel}${tSni ? " | SNI: " + tSni : ""})`;
 
       const nodeOpts: DnsTunnelOption[] = [];
       const cNodes = tItem.client_nodes || tItem.ClientNodes || [];
@@ -190,7 +206,9 @@ async function fetchTunnels() {
           const isOnline = c.IsOnline ?? c.is_online ?? false;
           const cName = c.Name || c.name || "Node";
           const token = c.Token || c.token || "";
-          const statusText = isOnline ? t("tunnelClient.online", "在线") : t("tunnelClient.offline", "离线");
+          const statusText = isOnline
+            ? t("tunnelClient.online", "在线")
+            : t("tunnelClient.offline", "离线");
           const key = `${tidStr}|${token}`;
           const nodeLabel = `[${statusText}] ${cName}`;
           nodeOpts.push({
@@ -225,7 +243,8 @@ async function fetchTunnels() {
 
     tunnelNodeGroups.value = groups;
     syncSelectedTunnelNodeKey();
-  } catch (e) {} finally {
+  } catch (e) {
+  } finally {
     tunnelLoading.value = false;
   }
 }
@@ -244,16 +263,23 @@ function syncSelectedTunnelNodeKey() {
   });
 
   const match = allOpts.find(
-    o => !o.disabled && String(o.tunnel_id) === String(tid) && String(o.tunnel_token || "") === String(token || "")
+    o =>
+      !o.disabled &&
+      String(o.tunnel_id) === String(tid) &&
+      String(o.tunnel_token || "") === String(token || "")
   );
 
   if (match) {
     selectedTunnelNodeKey.value = match.value;
   } else {
-    const groupMatch = tunnelNodeGroups.value.find(g => String(g.tunnel_id) === String(tid));
+    const groupMatch = tunnelNodeGroups.value.find(
+      g => String(g.tunnel_id) === String(tid)
+    );
     const fallbackKey = `${tid}|${token || ""}`;
     const tType = newFormInline.value.tunnel_type || "quic";
-    const fallbackName = token ? `Node-${token.length > 6 ? token.slice(-6) : token}` : t("tunnelClient.nodeRef", "节点");
+    const fallbackName = token
+      ? `Node-${token.length > 6 ? token.slice(-6) : token}`
+      : t("tunnelClient.nodeRef", "节点");
     const fallbackOption: DnsTunnelOption = {
       label: `[${t("tunnelClient.unsavedId", "未存库")}] ${fallbackName}`,
       value: fallbackKey,
@@ -299,12 +325,13 @@ function handleTunnelNodeChange(val: string) {
 
 // Upstream servers table & strategy logic
 type UpstreamItem = { target: string; weight: number };
-const upstreamList = ref<UpstreamItem[]>([
-  { target: "8.8.8.8:53", weight: 1 }
-]);
+const upstreamList = ref<UpstreamItem[]>([{ target: "8.8.8.8:53", weight: 1 }]);
 
 try {
-  if (typeof newFormInline.value.upstream_servers === "string" && newFormInline.value.upstream_servers) {
+  if (
+    typeof newFormInline.value.upstream_servers === "string" &&
+    newFormInline.value.upstream_servers
+  ) {
     const parsed = JSON.parse(newFormInline.value.upstream_servers);
     if (Array.isArray(parsed)) upstreamList.value = parsed;
   } else if (Array.isArray(newFormInline.value.upstream_servers)) {
@@ -358,7 +385,8 @@ const hostsSummary = computed(() => {
   const lines = text.split("\n");
   for (const line of lines) {
     const trimmed = line.trim();
-    if (!trimmed || trimmed.startsWith("#") || trimmed.startsWith("//")) continue;
+    if (!trimmed || trimmed.startsWith("#") || trimmed.startsWith("//"))
+      continue;
     const parts = trimmed.split(/\s+/);
     if (parts.length >= 2) {
       const ip = parts[0];
@@ -375,7 +403,11 @@ const hostsSummary = computed(() => {
 
 const formRules = reactive({
   name: [
-    { required: true, message: () => t("dns.nameRequired", "请输入名称"), trigger: "blur" }
+    {
+      required: true,
+      message: () => t("dns.nameRequired", "请输入名称"),
+      trigger: "blur"
+    }
   ],
   port: [
     { required: true, message: () => t("dns.portRequired"), trigger: "blur" },
@@ -395,7 +427,9 @@ const formRules = reactive({
 
 function validateCustomBackend() {
   const hasTunnel = Boolean(newFormInline.value.tunnel_id);
-  const validServers = upstreamList.value.filter(s => s.target && s.target.trim().length > 0);
+  const validServers = upstreamList.value.filter(
+    s => s.target && s.target.trim().length > 0
+  );
   if (!hasTunnel && validServers.length === 0) {
     return false;
   }
@@ -418,7 +452,10 @@ function getRef() {
           return;
         }
         if (!validateCustomBackend()) {
-          message("请至少配置一个有效的 Upstream 上游服务器或选择 Tunnel 隧道！", { type: "warning" });
+          message(
+            "请至少配置一个有效的 Upstream 上游服务器或选择 Tunnel 隧道！",
+            { type: "warning" }
+          );
           callback(false);
           return;
         }
@@ -437,15 +474,20 @@ defineExpose({ getRef });
     :model="newFormInline"
     :rules="formRules"
     label-width="auto"
-    class="dns-form py-1 px-1 sm:px-2 space-y-4"
+    class="dns-form p-1 sm:px-2 space-y-4"
   >
     <!-- 板块 1: 基础监听与规则 -->
-    <el-card shadow="never" class="!border-[var(--el-border-color-lighter)] rounded-xl">
+    <el-card
+      shadow="never"
+      class="border-(--el-border-color-lighter)! rounded-xl"
+    >
       <template #header>
         <div class="flex items-center space-x-2">
-          <div class="w-1.5 h-4 bg-blue-500 rounded-full"></div>
-          <span class="font-bold text-sm sm:text-base text-[var(--el-text-color-primary)]">
-            {{ t('dns.baseInfoTab') }}
+          <div class="w-1.5 h-4 bg-blue-500 rounded-full" />
+          <span
+            class="font-bold text-sm sm:text-base text-(--el-text-color-primary)"
+          >
+            {{ t("dns.baseInfoTab") }}
           </span>
         </div>
       </template>
@@ -501,27 +543,42 @@ defineExpose({ getRef });
                 />
               </el-select>
 
-              <div class="text-xs text-[var(--el-text-color-secondary)] mt-1 leading-relaxed">
-                提示: DNS 代理属于传输层 (L4) 服务，下拉列表仅展示在“规则”菜单中配置的传输层 (L4) 中间件规则 (如 ip_matcher / reset_conn_action)，HTTP 应用层规则不适用于 DNS。
+              <div
+                class="text-xs/relaxed text-(--el-text-color-secondary) mt-1"
+              >
+                提示: DNS 代理属于传输层 (L4)
+                服务，下拉列表仅展示在“规则”菜单中配置的传输层 (L4) 中间件规则
+                (如 ip_matcher / reset_conn_action)，HTTP 应用层规则不适用于
+                DNS。
               </div>
 
               <!-- 已选中规则的排序清单 -->
-              <div v-if="selectedRules.length > 0" class="p-2.5 bg-[var(--el-fill-color-light)] rounded-lg border border-[var(--el-border-color-lighter)] text-xs">
-                <div class="text-[var(--el-text-color-secondary)] mb-1.5 font-medium flex justify-between items-center">
+              <div
+                v-if="selectedRules.length > 0"
+                class="p-2.5 bg-(--el-fill-color-light) rounded-lg border border-(--el-border-color-lighter) text-xs"
+              >
+                <div
+                  class="text-(--el-text-color-secondary) mb-1.5 font-medium flex-bc"
+                >
                   <span class="inline-flex items-center gap-1">
                     <IconifyIconOffline icon="ri:settings-3-line" />
-                    {{ t('dns.ruleOrderTip') }}
+                    {{ t("dns.ruleOrderTip") }}
                   </span>
-                  <span class="font-mono">共 {{ selectedRules.length }} 项</span>
+                  <span class="font-mono"
+                    >共 {{ selectedRules.length }} 项</span
+                  >
                 </div>
                 <div class="space-y-1">
                   <div
                     v-for="(ruleVal, idx) in selectedRules"
                     :key="ruleVal"
-                    class="flex items-center justify-between p-2 bg-[var(--el-bg-color)] rounded-lg border border-[var(--el-border-color-lighter)]"
+                    class="flex-bc p-2 bg-(--el-bg-color) rounded-lg border border-(--el-border-color-lighter)"
                   >
-                    <span class="font-mono text-[var(--el-text-color-primary)]">
-                      <span class="text-gray-400 font-bold mr-1.5">#{{ idx + 1 }}</span> {{ ruleVal }}
+                    <span class="font-mono text-(--el-text-color-primary)">
+                      <span class="text-gray-400 font-bold mr-1.5"
+                        >#{{ idx + 1 }}</span
+                      >
+                      {{ ruleVal }}
                     </span>
                     <div class="flex items-center space-x-1">
                       <el-button
@@ -562,20 +619,35 @@ defineExpose({ getRef });
     </el-card>
 
     <!-- 板块 2: Hosts 域名映射 -->
-    <el-card shadow="never" class="!border-[var(--el-border-color-lighter)] rounded-xl">
+    <el-card
+      shadow="never"
+      class="border-(--el-border-color-lighter)! rounded-xl"
+    >
       <template #header>
-        <div class="flex items-center justify-between flex-wrap gap-2">
+        <div class="flex-bc flex-wrap gap-2">
           <div class="flex items-center space-x-2">
-            <div class="w-1.5 h-4 bg-emerald-500 rounded-full"></div>
-            <span class="font-bold text-sm sm:text-base text-[var(--el-text-color-primary)]">
-              {{ t('dns.hostsTab') }}
+            <div class="w-1.5 h-4 bg-emerald-500 rounded-full" />
+            <span
+              class="font-bold text-sm sm:text-base text-(--el-text-color-primary)"
+            >
+              {{ t("dns.hostsTab") }}
             </span>
           </div>
           <div class="flex items-center space-x-2">
-            <el-tag size="small" type="primary" effect="light" class="font-mono font-medium">
+            <el-tag
+              size="small"
+              type="primary"
+              effect="light"
+              class="font-mono font-medium"
+            >
               A: {{ hostsSummary.aCount }}
             </el-tag>
-            <el-tag size="small" type="success" effect="light" class="font-mono font-medium">
+            <el-tag
+              size="small"
+              type="success"
+              effect="light"
+              class="font-mono font-medium"
+            >
               AAAA: {{ hostsSummary.aaaaCount }}
             </el-tag>
           </div>
@@ -583,9 +655,14 @@ defineExpose({ getRef });
       </template>
 
       <div class="space-y-3">
-        <div class="text-xs text-[var(--el-text-color-secondary)] font-medium inline-flex items-center gap-1">
-          <IconifyIconOffline icon="ri:information-line" class="text-blue-500" />
-          {{ t('dns.hostsTip') }}
+        <div
+          class="text-xs text-(--el-text-color-secondary) font-medium inline-flex items-center gap-1"
+        >
+          <IconifyIconOffline
+            icon="ri:information-line"
+            class="text-blue-500"
+          />
+          {{ t("dns.hostsTip") }}
         </div>
 
         <el-input
@@ -599,12 +676,17 @@ defineExpose({ getRef });
     </el-card>
 
     <!-- 板块 3: 上游配置 -->
-    <el-card shadow="never" class="!border-[var(--el-border-color-lighter)] rounded-xl">
+    <el-card
+      shadow="never"
+      class="border-(--el-border-color-lighter)! rounded-xl"
+    >
       <template #header>
         <div class="flex items-center space-x-2">
-          <div class="w-1.5 h-4 bg-purple-500 rounded-full"></div>
-          <span class="font-bold text-sm sm:text-base text-[var(--el-text-color-primary)]">
-            {{ t('dns.backendTab') }}
+          <div class="w-1.5 h-4 bg-purple-500 rounded-full" />
+          <span
+            class="font-bold text-sm sm:text-base text-(--el-text-color-primary)"
+          >
+            {{ t("dns.backendTab") }}
           </span>
         </div>
       </template>
@@ -634,11 +716,26 @@ defineExpose({ getRef });
                   :value="item.value"
                   :disabled="item.disabled"
                 >
-                  <div v-if="!item.disabled" class="flex items-center space-x-2 py-0.5 text-xs">
-                    <el-tag size="small" :type="item.isOnline ? 'success' : 'info'" effect="light" class="font-medium">
-                      {{ item.isOnline ? t('tunnelClient.online', '在线') : t('tunnelClient.offline', '离线') }}
+                  <div
+                    v-if="!item.disabled"
+                    class="flex items-center space-x-2 py-0.5 text-xs"
+                  >
+                    <el-tag
+                      size="small"
+                      :type="item.isOnline ? 'success' : 'info'"
+                      effect="light"
+                      class="font-medium"
+                    >
+                      {{
+                        item.isOnline
+                          ? t("tunnelClient.online", "在线")
+                          : t("tunnelClient.offline", "离线")
+                      }}
                     </el-tag>
-                    <span class="font-semibold text-[var(--el-text-color-primary)] font-mono">{{ item.cName || 'Node' }}</span>
+                    <span
+                      class="font-semibold text-(--el-text-color-primary) font-mono"
+                      >{{ item.cName || "Node" }}</span
+                    >
                   </div>
                   <div v-else class="text-xs text-gray-400 py-0.5">
                     {{ item.cName }}
@@ -646,15 +743,20 @@ defineExpose({ getRef });
                 </el-option>
               </el-option-group>
             </el-select>
-            <div class="text-xs text-[var(--el-text-color-secondary)] font-medium inline-flex items-center gap-1">
-              <IconifyIconOffline icon="ri:information-line" class="text-blue-500" />
-              {{ t('dns.tunnelTip') }}
+            <div
+              class="text-xs text-(--el-text-color-secondary) font-medium inline-flex items-center gap-1"
+            >
+              <IconifyIconOffline
+                icon="ri:information-line"
+                class="text-blue-500"
+              />
+              {{ t("dns.tunnelTip") }}
             </div>
           </div>
         </el-form-item>
 
         <!-- 2. Upstream DNS 服务器列表配置 -->
-        <div class="space-y-3 pt-3 border-t border-[var(--el-border-color-lighter)]">
+        <div class="space-y-3 pt-3 border-t border-(--el-border-color-lighter)">
           <el-form-item :label="t('dns.upstreamMethod')" prop="upstream_method">
             <el-select
               v-model="newFormInline.upstream_method"
@@ -669,9 +771,9 @@ defineExpose({ getRef });
 
           <!-- 上游 DNS 服务器列表表格 -->
           <div class="space-y-2">
-            <div class="flex justify-between items-center">
-              <span class="text-xs font-medium text-[var(--el-text-color-primary)]">
-                {{ t('dns.upstreamServers') }}
+            <div class="flex-bc">
+              <span class="text-xs font-medium text-(--el-text-color-primary)">
+                {{ t("dns.upstreamServers") }}
               </span>
               <el-button
                 type="primary"
@@ -679,7 +781,7 @@ defineExpose({ getRef });
                 :icon="useRenderIcon(AddFill)"
                 @click="addUpstreamRow"
               >
-                {{ t('dns.addServer') }}
+                {{ t("dns.addServer") }}
               </el-button>
             </div>
 
@@ -705,7 +807,11 @@ defineExpose({ getRef });
                   />
                 </template>
               </el-table-column>
-              <el-table-column :label="t('dns.weight')" width="100" align="center">
+              <el-table-column
+                :label="t('dns.weight')"
+                width="100"
+                align="center"
+              >
                 <template #default="{ row }">
                   <el-input-number
                     v-model="row.weight"
@@ -718,7 +824,11 @@ defineExpose({ getRef });
                   />
                 </template>
               </el-table-column>
-              <el-table-column :label="t('dns.operation')" width="65" align="center">
+              <el-table-column
+                :label="t('dns.operation')"
+                width="65"
+                align="center"
+              >
                 <template #default="{ $index }">
                   <el-button
                     type="danger"

@@ -8,6 +8,8 @@ import { getTunnelList } from "@/api/tunnel";
 import { useRenderIcon } from "@/components/ReIcon/src/hooks";
 import AddFill from "~icons/ri/add-line";
 import Delete from "~icons/ep/delete";
+import Rank from "~icons/ep/rank";
+import Sortable from "sortablejs";
 
 export interface LocationItem {
   Path: string;
@@ -58,18 +60,22 @@ const props = withDefaults(defineProps<{ formInline: any }>(), {
     tunnel_id: "",
     tunnel_token: "",
     dns_resolver: "dns1",
-    location_json: JSON.stringify([
-      {
-        Path: "/",
-        Upstream: {
-          Type: "proxy_pass",
-          Data: {
-            Method: "round_robin",
-            Servers: [{ Target: "http://127.0.0.1:8080", Weight: 1 }]
+    location_json: JSON.stringify(
+      [
+        {
+          Path: "/",
+          Upstream: {
+            Type: "proxy_pass",
+            Data: {
+              Method: "round_robin",
+              Servers: [{ Target: "http://127.0.0.1:8080", Weight: 1 }]
+            }
           }
         }
-      }
-    ], null, 2),
+      ],
+      null,
+      2
+    ),
     remark: ""
   })
 });
@@ -100,46 +106,134 @@ const selectedProxyHeaders = ref<string[]>([]);
 // Certificate options
 const certOptions = ref<Array<{ label: string; value: string }>>([]);
 // Tunnel options
-const tunnelOptions = ref<Array<{ label: string; value: string; type: string }>>([]);
+const tunnelOptions = ref<
+  Array<{ label: string; value: string; type: string }>
+>([]);
 const tunnelNodeGroups = ref<TunnelGroup[]>([]);
 const selectedTunnelNodeKey = ref<string>("");
 // Rule options
 const availableRules = ref<Array<{ label: string; value: string }>>([]);
 // Selected Rules array
 const selectedRules = ref<string[]>([]);
+
 // Location items array
 const locationList = ref<LocationItem[]>([]);
+
+interface DnsItem {
+  id: string;
+  value: string;
+}
+const dnsResolverList = ref<DnsItem[]>([]);
+const dnsResolverGroupRef = ref();
+
+function initSortableDns() {
+  if (dnsResolverGroupRef.value) {
+    Sortable.create(dnsResolverGroupRef.value, {
+      handle: ".drag-handle",
+      animation: 150,
+      onEnd: (evt: any) => {
+        const { oldIndex, newIndex } = evt;
+        if (
+          oldIndex !== undefined &&
+          newIndex !== undefined &&
+          oldIndex !== newIndex
+        ) {
+          const item = dnsResolverList.value.splice(oldIndex, 1)[0];
+          dnsResolverList.value.splice(newIndex, 0, item);
+          syncDnsResolver();
+        }
+      }
+    });
+  }
+}
+
+function addDnsResolver() {
+  dnsResolverList.value.push({
+    id: Math.random().toString(36).substring(2, 9),
+    value: ""
+  });
+  syncDnsResolver();
+}
+
+function removeDnsResolver(idx: number) {
+  dnsResolverList.value.splice(idx, 1);
+  syncDnsResolver();
+}
+
+function syncDnsResolver() {
+  newFormInline.value.dns_resolver = JSON.stringify(
+    dnsResolverList.value.map(item => item.value.trim()).filter(v => v !== "")
+  );
+}
 
 onMounted(() => {
   fetchCertificates();
   fetchTunnels();
   fetchRules();
   initFormState();
+  initSortableDns();
 });
 
 function initFormState() {
   try {
     if (newFormInline.value.proxy_headers) {
-      const parsed = typeof newFormInline.value.proxy_headers === "string"
-        ? JSON.parse(newFormInline.value.proxy_headers)
-        : newFormInline.value.proxy_headers;
+      const parsed =
+        typeof newFormInline.value.proxy_headers === "string"
+          ? JSON.parse(newFormInline.value.proxy_headers)
+          : newFormInline.value.proxy_headers;
       if (Array.isArray(parsed)) selectedProxyHeaders.value = parsed;
     }
   } catch (e) {}
   try {
     if (newFormInline.value.rules) {
-      const parsed = typeof newFormInline.value.rules === "string"
-        ? JSON.parse(newFormInline.value.rules)
-        : newFormInline.value.rules;
+      const parsed =
+        typeof newFormInline.value.rules === "string"
+          ? JSON.parse(newFormInline.value.rules)
+          : newFormInline.value.rules;
       if (Array.isArray(parsed)) selectedRules.value = parsed;
     }
   } catch (e) {}
 
   try {
+    if (newFormInline.value.dns_resolver) {
+      let parsed = newFormInline.value.dns_resolver;
+      if (typeof parsed === "string") {
+        if (parsed.startsWith("[")) {
+          parsed = JSON.parse(parsed);
+        } else {
+          parsed = parsed ? [parsed] : [];
+        }
+      }
+      if (Array.isArray(parsed)) {
+        dnsResolverList.value = parsed.map((v: string) => ({
+          id: Math.random().toString(36).substring(2, 9),
+          value: v
+        }));
+      }
+    }
+  } catch (e) {
+    if (newFormInline.value.dns_resolver) {
+      dnsResolverList.value = [
+        {
+          id: Math.random().toString(36).substring(2, 9),
+          value: newFormInline.value.dns_resolver
+        }
+      ];
+    }
+  }
+  if (dnsResolverList.value.length === 0) {
+    dnsResolverList.value.push({
+      id: Math.random().toString(36).substring(2, 9),
+      value: ""
+    });
+  }
+
+  try {
     if (newFormInline.value.location_json) {
-      const parsed = typeof newFormInline.value.location_json === "string"
-        ? JSON.parse(newFormInline.value.location_json)
-        : newFormInline.value.location_json;
+      const parsed =
+        typeof newFormInline.value.location_json === "string"
+          ? JSON.parse(newFormInline.value.location_json)
+          : newFormInline.value.location_json;
       if (Array.isArray(parsed)) {
         locationList.value = parsed.map((loc: any) => {
           const type = loc?.Upstream?.Type || "proxy_pass";
@@ -160,9 +254,11 @@ function initFormState() {
               Type: "proxy_pass",
               Data: {
                 Method: loc?.Upstream?.Data?.Method || "round_robin",
-                Servers: Array.isArray(loc?.Upstream?.Data?.Servers) && loc.Upstream.Data.Servers.length > 0
-                  ? loc.Upstream.Data.Servers
-                  : [{ Target: "http://127.0.0.1:8080", Weight: 1 }]
+                Servers:
+                  Array.isArray(loc?.Upstream?.Data?.Servers) &&
+                  loc.Upstream.Data.Servers.length > 0
+                    ? loc.Upstream.Data.Servers
+                    : [{ Target: "http://127.0.0.1:8080", Weight: 1 }]
               }
             }
           };
@@ -220,10 +316,14 @@ async function fetchTunnels() {
       const tName = tItem.Name || tItem.name || "";
       const tPort = tItem.Port || tItem.port || "";
       const tSni = tItem.SNI || tItem.sni || "";
-      const tType = (tItem.Type || tItem.type || "TLS").toLowerCase().includes("quic") ? "quic" : "tls";
+      const tType = (tItem.Type || tItem.type || "TLS")
+        .toLowerCase()
+        .includes("quic")
+        ? "quic"
+        : "tls";
 
       const portLabel = `${t("tunnel.port", "端口")}: ${tPort}`;
-      const groupLabel = `${tName ? '[' + tName + '] ' : ''}Tunnel #${tidStr} (${tType.toUpperCase()} | ${portLabel}${tSni ? ' | SNI: ' + tSni : ''})`;
+      const groupLabel = `${tName ? "[" + tName + "] " : ""}Tunnel #${tidStr} (${tType.toUpperCase()} | ${portLabel}${tSni ? " | SNI: " + tSni : ""})`;
 
       const nodeOpts: TunnelGroupOption[] = [];
       const cNodes = tItem.client_nodes || tItem.ClientNodes || [];
@@ -233,7 +333,9 @@ async function fetchTunnels() {
           const isOnline = c.IsOnline ?? c.is_online ?? false;
           const cName = c.Name || c.name || "Node";
           const token = c.Token || c.token || "";
-          const statusText = isOnline ? t("tunnelClient.online", "在线") : t("tunnelClient.offline", "离线");
+          const statusText = isOnline
+            ? t("tunnelClient.online", "在线")
+            : t("tunnelClient.offline", "离线");
           const key = `${tidStr}|${token}`;
           const nodeLabel = `[${statusText}] ${cName}`;
           nodeOpts.push({
@@ -285,16 +387,23 @@ function syncSelectedTunnelNodeKey() {
   });
 
   const match = allOpts.find(
-    o => !o.disabled && String(o.tunnel_id) === String(tid) && String(o.tunnel_token || "") === String(token || "")
+    o =>
+      !o.disabled &&
+      String(o.tunnel_id) === String(tid) &&
+      String(o.tunnel_token || "") === String(token || "")
   );
 
   if (match) {
     selectedTunnelNodeKey.value = match.value;
   } else {
-    const groupMatch = tunnelNodeGroups.value.find(g => String(g.tunnel_id) === String(tid));
+    const groupMatch = tunnelNodeGroups.value.find(
+      g => String(g.tunnel_id) === String(tid)
+    );
     const fallbackKey = `${tid}|${token || ""}`;
     const tType = newFormInline.value.tunnel_type || "tls";
-    const fallbackName = token ? `Node-${token.length > 6 ? token.slice(-6) : token}` : t("tunnelClient.nodeRef", "节点");
+    const fallbackName = token
+      ? `Node-${token.length > 6 ? token.slice(-6) : token}`
+      : t("tunnelClient.nodeRef", "节点");
     const fallbackOption: TunnelGroupOption = {
       label: `[${t("tunnelClient.unsavedId", "未存库")}] ${fallbackName}`,
       value: fallbackKey,
@@ -367,7 +476,10 @@ function handleTunnelChange(val: string) {
 
 function addLocation() {
   locationList.value.push({
-    Path: locationList.value.length === 0 ? "/" : `/path-${locationList.value.length + 1}`,
+    Path:
+      locationList.value.length === 0
+        ? "/"
+        : `/path-${locationList.value.length + 1}`,
     Upstream: {
       Type: "proxy_pass",
       Data: {
@@ -384,8 +496,13 @@ function handleLocationTypeChange(loc: LocationItem) {
   if (type === "proxy_pass") {
     if (!loc.Upstream.Data) loc.Upstream.Data = {};
     if (!loc.Upstream.Data.Method) loc.Upstream.Data.Method = "round_robin";
-    if (!Array.isArray(loc.Upstream.Data.Servers) || loc.Upstream.Data.Servers.length === 0) {
-      loc.Upstream.Data.Servers = [{ Target: "http://127.0.0.1:8080", Weight: 1 }];
+    if (
+      !Array.isArray(loc.Upstream.Data.Servers) ||
+      loc.Upstream.Data.Servers.length === 0
+    ) {
+      loc.Upstream.Data.Servers = [
+        { Target: "http://127.0.0.1:8080", Weight: 1 }
+      ];
     }
     delete loc.Upstream.Data.Dir;
   } else if (type === "root" || type === "alias") {
@@ -427,13 +544,17 @@ function addUpstreamServer(locIdx: number) {
   if (!loc || loc.Upstream.Type !== "proxy_pass") return;
   if (!loc.Upstream.Data) loc.Upstream.Data = {};
   if (!Array.isArray(loc.Upstream.Data.Servers)) loc.Upstream.Data.Servers = [];
-  loc.Upstream.Data.Servers.push({ Target: "http://127.0.0.1:8081", Weight: 1 });
+  loc.Upstream.Data.Servers.push({
+    Target: "http://127.0.0.1:8081",
+    Weight: 1
+  });
   syncLocationJSON();
 }
 
 function removeUpstreamServer(locIdx: number, serverIdx: number) {
   const loc = locationList.value[locIdx];
-  if (!loc || loc.Upstream.Type !== "proxy_pass" || !loc.Upstream.Data?.Servers) return;
+  if (!loc || loc.Upstream.Type !== "proxy_pass" || !loc.Upstream.Data?.Servers)
+    return;
   if (loc.Upstream.Data.Servers.length <= 1) return;
   loc.Upstream.Data.Servers.splice(serverIdx, 1);
   syncLocationJSON();
@@ -459,7 +580,11 @@ function syncLocationJSON() {
         Type: "proxy_pass",
         Data: {
           Method: loc.Upstream?.Data?.Method || "round_robin",
-          Servers: (loc.Upstream?.Data?.Servers || [{ Target: "http://127.0.0.1:8080", Weight: 1 }]).map(s => ({
+          Servers: (
+            loc.Upstream?.Data?.Servers || [
+              { Target: "http://127.0.0.1:8080", Weight: 1 }
+            ]
+          ).map(s => ({
             Target: s.Target,
             Weight: s.Weight || 1
           }))
@@ -472,7 +597,11 @@ function syncLocationJSON() {
 
 const validateCertificate = (_rule: any, _value: any, callback: any) => {
   if (newFormInline.value.tls && !newFormInline.value.certificate) {
-    callback(new Error(t("http.certRequiredForTls", "开启 HTTPS (TLS) 必须选择关联证书")));
+    callback(
+      new Error(
+        t("http.certRequiredForTls", "开启 HTTPS (TLS) 必须选择关联证书")
+      )
+    );
   } else {
     callback();
   }
@@ -489,8 +618,16 @@ function handleTlsChange(val: boolean) {
 }
 
 const formRules = reactive({
-  name: [{ required: true, message: () => t("http.nameRequired", "请输入应用名称"), trigger: "blur" }],
-  hostname: [{ required: true, message: () => t("http.hostname"), trigger: "blur" }],
+  name: [
+    {
+      required: true,
+      message: () => t("http.nameRequired", "请输入应用名称"),
+      trigger: "blur"
+    }
+  ],
+  hostname: [
+    { required: true, message: () => t("http.hostname"), trigger: "blur" }
+  ],
   port: [{ required: true, message: () => t("http.port"), trigger: "blur" }],
   certificate: [{ validator: validateCertificate, trigger: ["change", "blur"] }]
 });
@@ -508,15 +645,21 @@ defineExpose({ getRef, syncLocationJSON });
     :model="newFormInline"
     :rules="formRules"
     label-width="auto"
-    class="http-form px-1 sm:px-2 py-1"
+    class="http-form p-1 sm:px-2"
   >
     <div class="space-y-4">
       <!-- Section 1: Front 基础接入属性 -->
-      <el-card shadow="never" class="mb-4 !border-[var(--el-border-color-lighter)] rounded-xl">
+      <el-card
+        shadow="never"
+        class="mb-4 border-(--el-border-color-lighter)! rounded-xl"
+      >
         <template #header>
           <div class="flex items-center space-x-2">
-            <div class="w-1.5 h-4 bg-[var(--el-color-primary)] rounded-full"></div>
-            <span class="font-bold text-[var(--el-text-color-primary)] text-sm sm:text-base">{{ t("http.frontSection") }}</span>
+            <div class="w-1.5 h-4 bg-(--el-color-primary) rounded-full" />
+            <span
+              class="font-bold text-(--el-text-color-primary) text-sm sm:text-base"
+              >{{ t("http.frontSection") }}</span
+            >
           </div>
         </template>
         <el-row :gutter="16">
@@ -544,17 +687,22 @@ defineExpose({ getRef, syncLocationJSON });
             <el-form-item :label="t('http.hostname')" prop="hostname">
               <el-input
                 v-model="newFormInline.hostname"
-                :placeholder="t('http.hostnamePlaceholder', '例如 foo.com 或 *.example.com')"
+                :placeholder="
+                  t('http.hostnamePlaceholder', '例如 foo.com 或 *.example.com')
+                "
                 clearable
               />
-              <div class="text-xs text-[var(--el-text-color-secondary)] mt-1.5">
+              <div class="text-xs text-(--el-text-color-secondary) mt-1.5">
                 {{ t("http.hostnameTip") }}
               </div>
             </el-form-item>
           </re-col>
 
           <re-col :value="24" :xs="24">
-            <el-form-item :label="t('http.proxyHeaders', '转发头')" prop="proxy_headers">
+            <el-form-item
+              :label="t('http.proxyHeaders', '转发头')"
+              prop="proxy_headers"
+            >
               <el-select
                 v-model="selectedProxyHeaders"
                 multiple
@@ -563,7 +711,12 @@ defineExpose({ getRef, syncLocationJSON });
                 default-first-option
                 clearable
                 class="w-full"
-                :placeholder="t('http.proxyHeadersPlaceholder', '请选择或输入转发头 (如 Host, X-Forwarded-For)')"
+                :placeholder="
+                  t(
+                    'http.proxyHeadersPlaceholder',
+                    '请选择或输入转发头 (如 Host, X-Forwarded-For)'
+                  )
+                "
                 @change="handleProxyHeadersChange"
               >
                 <el-option
@@ -578,16 +731,43 @@ defineExpose({ getRef, syncLocationJSON });
 
           <re-col :value="24" :xs="24">
             <el-form-item :label="t('http.frontSection')">
-              <div class="p-3 rounded-lg border border-[var(--el-border-color-lighter)] bg-[var(--el-fill-color-light)] w-full space-y-3">
+              <div
+                class="p-3 rounded-lg border border-(--el-border-color-lighter) bg-(--el-fill-color-light) w-full space-y-3"
+              >
                 <div class="flex flex-wrap gap-4 sm:gap-6 items-center">
-                  <el-checkbox v-model="newFormInline.http" :label="t('http.enableHttp')" />
-                  <el-checkbox v-model="newFormInline.tls" :label="t('http.enableTls')" @change="handleTlsChange" />
-                  <el-switch v-show="newFormInline.tls" v-model="newFormInline.h2" :active-text="t('http.http2')" inactive-text="" />
-                  <el-switch v-show="newFormInline.tls" v-model="newFormInline.hsts" :active-text="t('http.hsts')" inactive-text="" />
+                  <el-checkbox
+                    v-model="newFormInline.http"
+                    :label="t('http.enableHttp')"
+                  />
+                  <el-checkbox
+                    v-model="newFormInline.tls"
+                    :label="t('http.enableTls')"
+                    @change="handleTlsChange"
+                  />
+                  <el-switch
+                    v-show="newFormInline.tls"
+                    v-model="newFormInline.h2"
+                    :active-text="t('http.http2')"
+                    inactive-text=""
+                  />
+                  <el-switch
+                    v-show="newFormInline.tls"
+                    v-model="newFormInline.hsts"
+                    :active-text="t('http.hsts')"
+                    inactive-text=""
+                  />
                 </div>
 
-                <div v-show="newFormInline.tls" class="pt-2 border-t border-[var(--el-border-color-lighter)]">
-                  <el-form-item :label="t('http.selectCert')" label-width="110px" class="!mb-0" prop="certificate">
+                <div
+                  v-show="newFormInline.tls"
+                  class="pt-2 border-t border-(--el-border-color-lighter)"
+                >
+                  <el-form-item
+                    :label="t('http.selectCert')"
+                    label-width="110px"
+                    class="mb-0!"
+                    prop="certificate"
+                  >
                     <el-select
                       v-model="newFormInline.certificate"
                       clearable
@@ -621,32 +801,53 @@ defineExpose({ getRef, syncLocationJSON });
       </el-card>
 
       <!-- Section 2: Feature 特性设置 -->
-      <el-card shadow="never" class="mb-4 !border-[var(--el-border-color-lighter)] rounded-xl">
+      <el-card
+        shadow="never"
+        class="mb-4 border-(--el-border-color-lighter)! rounded-xl"
+      >
         <template #header>
           <div class="flex items-center space-x-2">
-            <div class="w-1.5 h-4 bg-emerald-500 rounded-full"></div>
-            <span class="font-bold text-[var(--el-text-color-primary)] text-sm sm:text-base">{{ t("http.featureSection") }}</span>
+            <div class="w-1.5 h-4 bg-emerald-500 rounded-full" />
+            <span
+              class="font-bold text-(--el-text-color-primary) text-sm sm:text-base"
+              >{{ t("http.featureSection") }}</span
+            >
           </div>
         </template>
-        <div class="p-3.5 rounded-lg border border-[var(--el-border-color-lighter)] bg-[var(--el-fill-color-light)]">
-          <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+        <div
+          class="p-3.5 rounded-lg border border-(--el-border-color-lighter) bg-(--el-fill-color-light)"
+        >
+          <div
+            class="flex flex-col sm:flex-row sm:items-center justify-between gap-3"
+          >
             <div>
-              <div class="font-bold text-sm text-[var(--el-text-color-primary)]">{{ t("http.compress") }}</div>
-              <div class="text-xs text-[var(--el-text-color-secondary)] mt-1">
+              <div class="font-bold text-sm text-(--el-text-color-primary)">
+                {{ t("http.compress") }}
+              </div>
+              <div class="text-xs text-(--el-text-color-secondary) mt-1">
                 {{ t("http.compressTip") }}
               </div>
             </div>
-            <el-switch v-model="newFormInline.compress" class="shrink-0 self-start sm:self-auto" />
+            <el-switch
+              v-model="newFormInline.compress"
+              class="shrink-0 self-start sm:self-auto"
+            />
           </div>
         </div>
       </el-card>
 
       <!-- Section 3: Rule 中间件规则 -->
-      <el-card shadow="never" class="mb-4 !border-[var(--el-border-color-lighter)] rounded-xl">
+      <el-card
+        shadow="never"
+        class="mb-4 border-(--el-border-color-lighter)! rounded-xl"
+      >
         <template #header>
           <div class="flex items-center space-x-2">
-            <div class="w-1.5 h-4 bg-amber-500 rounded-full"></div>
-            <span class="font-bold text-[var(--el-text-color-primary)] text-sm sm:text-base">{{ t("http.ruleSection") }}</span>
+            <div class="w-1.5 h-4 bg-amber-500 rounded-full" />
+            <span
+              class="font-bold text-(--el-text-color-primary) text-sm sm:text-base"
+              >{{ t("http.ruleSection") }}</span
+            >
           </div>
         </template>
         <el-form-item :label="t('http.mountRules')" prop="rules">
@@ -666,29 +867,40 @@ defineExpose({ getRef, syncLocationJSON });
             />
           </el-select>
         </el-form-item>
-        <div class="text-xs text-[var(--el-text-color-secondary)] leading-relaxed mt-1">
+        <div class="text-xs/relaxed text-(--el-text-color-secondary) mt-1">
           {{ t("http.mountRulesTip") }}
         </div>
       </el-card>
 
       <!-- Section 4: Backend 反向代理与路由 -->
-      <el-card shadow="never" class="mb-4 !border-[var(--el-border-color-lighter)] rounded-xl">
+      <el-card
+        shadow="never"
+        class="mb-4 border-(--el-border-color-lighter)! rounded-xl"
+      >
         <template #header>
           <div class="flex items-center space-x-2">
-            <div class="w-1.5 h-4 bg-purple-500 rounded-full"></div>
-            <span class="font-bold text-[var(--el-text-color-primary)] text-sm sm:text-base">{{ t("http.backendSection") }}</span>
+            <div class="w-1.5 h-4 bg-purple-500 rounded-full" />
+            <span
+              class="font-bold text-(--el-text-color-primary) text-sm sm:text-base"
+              >{{ t("http.backendSection") }}</span
+            >
           </div>
         </template>
         <div class="space-y-4">
           <!-- General Backend Fields -->
           <el-row :gutter="16">
-            <re-col :value="12" :xs="24">
+            <re-col :value="24" :xs="24">
               <el-form-item :label="t('http.assocTunnel', 'Tunnel')">
                 <el-select
                   v-model="selectedTunnelNodeKey"
                   clearable
                   filterable
-                  :placeholder="t('http.assocTunnelPlaceholder', '选择关联的 Tunnel 客户端节点')"
+                  :placeholder="
+                    t(
+                      'http.assocTunnelPlaceholder',
+                      '选择关联的 Tunnel 客户端节点'
+                    )
+                  "
                   class="w-full"
                   @change="handleTunnelNodeChange"
                 >
@@ -704,11 +916,26 @@ defineExpose({ getRef, syncLocationJSON });
                       :value="item.value"
                       :disabled="item.disabled"
                     >
-                      <div v-if="!item.disabled" class="flex items-center space-x-2 py-0.5 text-xs">
-                        <el-tag size="small" :type="item.isOnline ? 'success' : 'info'" effect="light" class="font-medium">
-                          {{ item.isOnline ? t('tunnelClient.online', '在线') : t('tunnelClient.offline', '离线') }}
+                      <div
+                        v-if="!item.disabled"
+                        class="flex items-center space-x-2 py-0.5 text-xs"
+                      >
+                        <el-tag
+                          size="small"
+                          :type="item.isOnline ? 'success' : 'info'"
+                          effect="light"
+                          class="font-medium"
+                        >
+                          {{
+                            item.isOnline
+                              ? t("tunnelClient.online", "在线")
+                              : t("tunnelClient.offline", "离线")
+                          }}
                         </el-tag>
-                        <span class="font-semibold text-[var(--el-text-color-primary)] font-mono">{{ item.cName || 'Node' }}</span>
+                        <span
+                          class="font-semibold text-(--el-text-color-primary) font-mono"
+                          >{{ item.cName || "Node" }}</span
+                        >
                       </div>
                       <div v-else class="text-xs text-gray-400 py-0.5">
                         {{ item.cName }}
@@ -719,23 +946,71 @@ defineExpose({ getRef, syncLocationJSON });
               </el-form-item>
             </re-col>
 
-            <re-col :value="12" :xs="24">
-              <el-form-item :label="t('http.dnsResolver', 'DNS 解析器')">
-                <el-input
-                  v-model="newFormInline.dns_resolver"
-                  :placeholder="t('http.dnsResolverPlaceholder', '8.8.8.8:53 (留空使用系统默认 DNS)')"
-                  clearable
-                />
+            <re-col :value="24" :xs="24">
+              <el-form-item :label="t('http.dnsResolver', 'DNS')">
+                <div class="w-full flex flex-col space-y-2">
+                  <div ref="dnsResolverGroupRef" class="w-full space-y-2">
+                    <div
+                      v-for="(dns, dIdx) in dnsResolverList"
+                      :key="dns.id"
+                      class="flex items-center space-x-2"
+                    >
+                      <el-input
+                        v-model="dns.value"
+                        :placeholder="
+                          t(
+                            'http.dnsResolverPlaceholder',
+                            '8.8.8.8:53 (留空使用系统默认 DNS)'
+                          )
+                        "
+                        clearable
+                        @input="syncDnsResolver"
+                      />
+                      <el-button
+                        type="danger"
+                        link
+                        :icon="useRenderIcon(Delete)"
+                        @click="removeDnsResolver(dIdx)"
+                      />
+                      <el-tooltip
+                        :content="t('http.dragToReorder', '拖动改变顺序')"
+                        placement="top"
+                      >
+                        <el-button
+                          type="info"
+                          link
+                          class="cursor-move drag-handle !text-(--el-text-color-secondary) hover:!text-(--el-color-primary)"
+                          :icon="useRenderIcon(Rank)"
+                        />
+                      </el-tooltip>
+                    </div>
+                  </div>
+                  <el-button
+                    type="primary"
+                    plain
+                    size="small"
+                    class="self-start"
+                    :icon="useRenderIcon(AddFill)"
+                    @click="addDnsResolver"
+                  >
+                    {{ t("http.addDns", "添加 DNS") }}
+                  </el-button>
+                </div>
               </el-form-item>
             </re-col>
           </el-row>
 
           <!-- Location Routers List -->
-          <div class="border-t border-[var(--el-border-color-lighter)] pt-4">
-            <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-2 mb-3">
+          <div class="border-t border-(--el-border-color-lighter) pt-4">
+            <div
+              class="flex flex-col sm:flex-row sm:items-center justify-between gap-2 mb-3"
+            >
               <div>
-                <span class="font-bold text-sm text-[var(--el-text-color-primary)]">{{ t("http.locationTitle") }}</span>
-                <div class="text-xs text-[var(--el-text-color-secondary)] mt-0.5">
+                <span
+                  class="font-bold text-sm text-(--el-text-color-primary)"
+                  >{{ t("http.locationTitle") }}</span
+                >
+                <div class="text-xs text-(--el-text-color-secondary) mt-0.5">
                   {{ t("http.locationTip") }}
                 </div>
               </div>
@@ -754,14 +1029,23 @@ defineExpose({ getRef, syncLocationJSON });
               <div
                 v-for="(loc, lIdx) in locationList"
                 :key="lIdx"
-                class="p-3 sm:p-4 rounded-xl border border-[var(--el-border-color-lighter)] bg-[var(--el-fill-color-light)] transition-all"
+                class="p-3 sm:p-4 rounded-xl border border-(--el-border-color-lighter) bg-(--el-fill-color-light) transition-all"
               >
-                <div class="flex items-center justify-between mb-3 pb-2 border-b border-[var(--el-border-color-lighter)]">
+                <div
+                  class="flex-bc mb-3 pb-2 border-b border-(--el-border-color-lighter)"
+                >
                   <div class="flex items-center space-x-2">
-                    <el-tag size="small" type="primary" effect="dark" class="font-bold font-mono">
+                    <el-tag
+                      size="small"
+                      type="primary"
+                      effect="dark"
+                      class="font-bold font-mono"
+                    >
                       Location #{{ lIdx + 1 }}
                     </el-tag>
-                    <span class="text-xs text-[var(--el-text-color-secondary)]">Path</span>
+                    <span class="text-xs text-(--el-text-color-secondary)"
+                      >Path</span
+                    >
                   </div>
                   <el-button
                     size="small"
@@ -777,7 +1061,11 @@ defineExpose({ getRef, syncLocationJSON });
 
                 <el-row :gutter="12">
                   <re-col :value="10" :xs="24">
-                    <el-form-item :label="t('http.matchPath')" class="!mb-3" required>
+                    <el-form-item
+                      :label="t('http.matchPath')"
+                      class="mb-3!"
+                      required
+                    >
                       <div class="w-full space-y-1">
                         <el-input
                           v-model="loc.Path"
@@ -785,37 +1073,77 @@ defineExpose({ getRef, syncLocationJSON });
                           @input="syncLocationJSON"
                         />
                         <div class="flex items-center gap-1 flex-wrap">
-                          <span class="text-[11px] text-[var(--el-text-color-secondary)]">{{ t("http.matchMode") }}</span>
-                          <el-button size="small" link type="primary" @click="quickSetPathPrefix(loc, '/')">{{ t("http.prefixMatch") }}</el-button>
-                          <el-button size="small" link type="success" @click="quickSetPathPrefix(loc, '=')">{{ t("http.exactMatch") }}</el-button>
-                          <el-button size="small" link type="warning" @click="quickSetPathPrefix(loc, '~')">{{ t("http.regexMatch") }}</el-button>
-                          <el-button size="small" link type="danger" @click="quickSetPathPrefix(loc, '~*')">{{ t("http.regexIgnoreMatch") }}</el-button>
+                          <span
+                            class="text-[11px] text-(--el-text-color-secondary)"
+                            >{{ t("http.matchMode") }}</span
+                          >
+                          <el-button
+                            size="small"
+                            link
+                            type="primary"
+                            @click="quickSetPathPrefix(loc, '/')"
+                            >{{ t("http.prefixMatch") }}</el-button
+                          >
+                          <el-button
+                            size="small"
+                            link
+                            type="success"
+                            @click="quickSetPathPrefix(loc, '=')"
+                            >{{ t("http.exactMatch") }}</el-button
+                          >
+                          <el-button
+                            size="small"
+                            link
+                            type="warning"
+                            @click="quickSetPathPrefix(loc, '~')"
+                            >{{ t("http.regexMatch") }}</el-button
+                          >
+                          <el-button
+                            size="small"
+                            link
+                            type="danger"
+                            @click="quickSetPathPrefix(loc, '~*')"
+                            >{{ t("http.regexIgnoreMatch") }}</el-button
+                          >
                         </div>
                       </div>
                     </el-form-item>
                   </re-col>
                   <re-col :value="8" :xs="24">
-                    <el-form-item :label="t('http.upstreamType')" class="!mb-3">
+                    <el-form-item :label="t('http.upstreamType')" class="mb-3!">
                       <el-select
                         v-model="loc.Upstream.Type"
                         class="w-full"
                         @change="handleLocationTypeChange(loc)"
                       >
-                        <el-option :label="t('http.proxyPass')" value="proxy_pass" />
+                        <el-option
+                          :label="t('http.proxyPass')"
+                          value="proxy_pass"
+                        />
                         <el-option :label="t('http.rootDir')" value="root" />
                         <el-option :label="t('http.aliasDir')" value="alias" />
                       </el-select>
                     </el-form-item>
                   </re-col>
-                  <re-col v-if="loc.Upstream.Type === 'proxy_pass'" :value="6" :xs="24">
-                    <el-form-item :label="t('http.lbAlgorithm')" class="!mb-3">
+                  <re-col
+                    v-if="loc.Upstream.Type === 'proxy_pass'"
+                    :value="6"
+                    :xs="24"
+                  >
+                    <el-form-item :label="t('http.lbAlgorithm')" class="mb-3!">
                       <el-select
                         v-model="loc.Upstream.Data.Method"
                         class="w-full"
                         @change="syncLocationJSON"
                       >
-                        <el-option :label="t('http.roundRobin')" value="round_robin" />
-                        <el-option :label="t('http.weightRoundRobin')" value="weight" />
+                        <el-option
+                          :label="t('http.roundRobin')"
+                          value="round_robin"
+                        />
+                        <el-option
+                          :label="t('http.weightRoundRobin')"
+                          value="weight"
+                        />
                         <el-option :label="t('http.ipHash')" value="ip_hash" />
                       </el-select>
                     </el-form-item>
@@ -823,16 +1151,27 @@ defineExpose({ getRef, syncLocationJSON });
                 </el-row>
 
                 <!-- Case A: Upstream Target Servers (proxy_pass) -->
-                <div v-if="loc.Upstream.Type === 'proxy_pass'" class="mt-1 p-2.5 sm:p-3 bg-[var(--el-bg-color)] rounded-lg border border-[var(--el-border-color-lighter)] space-y-2">
-                  <div class="flex items-center justify-between text-xs font-bold text-[var(--el-text-color-primary)]">
+                <div
+                  v-if="loc.Upstream.Type === 'proxy_pass'"
+                  class="mt-1 p-2.5 sm:p-3 bg-(--el-bg-color) rounded-lg border border-(--el-border-color-lighter) space-y-2"
+                >
+                  <div
+                    class="flex-bc text-xs font-bold text-(--el-text-color-primary)"
+                  >
                     <span>{{ t("http.targetUrl") }}</span>
-                    <el-button size="small" link type="primary" @click="addUpstreamServer(lIdx)">{{ t("http.addBackendNode") }}</el-button>
+                    <el-button
+                      size="small"
+                      link
+                      type="primary"
+                      @click="addUpstreamServer(lIdx)"
+                      >{{ t("http.addBackendNode") }}</el-button
+                    >
                   </div>
 
                   <div
-                    v-for="(srv, sIdx) in (loc.Upstream.Data.Servers || [])"
+                    v-for="(srv, sIdx) in loc.Upstream.Data.Servers || []"
                     :key="sIdx"
-                    class="flex flex-wrap sm:flex-nowrap items-center gap-2 pb-2 sm:pb-0 border-b sm:border-b-0 border-[var(--el-border-color-lighter)] last:border-b-0"
+                    class="flex flex-wrap sm:flex-nowrap items-center gap-2 pb-2 sm:pb-0 border-b sm:border-b-0 border-(--el-border-color-lighter) last:border-b-0"
                   >
                     <el-input
                       v-model="srv.Target"
@@ -841,21 +1180,27 @@ defineExpose({ getRef, syncLocationJSON });
                       class="w-full sm:flex-1"
                       @input="syncLocationJSON"
                     />
-                    <div class="flex items-center space-x-2 shrink-0 self-end sm:self-auto">
-                      <span class="text-xs text-[var(--el-text-color-secondary)]">{{ t("http.weight") }}</span>
+                    <div
+                      class="flex items-center space-x-2 shrink-0 self-end sm:self-auto"
+                    >
+                      <span class="text-xs text-(--el-text-color-secondary)">{{
+                        t("http.weight")
+                      }}</span>
                       <el-input-number
                         v-model="srv.Weight"
                         size="small"
                         :min="1"
                         :max="100"
-                        class="!w-24"
+                        class="w-24!"
                         @change="syncLocationJSON"
                       />
                       <el-button
                         size="small"
                         link
                         type="danger"
-                        :disabled="(loc.Upstream.Data.Servers || []).length <= 1"
+                        :disabled="
+                          (loc.Upstream.Data.Servers || []).length <= 1
+                        "
                         :icon="useRenderIcon(Delete)"
                         @click="removeUpstreamServer(lIdx, sIdx)"
                       />
@@ -864,16 +1209,25 @@ defineExpose({ getRef, syncLocationJSON });
                 </div>
 
                 <!-- Case B: Static Dir (root or alias) -->
-                <div v-else class="mt-1 p-2.5 sm:p-3 bg-[var(--el-bg-color)] rounded-lg border border-[var(--el-border-color-lighter)] space-y-2">
-                  <el-form-item :label="t('http.staticDir')" class="!mb-0" required>
+                <div
+                  v-else
+                  class="mt-1 p-2.5 sm:p-3 bg-(--el-bg-color) rounded-lg border border-(--el-border-color-lighter) space-y-2"
+                >
+                  <el-form-item
+                    :label="t('http.staticDir')"
+                    class="mb-0!"
+                    required
+                  >
                     <el-input
                       v-model="loc.Upstream.Data.Dir"
                       :placeholder="t('http.staticDirPlaceholder')"
                       @input="syncLocationJSON"
                     />
                   </el-form-item>
-                  <div class="text-[11px] text-[var(--el-text-color-secondary)]">
-                    <span v-if="loc.Upstream.Type === 'root'">{{ t("http.rootTip") }}</span>
+                  <div class="text-[11px] text-(--el-text-color-secondary)">
+                    <span v-if="loc.Upstream.Type === 'root'">{{
+                      t("http.rootTip")
+                    }}</span>
                     <span v-else>{{ t("http.aliasTip") }}</span>
                   </div>
                 </div>

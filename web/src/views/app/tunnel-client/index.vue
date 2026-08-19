@@ -104,13 +104,13 @@ const {
             :loading="loading"
             @click="onSearch"
           >
-            {{ t('tunnel.search') }}
+            {{ t("tunnel.search") }}
           </el-button>
           <el-button
             :icon="useRenderIcon('ri/refresh-line')"
             @click="resetForm(formRef)"
           >
-            {{ t('tunnel.reset') }}
+            {{ t("tunnel.reset") }}
           </el-button>
         </el-form-item>
       </el-form>
@@ -127,7 +127,7 @@ const {
             :icon="useRenderIcon(AddFill)"
             @click="openDialog(t('tunnelClient.addClient'))"
           >
-            {{ t('tunnelClient.addClient') }}
+            {{ t("tunnelClient.addClient") }}
           </el-button>
         </template>
         <template v-slot="{ size, dynamicColumns }">
@@ -141,23 +141,27 @@ const {
                 style="font-size: var(--el-font-size-base)"
                 class="text-[rgba(42,46,54,0.5)] dark:text-[rgba(220,220,242,0.5)]"
               >
-                {{ t('tunnel.selected') }} {{ selectedNum }} {{ t('tunnel.items') }}
+                {{ t("tunnel.selected") }} {{ selectedNum }}
+                {{ t("tunnel.items") }}
               </span>
               <el-button type="primary" text @click="onSelectionCancel">
-                {{ t('tunnel.cancelSelection') }}
+                {{ t("tunnel.cancelSelection") }}
               </el-button>
             </div>
-            <el-popconfirm :title="t('tunnel.confirmDelete')" @confirm="onbatchDel">
+            <el-popconfirm
+              :title="t('tunnel.confirmDelete')"
+              @confirm="onbatchDel"
+            >
               <template #reference>
                 <el-button type="danger" text class="mr-1!">
-                  {{ t('tunnel.batchDelete') }}
+                  {{ t("tunnel.batchDelete") }}
                 </el-button>
               </template>
             </el-popconfirm>
           </div>
           <pure-table
             ref="tableRef"
-            :row-key="(row) => row.Id || row.id"
+            :row-key="row => row.Id || row.id"
             adaptive
             :adaptiveConfig="{ offsetBottom: 108 }"
             align-whole="center"
@@ -184,7 +188,7 @@ const {
                 :icon="useRenderIcon(EditPen)"
                 @click="openDialog(t('tunnelClient.editClient'), row)"
               >
-                {{ t('tunnel.edit') }}
+                {{ t("tunnel.edit") }}
               </el-button>
               <el-popconfirm
                 :title="t('tunnelClient.confirmDeleteNode')"
@@ -198,7 +202,7 @@ const {
                     :size="size"
                     :icon="useRenderIcon(Delete)"
                   >
-                    {{ t('tunnel.delete') }}
+                    {{ t("tunnel.delete") }}
                   </el-button>
                 </template>
               </el-popconfirm>

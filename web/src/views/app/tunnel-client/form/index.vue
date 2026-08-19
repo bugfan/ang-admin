@@ -2,7 +2,10 @@
 import { ref, reactive, onMounted } from "vue";
 import ReCol from "@/components/ReCol";
 import { useI18n } from "vue-i18n";
-import { getActiveTunnelConnections, getTunnelClientList } from "@/api/tunnel-client";
+import {
+  getActiveTunnelConnections,
+  getTunnelClientList
+} from "@/api/tunnel-client";
 import { message } from "@/utils/message";
 import { useRenderIcon } from "@/components/ReIcon/src/hooks";
 import RefreshLine from "~icons/ri/refresh-line";
@@ -29,10 +32,18 @@ const selectedActiveConn = ref("");
 
 const formRules = reactive({
   name: [
-    { required: true, message: () => t("tunnelClient.nameRequired"), trigger: "blur" }
+    {
+      required: true,
+      message: () => t("tunnelClient.nameRequired"),
+      trigger: "blur"
+    }
   ],
   token: [
-    { required: true, message: () => t("tunnelClient.selectNodeRequired"), trigger: "change" }
+    {
+      required: true,
+      message: () => t("tunnelClient.selectNodeRequired"),
+      trigger: "change"
+    }
   ]
 });
 
@@ -49,8 +60,8 @@ async function fetchActiveConnections() {
     const savedClients = Array.isArray(resClients?.data?.list)
       ? resClients.data.list
       : Array.isArray(resClients?.data)
-      ? resClients.data
-      : [];
+        ? resClients.data
+        : [];
 
     const mapped = allConns.map((item: any) => {
       const boundClient = savedClients.find(
@@ -78,7 +89,9 @@ async function fetchActiveConnections() {
     // If token exists in formInline, pre-select matched active connection
     if (newFormInline.value?.token) {
       const curToken = newFormInline.value.token;
-      const matched = activeConnOptions.value.find(item => item.token === curToken);
+      const matched = activeConnOptions.value.find(
+        item => item.token === curToken
+      );
       if (matched) {
         selectedActiveConn.value = matched.label;
       }
@@ -110,7 +123,10 @@ function handleSelectActiveConn(val: string) {
       ? `Node-${matched.type.toUpperCase()}-${matched.tunnel_id}-${tokenSuffix}`
       : `Node-${matched.type.toUpperCase()}-${matched.tunnel_id}`;
 
-    if (!newFormInline.value.name || newFormInline.value.name.startsWith("Node-")) {
+    if (
+      !newFormInline.value.name ||
+      newFormInline.value.name.startsWith("Node-")
+    ) {
       newFormInline.value.name = defaultName;
     }
   }
@@ -133,7 +149,7 @@ defineExpose({ getRef });
     :model="newFormInline"
     :rules="formRules"
     label-width="70px"
-    class="py-1 px-1"
+    class="p-1"
   >
     <el-row :gutter="16">
       <!-- 1. 名称 (Name) - 置于最上方 -->
@@ -153,7 +169,12 @@ defineExpose({ getRef });
           <div class="w-full">
             <!-- 仅当在【节点】下拉框中选中项目后才在正上方呈现的信息胶囊 -->
             <div
-              v-if="selectedActiveConn && (newFormInline.type || newFormInline.tunnel_id || newFormInline.token)"
+              v-if="
+                selectedActiveConn &&
+                (newFormInline.type ||
+                  newFormInline.tunnel_id ||
+                  newFormInline.token)
+              "
               class="mb-2 inline-flex flex-wrap items-center gap-2 p-1.5 bg-gray-50 dark:bg-gray-800/60 rounded-md border border-gray-100 dark:border-gray-700/60 text-xs"
             >
               <el-tag
@@ -162,7 +183,7 @@ defineExpose({ getRef });
                 effect="dark"
                 class="font-bold rounded"
               >
-                {{ (newFormInline.type || 'tls').toUpperCase() }}
+                {{ (newFormInline.type || "tls").toUpperCase() }}
               </el-tag>
 
               <el-tag
@@ -199,12 +220,20 @@ defineExpose({ getRef });
                   :key="`${item.type}-${item.tunnel_id}-${item.token}-${item.remote_addr}`"
                   :label="item.label"
                   :value="item.label"
-                  :disabled="item.isAlreadyBound && (!newFormInline.id || Number(newFormInline.id) !== Number(item.boundId))"
+                  :disabled="
+                    item.isAlreadyBound &&
+                    (!newFormInline.id ||
+                      Number(newFormInline.id) !== Number(item.boundId))
+                  "
                   class="h-auto! py-2"
                 >
-                  <div class="flex flex-col space-y-1 w-full text-xs font-mono leading-normal">
-                    <div class="flex items-center justify-between gap-2">
-                      <span class="font-semibold text-gray-800 dark:text-gray-200 break-all">
+                  <div
+                    class="flex flex-col space-y-1 w-full text-xs/normal font-mono"
+                  >
+                    <div class="flex-bc gap-2">
+                      <span
+                        class="font-semibold text-gray-800 dark:text-gray-200 break-all"
+                      >
                         Token: {{ item.token }}
                       </span>
                       <div class="flex items-center space-x-1 shrink-0">
@@ -214,30 +243,30 @@ defineExpose({ getRef });
                           type="info"
                           class="rounded"
                         >
-                          {{ t('tunnelClient.bound') }}: {{ item.boundName }}
+                          {{ t("tunnelClient.bound") }}: {{ item.boundName }}
                         </el-tag>
-                          <el-tag
-                            v-else
-                            size="small"
-                            type="warning"
-                            effect="light"
-                            class="rounded font-medium inline-flex items-center gap-1"
-                          >
-                            <IconifyIconOffline icon="ri:flash-line" /> {{ t('tunnel.unsavedTag') }}
-                          </el-tag>
                         <el-tag
+                          v-else
                           size="small"
-                          type="primary"
-                          class="font-bold"
+                          type="warning"
+                          effect="light"
+                          class="rounded font-medium inline-flex items-center gap-1"
                         >
+                          <IconifyIconOffline icon="ri:flash-line" />
+                          {{ t("tunnel.unsavedTag") }}
+                        </el-tag>
+                        <el-tag size="small" type="primary" class="font-bold">
                           {{ item.type.toUpperCase() }}
                         </el-tag>
                       </div>
                     </div>
 
-                    <div class="flex items-center justify-between gap-2 text-gray-500 dark:text-gray-400 text-[11px]">
+                    <div
+                      class="flex-bc gap-2 text-gray-500 dark:text-gray-400 text-[11px]"
+                    >
                       <span class="break-all">
-                        Remote: {{ item.remote_addr }} <template v-if="item.sni">({{ item.sni }})</template>
+                        Remote: {{ item.remote_addr }}
+                        <template v-if="item.sni">({{ item.sni }})</template>
                       </span>
                       <span class="shrink-0 text-gray-400">
                         Tunnel ID: {{ item.tunnel_id }}
@@ -248,7 +277,10 @@ defineExpose({ getRef });
               </el-select>
 
               <!-- 右侧带箭头的圆形刷新图标按钮 -->
-              <el-tooltip :content="t('tunnelClient.refreshNodes')" placement="top">
+              <el-tooltip
+                :content="t('tunnelClient.refreshNodes')"
+                placement="top"
+              >
                 <el-button
                   type="primary"
                   link

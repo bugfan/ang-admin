@@ -9,9 +9,7 @@ const TITLE = getConfig("Title");
     class="layout-footer text-[rgba(0,0,0,0.6)] dark:text-[rgba(220,220,242,0.8)]"
   >
     Copyright © 2026
-    <span class="hover:text-primary!">
-      &nbsp;{{ TITLE }}
-    </span>
+    <span class="hover:text-primary!"> &nbsp;{{ TITLE }} </span>
   </footer>
 </template>
 

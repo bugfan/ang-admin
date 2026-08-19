@@ -288,6 +288,14 @@ func buildHTTPMap(rulesMap map[string]models.Rule) map[string]entity.HTTPConfig 
 			}
 		}
 
+		var dnsResolver []string
+		if item.DNSResolver != "" {
+			if err := json.Unmarshal([]byte(item.DNSResolver), &dnsResolver); err != nil {
+				// Fallback for old single string data
+				dnsResolver = []string{item.DNSResolver}
+			}
+		}
+
 		httpMap[keyStr] = entity.HTTPConfig{
 			Front: entity.HTTPFront{
 				Port:         item.Port,
@@ -306,7 +314,7 @@ func buildHTTPMap(rulesMap map[string]models.Rule) map[string]entity.HTTPConfig 
 			Backend: entity.HTTPBackend{
 				RealIp:      item.RealIp,
 				Tunnel:      backendTunnel,
-				DNSResolver: item.DNSResolver,
+				DNSResolver: dnsResolver,
 				Location:    locations,
 			},
 		}

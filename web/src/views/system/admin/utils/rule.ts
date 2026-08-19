@@ -16,7 +16,9 @@ export const formRules = reactive(<FormRules>{
         if (!value) {
           callback(new Error("用户密码为必填项"));
         } else if (!REGEXP_PWD.test(value)) {
-          callback(new Error("密码格式应为8-18位数字、字母、符号的任意两种组合"));
+          callback(
+            new Error("密码格式应为8-18位数字、字母、符号的任意两种组合")
+          );
         } else {
           callback();
         }

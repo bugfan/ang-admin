@@ -29,7 +29,9 @@ export function useTunnelClient(t: any, tableRef: Ref) {
     currentPage: 1,
     background: true,
     size: deviceDetection() ? "small" : "default",
-    layout: deviceDetection() ? "prev, pager, next" : "total, sizes, prev, pager, next, jumper"
+    layout: deviceDetection()
+      ? "prev, pager, next"
+      : "total, sizes, prev, pager, next, jumper"
   });
 
   const columns = computed<TableColumnList>(() => [
@@ -43,17 +45,19 @@ export function useTunnelClient(t: any, tableRef: Ref) {
       label: t("tunnel.id"),
       prop: "Id",
       width: 80,
-      formatter: (row) => row.Id || row.id
+      formatter: row => row.Id || row.id
     },
     {
       label: t("tunnelClient.name"),
       prop: "Name",
       minWidth: 120,
-      headerRenderer: () => <span class="whitespace-nowrap">{t("tunnelClient.name")}</span>,
+      headerRenderer: () => (
+        <span class="whitespace-nowrap">{t("tunnelClient.name")}</span>
+      ),
       cellRenderer: scope => {
         const name = scope.row.Name || scope.row.name || "-";
         return (
-          <span class="font-semibold text-sm text-[var(--el-text-color-primary)] break-words inline-block leading-snug py-1">
+          <span class="font-semibold text-sm/snug text-(--el-text-color-primary) wrap-break-word inline-block  py-1">
             {name}
           </span>
         );
@@ -64,7 +68,11 @@ export function useTunnelClient(t: any, tableRef: Ref) {
       prop: "Type",
       minWidth: 100,
       cellRenderer: scope => {
-        const clientType = (scope.row.Type || scope.row.type || "").toLowerCase();
+        const clientType = (
+          scope.row.Type ||
+          scope.row.type ||
+          ""
+        ).toLowerCase();
         const tagType = "primary";
         return (
           <el-tag type={tagType} effect="plain" class="font-bold">
@@ -107,14 +115,22 @@ export function useTunnelClient(t: any, tableRef: Ref) {
         const remoteAddr = scope.row.RemoteAddr || scope.row.remote_addr || "";
         return isOnline ? (
           <el-tooltip content={`Remote: ${remoteAddr}`} placement="top">
-            <el-tag type="success" effect="light" class="font-medium inline-flex items-center">
-              <span class="w-1.5 h-1.5 rounded-full bg-emerald-500 inline-block mr-1"></span>
+            <el-tag
+              type="success"
+              effect="light"
+              class="font-medium inline-flex items-center"
+            >
+              <span class="size-1.5  rounded-full bg-emerald-500 inline-block mr-1"></span>
               {t("tunnelClient.online")} ({remoteAddr})
             </el-tag>
           </el-tooltip>
         ) : (
-          <el-tag type="info" effect="plain" class="text-gray-400 inline-flex items-center">
-            <span class="w-1.5 h-1.5 rounded-full bg-rose-500 inline-block mr-1"></span>
+          <el-tag
+            type="info"
+            effect="plain"
+            class="text-gray-400 inline-flex items-center"
+          >
+            <span class="size-1.5  rounded-full bg-rose-500 inline-block mr-1"></span>
             {t("tunnelClient.offline")}
           </el-tag>
         );
@@ -125,14 +141,18 @@ export function useTunnelClient(t: any, tableRef: Ref) {
       prop: "Remark",
       minWidth: 110,
       align: "center",
-      headerRenderer: () => <span class="whitespace-nowrap">{t("tunnelClient.remark")}</span>,
+      headerRenderer: () => (
+        <span class="whitespace-nowrap">{t("tunnelClient.remark")}</span>
+      ),
       cellRenderer: scope => {
         const remark = scope.row.Remark || scope.row.remark || "-";
         if (!remark || remark === "-") {
-          return <span class="text-xs text-[var(--el-text-color-placeholder)]">-</span>;
+          return (
+            <span class="text-xs text-(--el-text-color-placeholder)">-</span>
+          );
         }
         return (
-          <span class="text-xs text-[var(--el-text-color-regular)] break-words inline-block leading-snug py-1">
+          <span class="text-xs/snug text-(--el-text-color-regular) wrap-break-word inline-block  py-1">
             {remark}
           </span>
         );
@@ -142,7 +162,7 @@ export function useTunnelClient(t: any, tableRef: Ref) {
       label: t("tunnel.createTime"),
       minWidth: 160,
       prop: "CreatedAt",
-      formatter: (row) => {
+      formatter: row => {
         const timeVal = row.CreatedAt || row.created_at;
         return timeVal && dayjs(timeVal).isValid() && dayjs(timeVal).year() > 1
           ? dayjs(timeVal).format("YYYY-MM-DD HH:mm:ss")
@@ -161,7 +181,9 @@ export function useTunnelClient(t: any, tableRef: Ref) {
     const targetId = row.Id || row.id;
     const { code, message: msg } = await deleteTunnelClient({ id: targetId });
     if (code === 0) {
-      message(`${t("tunnel.delete")} ID: ${targetId} success`, { type: "success" });
+      message(`${t("tunnel.delete")} ID: ${targetId} success`, {
+        type: "success"
+      });
       onSearch();
     } else {
       message(msg, { type: "error" });

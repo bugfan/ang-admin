@@ -39,10 +39,19 @@ export const getRuleList = async (params?: object) => {
     if (res && typeof res === "object" && res.list) {
       return { code: 0, message: "success", data: res };
     }
-    return { code: 0, message: "success", data: { list: [], total: 0, pageSize: 10, currentPage: 1 } };
+    return {
+      code: 0,
+      message: "success",
+      data: { list: [], total: 0, pageSize: 10, currentPage: 1 }
+    };
   } catch (err: any) {
-    const msg = err?.response?.data?.message || err?.message || "获取规则列表失败";
-    return { code: 1, message: msg, data: { list: [], total: 0, pageSize: 10, currentPage: 1 } };
+    const msg =
+      err?.response?.data?.message || err?.message || "获取规则列表失败";
+    return {
+      code: 1,
+      message: msg,
+      data: { list: [], total: 0, pageSize: 10, currentPage: 1 }
+    };
   }
 };
 
@@ -50,7 +59,12 @@ export const getRuleList = async (params?: object) => {
 export const createRule = async (data?: object) => {
   try {
     const res = await http.request<any>("post", "/api/rule", { data });
-    if (res && typeof res === "object" && res.code !== undefined && res.code !== 0) {
+    if (
+      res &&
+      typeof res === "object" &&
+      res.code !== undefined &&
+      res.code !== 0
+    ) {
       return res;
     }
     return { code: 0, message: "success", data: res };
@@ -65,7 +79,12 @@ export const updateRule = async (data: any) => {
   try {
     const id = data?.id || data?.Id;
     const res = await http.request<any>("put", `/api/rule/${id}`, { data });
-    if (res && typeof res === "object" && res.code !== undefined && res.code !== 0) {
+    if (
+      res &&
+      typeof res === "object" &&
+      res.code !== undefined &&
+      res.code !== 0
+    ) {
       return res;
     }
     return { code: 0, message: "success", data: res };
@@ -83,7 +102,7 @@ export const deleteRule = async (param: any) => {
         await http.request<any>("delete", `/api/rule/${id}`);
       }
     } else {
-      const id = typeof param === "object" ? (param.id || param.Id) : param;
+      const id = typeof param === "object" ? param.id || param.Id : param;
       await http.request<any>("delete", `/api/rule/${id}`);
     }
     return { code: 0, message: "success" };

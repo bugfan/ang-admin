@@ -68,18 +68,22 @@ function getDefaultFormInline() {
     tunnel_id: "",
     tunnel_token: "",
     dns_resolver: "",
-    location_json: JSON.stringify([
-      {
-        Path: "/",
-        Upstream: {
-          Type: "proxy_pass",
-          Data: {
-            Method: "round_robin",
-            Servers: [{ Target: "http://127.0.0.1:8080", Weight: 1 }]
+    location_json: JSON.stringify(
+      [
+        {
+          Path: "/",
+          Upstream: {
+            Type: "proxy_pass",
+            Data: {
+              Method: "round_robin",
+              Servers: [{ Target: "http://127.0.0.1:8080", Weight: 1 }]
+            }
           }
         }
-      }
-    ], null, 2),
+      ],
+      null,
+      2
+    ),
     remark: ""
   };
 }
@@ -96,7 +100,8 @@ function getFormInlineFromRow(row: any) {
     h2: row?.H2 ?? row?.h2 ?? true,
     hsts: row?.HSTS ?? row?.hsts ?? false,
     certificate: row?.Certificate ?? row?.certificate ?? "",
-    proxy_headers: row?.ProxyHeaders ?? row?.proxy_headers ?? JSON.stringify([]),
+    proxy_headers:
+      row?.ProxyHeaders ?? row?.proxy_headers ?? JSON.stringify([]),
     compress: row?.Compress ?? row?.compress ?? false,
     rules: row?.Rules ?? row?.rules ?? JSON.stringify([]),
     real_ip: row?.RealIp ?? row?.real_ip ?? "",
@@ -104,18 +109,25 @@ function getFormInlineFromRow(row: any) {
     tunnel_id: row?.TunnelId ?? row?.tunnel_id ?? "",
     tunnel_token: row?.TunnelToken ?? row?.tunnel_token ?? "",
     dns_resolver: row?.DNSResolver ?? row?.dns_resolver ?? "",
-    location_json: row?.LocationJSON ?? row?.location_json ?? JSON.stringify([
-      {
-        Path: "/",
-        Upstream: {
-          Type: "proxy_pass",
-          Data: {
-            Method: "round_robin",
-            Servers: [{ Target: "http://127.0.0.1:8080", Weight: 1 }]
+    location_json:
+      row?.LocationJSON ??
+      row?.location_json ??
+      JSON.stringify(
+        [
+          {
+            Path: "/",
+            Upstream: {
+              Type: "proxy_pass",
+              Data: {
+                Method: "round_robin",
+                Servers: [{ Target: "http://127.0.0.1:8080", Weight: 1 }]
+              }
+            }
           }
-        }
-      }
-    ], null, 2),
+        ],
+        null,
+        2
+      ),
     remark: row?.Remark ?? row?.remark ?? ""
   };
 }
@@ -155,14 +167,18 @@ async function handleSaveSubmit() {
             message(msg, { type: "error" });
             return;
           }
-          message(t("http.addHttp") + " " + t("http.success", "成功"), { type: "success" });
+          message(t("http.addHttp") + " " + t("http.success", "成功"), {
+            type: "success"
+          });
         } else {
           const { code, message: msg } = await updateHttpProxy(curData);
           if (code !== 0) {
             message(msg, { type: "error" });
             return;
           }
-          message(t("http.editHttp") + " " + t("http.success", "成功"), { type: "success" });
+          message(t("http.editHttp") + " " + t("http.success", "成功"), {
+            type: "success"
+          });
         }
         showView.value = "list";
         onSearch();
@@ -240,14 +256,16 @@ function formatJSON(row: any) {
         ref="searchFormRef"
         :inline="true"
         :model="form"
-        class="search-form bg-bg_color w-full px-3 sm:px-6 pt-3 pb-1 overflow-auto mb-3 rounded-xl border border-[var(--el-border-color-lighter)] shadow-2xs"
+        class="search-form bg-bg_color w-full px-3 sm:px-6 pt-3 pb-1 overflow-auto mb-3 rounded-xl border border-(--el-border-color-lighter) shadow-2xs"
       >
         <el-form-item prop="keyword">
           <el-input
             v-model="form.keyword"
-            :placeholder="t('http.keywordPlaceholder', '搜索名称、Hostname、端口或备注')"
+            :placeholder="
+              t('http.keywordPlaceholder', '搜索名称、Hostname、端口或备注')
+            "
             clearable
-            class="w-full sm:!w-[280px]"
+            class="w-full sm:w-70!"
             @keyup.enter="onSearch"
           />
         </el-form-item>
@@ -286,11 +304,16 @@ function formatJSON(row: any) {
         <template v-slot="{ size, dynamicColumns }">
           <div
             v-if="selectedNum > 0"
-            class="bg-[var(--el-color-primary-light-9)] text-[var(--el-color-primary)] border border-[var(--el-color-primary-light-7)] px-4 py-2 rounded-lg text-sm mb-3 flex items-center justify-between"
+            class="bg-(--el-color-primary-light-9) text-(--el-color-primary) border border-(--el-color-primary-light-7) px-4 py-2 rounded-lg text-sm mb-3 flex-bc"
           >
             <span>{{ t("http.selected", { count: selectedNum }) }}</span>
             <div>
-              <el-button type="primary" link size="small" @click="onSelectionCancel">
+              <el-button
+                type="primary"
+                link
+                size="small"
+                @click="onSelectionCancel"
+              >
                 {{ t("http.cancelSelection") }}
               </el-button>
               <el-popconfirm
@@ -329,21 +352,45 @@ function formatJSON(row: any) {
           >
             <!-- Expand Row Slot: Theme-Adaptive JSON Preview -->
             <template #expand="{ row }">
-              <div class="p-3 sm:p-4 bg-[var(--el-fill-color-light)] rounded-xl m-1 sm:m-2 border border-[var(--el-border-color-lighter)]">
-                <div class="text-xs font-bold text-[var(--el-text-color-regular)] mb-2 flex items-center justify-between flex-wrap gap-1">
+              <div
+                class="p-3 sm:p-4 bg-(--el-fill-color-light) rounded-xl m-1 sm:m-2 border border-(--el-border-color-lighter)"
+              >
+                <div
+                  class="text-xs font-bold text-(--el-text-color-regular) mb-2 flex-bc flex-wrap gap-1"
+                >
                   <div class="flex items-center space-x-2">
-                    <div class="w-2 h-2 bg-[var(--el-color-primary)] rounded-full"></div>
-                    <span>{{ t("http.engineJsonTitle") }} [ID: {{ row.Id || row.id }}]</span>
+                    <div class="size-2 bg-(--el-color-primary) rounded-full" />
+                    <span
+                      >{{ t("http.engineJsonTitle") }} [ID:
+                      {{ row.Id || row.id }}]</span
+                    >
                   </div>
-                  <span class="text-[var(--el-text-color-secondary)] font-mono text-[11px]">HTTP Server JSON</span>
+                  <span
+                    class="text-(--el-text-color-secondary) font-mono text-[11px]"
+                    >HTTP Server JSON</span
+                  >
                 </div>
-                <div class="bg-[var(--el-bg-color)] p-3 rounded-lg border border-[var(--el-border-color-lighter)]">
-                  <div class="flex items-center justify-between mb-2 pb-1.5 border-b border-[var(--el-border-color-lighter)]">
-                    <span class="text-xs font-bold text-[var(--el-color-primary)]">Front + Feature + Rule + Backend</span>
-                    <el-tag size="small" type="primary" effect="plain" class="font-mono">JSON Config</el-tag>
+                <div
+                  class="bg-(--el-bg-color) p-3 rounded-lg border border-(--el-border-color-lighter)"
+                >
+                  <div
+                    class="flex-bc mb-2 pb-1.5 border-b border-(--el-border-color-lighter)"
+                  >
+                    <span class="text-xs font-bold text-(--el-color-primary)"
+                      >Front + Feature + Rule + Backend</span
+                    >
+                    <el-tag
+                      size="small"
+                      type="primary"
+                      effect="plain"
+                      class="font-mono"
+                      >JSON Config</el-tag
+                    >
                   </div>
                   <el-scrollbar max-height="220px" class="item-scrollbar pr-1">
-                    <pre class="text-xs text-[var(--el-text-color-primary)] font-mono whitespace-pre-wrap break-all leading-relaxed">{{ formatJSON(row) }}</pre>
+                    <pre
+                      class="text-xs/relaxed text-(--el-text-color-primary) font-mono whitespace-pre-wrap break-all"
+                      >{{ formatJSON(row) }}</pre>
                   </el-scrollbar>
                 </div>
               </div>
@@ -384,7 +431,10 @@ function formatJSON(row: any) {
     </div>
 
     <!-- Create / Edit Full Page View -->
-    <div v-else-if="showView === 'new' || showView === 'edit'" class="p-3 sm:p-5 bg-bg_color rounded-xl border border-[var(--el-border-color-lighter)] shadow-2xs">
+    <div
+      v-else-if="showView === 'new' || showView === 'edit'"
+      class="p-3 sm:p-5 bg-bg_color rounded-xl border border-(--el-border-color-lighter) shadow-2xs"
+    >
       <!-- Full Page Header Bar -->
       <PageHeader
         :title="formInline.title"
@@ -393,10 +443,7 @@ function formatJSON(row: any) {
         @back="handleCancelPage"
       >
         <template #actions>
-          <el-button
-            :icon="useRenderIcon(CloseIcon)"
-            @click="handleCancelPage"
-          >
+          <el-button :icon="useRenderIcon(CloseIcon)" @click="handleCancelPage">
             {{ t("http.cancel") }}
           </el-button>
           <el-button
@@ -414,11 +461,10 @@ function formatJSON(row: any) {
       <editForm ref="createEditFormRef" :formInline="formInline" />
 
       <!-- Bottom Action Bar -->
-      <div class="flex items-center justify-end space-x-3 pt-4 mt-4 border-t border-[var(--el-border-color-lighter)]">
-        <el-button
-          :icon="useRenderIcon(CloseIcon)"
-          @click="handleCancelPage"
-        >
+      <div
+        class="flex items-center justify-end space-x-3 pt-4 mt-4 border-t border-(--el-border-color-lighter)"
+      >
+        <el-button :icon="useRenderIcon(CloseIcon)" @click="handleCancelPage">
           {{ t("http.cancel") }}
         </el-button>
         <el-button

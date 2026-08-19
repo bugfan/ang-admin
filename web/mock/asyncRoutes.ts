@@ -98,10 +98,7 @@ export default defineFakeRoute([
       return {
         code: 0,
         message: "操作成功",
-        data: [
-          appRouter,
-          accountManagementRouter
-        ]
+        data: [appRouter, accountManagementRouter]
       };
     }
   }

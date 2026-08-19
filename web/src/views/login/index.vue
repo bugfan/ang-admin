@@ -118,7 +118,6 @@ useEventListener(document, "keydown", ({ code }) => {
     immediateDebounce(ruleFormRef.value);
 });
 
-
 watch(checked, bool => {
   useUserStoreHook().SET_ISREMEMBERED(bool);
 });
@@ -232,7 +231,12 @@ watch(loginDay, value => {
                   <template v-slot:append>
                     <img
                       :src="imgCode"
-                      style="cursor: pointer; height: 100%; width: 120px; object-fit: contain"
+                      style="
+                        cursor: pointer;
+                        height: 100%;
+                        width: 120px;
+                        object-fit: contain;
+                      "
                       @click="fetchCaptcha"
                     />
                   </template>
@@ -270,7 +274,6 @@ watch(loginDay, value => {
                       />
                     </span>
                   </el-checkbox>
-
                 </div>
                 <el-button
                   class="w-full mt-4!"
@@ -284,7 +287,6 @@ watch(loginDay, value => {
                 </el-button>
               </el-form-item>
             </Motion>
-
           </el-form>
         </div>
       </div>

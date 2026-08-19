@@ -36,7 +36,9 @@ export function useTunnel(t: any, tableRef: Ref) {
     currentPage: 1,
     background: true,
     size: deviceDetection() ? "small" : "default",
-    layout: deviceDetection() ? "prev, pager, next" : "total, sizes, prev, pager, next, jumper"
+    layout: deviceDetection()
+      ? "prev, pager, next"
+      : "total, sizes, prev, pager, next, jumper"
   });
 
   const validCertSet = ref<Set<string>>(new Set());
@@ -56,17 +58,19 @@ export function useTunnel(t: any, tableRef: Ref) {
       label: t("tunnel.id"),
       prop: "Id",
       width: 80,
-      formatter: (row) => row.Id || row.id
+      formatter: row => row.Id || row.id
     },
     {
       label: t("tunnel.name", "名称"),
       prop: "Name",
       minWidth: 120,
-      headerRenderer: () => <span class="whitespace-nowrap">{t("tunnel.name", "名称")}</span>,
+      headerRenderer: () => (
+        <span class="whitespace-nowrap">{t("tunnel.name", "名称")}</span>
+      ),
       cellRenderer: scope => {
         const name = scope.row.Name || scope.row.name || "-";
         return (
-          <span class="font-semibold text-sm text-[var(--el-text-color-primary)] break-words inline-block leading-snug py-1">
+          <span class="font-semibold text-sm/snug text-(--el-text-color-primary) wrap-break-word inline-block  py-1">
             {name}
           </span>
         );
@@ -103,7 +107,7 @@ export function useTunnel(t: any, tableRef: Ref) {
       label: t("tunnel.sni"),
       prop: "SNI",
       minWidth: 130,
-      formatter: (row) => row.SNI || row.sni
+      formatter: row => row.SNI || row.sni
     },
     {
       label: t("tunnel.certificate"),
@@ -118,7 +122,13 @@ export function useTunnel(t: any, tableRef: Ref) {
             {cert}
           </el-tag>
         ) : (
-          <el-tooltip content={t("tunnel.certDeletedTip", "引用的证书已被删除，请编辑重选")} placement="top">
+          <el-tooltip
+            content={t(
+              "tunnel.certDeletedTip",
+              "引用的证书已被删除，请编辑重选"
+            )}
+            placement="top"
+          >
             <el-tag type="danger" size="small" effect="light" class="font-bold">
               {cert} ({t("tunnel.invalidAssoc", "关联失效")})
             </el-tag>
@@ -136,14 +146,18 @@ export function useTunnel(t: any, tableRef: Ref) {
       prop: "Remark",
       minWidth: 110,
       align: "center",
-      headerRenderer: () => <span class="whitespace-nowrap">{t("tunnel.remark")}</span>,
+      headerRenderer: () => (
+        <span class="whitespace-nowrap">{t("tunnel.remark")}</span>
+      ),
       cellRenderer: scope => {
         const remark = scope.row.Remark || scope.row.remark || "-";
         if (!remark || remark === "-") {
-          return <span class="text-xs text-[var(--el-text-color-placeholder)]">-</span>;
+          return (
+            <span class="text-xs text-(--el-text-color-placeholder)">-</span>
+          );
         }
         return (
-          <span class="text-xs text-[var(--el-text-color-regular)] break-words inline-block leading-snug py-1">
+          <span class="text-xs/snug text-(--el-text-color-regular) wrap-break-word inline-block  py-1">
             {remark}
           </span>
         );
@@ -153,7 +167,7 @@ export function useTunnel(t: any, tableRef: Ref) {
       label: t("tunnel.createTime"),
       minWidth: 160,
       prop: "created_at",
-      formatter: (row) => {
+      formatter: row => {
         const timeVal = row.created_at || row.CreatedAt;
         return timeVal && dayjs(timeVal).isValid() && dayjs(timeVal).year() > 1
           ? dayjs(timeVal).format("YYYY-MM-DD HH:mm:ss")
@@ -172,7 +186,10 @@ export function useTunnel(t: any, tableRef: Ref) {
     const targetId = row.Id || row.id;
     const { code, message: msg } = await deleteTunnel({ id: targetId });
     if (code === 0) {
-      message(`${t("tunnel.delete")} ID: ${targetId} ${t("tunnel.success", "成功")}`, { type: "success" });
+      message(
+        `${t("tunnel.delete")} ID: ${targetId} ${t("tunnel.success", "成功")}`,
+        { type: "success" }
+      );
       onSearch();
     } else {
       message(msg, { type: "error" });
@@ -183,7 +200,10 @@ export function useTunnel(t: any, tableRef: Ref) {
     const targetId = clientRow.Id || clientRow.id;
     const { code, message: msg } = await deleteTunnelClient({ id: targetId });
     if (code === 0) {
-      message(`${t("tunnel.delete")} ID: ${targetId} ${t("tunnel.success", "成功")}`, { type: "success" });
+      message(
+        `${t("tunnel.delete")} ID: ${targetId} ${t("tunnel.success", "成功")}`,
+        { type: "success" }
+      );
       onSearch();
     } else {
       message(msg, { type: "error" });
@@ -217,7 +237,9 @@ export function useTunnel(t: any, tableRef: Ref) {
     const ids = curSelected.map((item: any) => item.Id || item.id);
     const { code, message: msg } = await deleteTunnel({ ids });
     if (code === 0) {
-      message(`${t("tunnel.batchDelete")} ${t("tunnel.success", "成功")}`, { type: "success" });
+      message(`${t("tunnel.batchDelete")} ${t("tunnel.success", "成功")}`, {
+        type: "success"
+      });
       tableRef.value.getTableRef().clearSelection();
       onSearch();
     } else {
@@ -234,7 +256,9 @@ export function useTunnel(t: any, tableRef: Ref) {
     ]);
 
     if (certRes?.code === 0 && certRes?.data?.list) {
-      validCertSet.value = new Set(certRes.data.list.map((c: any) => c.CertId || c.cert_id));
+      validCertSet.value = new Set(
+        certRes.data.list.map((c: any) => c.CertId || c.cert_id)
+      );
     }
 
     if (tunnelRes?.code === 0 && tunnelRes?.data) {
@@ -292,7 +316,9 @@ export function useTunnel(t: any, tableRef: Ref) {
                 return;
               }
             }
-            message(`${title} ${t("tunnel.success", "成功")}`, { type: "success" });
+            message(`${title} ${t("tunnel.success", "成功")}`, {
+              type: "success"
+            });
             done();
             onSearch();
           }
@@ -306,8 +332,9 @@ export function useTunnel(t: any, tableRef: Ref) {
     const normType = srvType.toLowerCase().includes("tls") ? "tls" : "quic";
     const tid = tunnelRow ? String(tunnelRow.Id || tunnelRow.id || "") : "";
 
-    const isUnsaved = !clientRow || !clientRow.is_saved || !(clientRow.Id || clientRow.id);
-    const clientId = isUnsaved ? undefined : (clientRow.Id || clientRow.id);
+    const isUnsaved =
+      !clientRow || !clientRow.is_saved || !(clientRow.Id || clientRow.id);
+    const clientId = isUnsaved ? undefined : clientRow.Id || clientRow.id;
     const tokenVal = clientRow?.Token || clientRow?.token || "";
     const tokenSuffix = tokenVal.length > 8 ? tokenVal.slice(-6) : tokenVal;
 
@@ -335,7 +362,10 @@ export function useTunnel(t: any, tableRef: Ref) {
       fullscreenIcon: true,
       closeOnClickModal: false,
       contentRenderer: ({ options }) =>
-        h(clientEditForm, { ref: clientFormRef, formInline: options.props.formInline }),
+        h(clientEditForm, {
+          ref: clientFormRef,
+          formInline: options.props.formInline
+        }),
       beforeSure: (done, { options }) => {
         const FormRef = clientFormRef.value.getRef();
         const curData = options.props.formInline;
@@ -354,7 +384,9 @@ export function useTunnel(t: any, tableRef: Ref) {
                 return;
               }
             }
-            message(`${title} ${t("tunnel.success", "成功")}`, { type: "success" });
+            message(`${title} ${t("tunnel.success", "成功")}`, {
+              type: "success"
+            });
             done();
             onSearch();
           }
@@ -370,13 +402,23 @@ export function useTunnel(t: any, tableRef: Ref) {
     refreshingRowId.value = targetId;
     const res = await getTunnelList({ id: targetId });
     refreshingRowId.value = null;
-    if (res?.code === 0 && Array.isArray(res.data?.list) && res.data.list.length > 0) {
-      const updated = res.data.list.find((item: any) => String(item.Id || item.id) === String(targetId)) || res.data.list[0];
+    if (
+      res?.code === 0 &&
+      Array.isArray(res.data?.list) &&
+      res.data.list.length > 0
+    ) {
+      const updated =
+        res.data.list.find(
+          (item: any) => String(item.Id || item.id) === String(targetId)
+        ) || res.data.list[0];
       row.client_nodes = updated.client_nodes || [];
       row.total_count = updated.total_count || 0;
       row.online_count = updated.online_count || 0;
       row.unsaved_count = updated.unsaved_count || 0;
-      message(`${t("tunnelClient.refreshNodesSuccess", "刷新节点成功")} [ID: ${targetId}]`, { type: "success" });
+      message(
+        `${t("tunnelClient.refreshNodesSuccess", "刷新节点成功")} [ID: ${targetId}]`,
+        { type: "success" }
+      );
     } else {
       onSearch();
     }

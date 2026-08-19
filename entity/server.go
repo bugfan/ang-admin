@@ -165,9 +165,7 @@ type HTTPLocation struct {
 type HTTPBackend struct {
 	RealIp       string         `json:"RealIp"`
 	Tunnel       *BackendTunnel `json:"Tunnel,omitempty"`
-	Tunnel3      *BackendTunnel `json:"Tunnel3,omitempty"`
-	DNSResolver  string         `json:"DNSResolver,omitempty"`
-	DNSResolver2 string         `json:"DNSResolver2,omitempty"`
+	DNSResolver  []string       `json:"DNSResolver,omitempty"`
 	Location     []HTTPLocation `json:"Location,omitempty"`
 }
 

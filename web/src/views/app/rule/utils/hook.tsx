@@ -27,7 +27,9 @@ export function useRule(t: any, tableRef: Ref) {
     currentPage: 1,
     background: true,
     size: deviceDetection() ? "small" : "default",
-    layout: deviceDetection() ? "prev, pager, next" : "total, sizes, prev, pager, next, jumper"
+    layout: deviceDetection()
+      ? "prev, pager, next"
+      : "total, sizes, prev, pager, next, jumper"
   });
 
   const columns = computed<TableColumnList>(() => [
@@ -45,16 +47,18 @@ export function useRule(t: any, tableRef: Ref) {
       label: t("rule.id") || "ID",
       prop: "Id",
       width: 80,
-      formatter: (row) => row.Id || row.id
+      formatter: row => row.Id || row.id
     },
     {
       label: t("rule.name") || "规则组名称",
       minWidth: 120,
-      headerRenderer: () => <span class="whitespace-nowrap">{t("rule.name") || "规则组名称"}</span>,
+      headerRenderer: () => (
+        <span class="whitespace-nowrap">{t("rule.name") || "规则组名称"}</span>
+      ),
       cellRenderer: scope => {
         const name = scope.row.Name || scope.row.name || "-";
         return (
-          <span class="font-semibold text-sm text-[var(--el-text-color-primary)] break-words inline-block leading-snug py-1">
+          <span class="font-semibold text-sm/snug text-(--el-text-color-primary) wrap-break-word inline-block  py-1">
             {name}
           </span>
         );
@@ -67,12 +71,18 @@ export function useRule(t: any, tableRef: Ref) {
         const itemsStr = scope.row.Items || scope.row.items || "";
         let count = 0;
         try {
-          const parsed = typeof itemsStr === "string" ? JSON.parse(itemsStr) : itemsStr;
+          const parsed =
+            typeof itemsStr === "string" ? JSON.parse(itemsStr) : itemsStr;
           if (Array.isArray(parsed)) count = parsed.length;
         } catch (e) {}
 
         return (
-          <el-tag size="small" type="primary" effect="light" class="font-mono font-medium">
+          <el-tag
+            size="small"
+            type="primary"
+            effect="light"
+            class="font-mono font-medium"
+          >
             {t("rule.itemCountTag", { count })}
           </el-tag>
         );
@@ -83,14 +93,18 @@ export function useRule(t: any, tableRef: Ref) {
       prop: "Remark",
       minWidth: 110,
       align: "center",
-      headerRenderer: () => <span class="whitespace-nowrap">{t("rule.remark") || "备注"}</span>,
+      headerRenderer: () => (
+        <span class="whitespace-nowrap">{t("rule.remark") || "备注"}</span>
+      ),
       cellRenderer: scope => {
         const remark = scope.row.Remark || scope.row.remark || "-";
         if (!remark || remark === "-") {
-          return <span class="text-xs text-[var(--el-text-color-placeholder)]">-</span>;
+          return (
+            <span class="text-xs text-(--el-text-color-placeholder)">-</span>
+          );
         }
         return (
-          <span class="text-xs text-[var(--el-text-color-regular)] break-words inline-block leading-snug py-1">
+          <span class="text-xs/snug text-(--el-text-color-regular) wrap-break-word inline-block  py-1">
             {remark}
           </span>
         );
@@ -100,7 +114,7 @@ export function useRule(t: any, tableRef: Ref) {
       label: t("rule.createTime") || "创建时间",
       minWidth: 160,
       prop: "created_at",
-      formatter: (row) => {
+      formatter: row => {
         const timeVal = row.created_at || row.CreatedAt;
         return timeVal && dayjs(timeVal).isValid() && dayjs(timeVal).year() > 1
           ? dayjs(timeVal).format("YYYY-MM-DD HH:mm:ss")
@@ -184,12 +198,19 @@ export function useRule(t: any, tableRef: Ref) {
   };
 
   function openDialog(title = "", row?: any) {
-    const defaultItems = JSON.stringify([
-      {
-        Matcher: { Name: "ip_matcher", Config: { Address: ["127.0.0.1"] } },
-        Action: { Name: "reset_conn_action", Config: { Content: "Connection reset by rule" } }
-      }
-    ], null, 2);
+    const defaultItems = JSON.stringify(
+      [
+        {
+          Matcher: { Name: "ip_matcher", Config: { Address: ["127.0.0.1"] } },
+          Action: {
+            Name: "reset_conn_action",
+            Config: { Content: "Connection reset by rule" }
+          }
+        }
+      ],
+      null,
+      2
+    );
 
     addDialog({
       title: `${title}`,

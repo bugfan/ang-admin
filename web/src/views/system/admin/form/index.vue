@@ -19,7 +19,9 @@ const props = withDefaults(defineProps<{ formInline: any }>(), {
 const ruleFormRef = ref();
 const newFormInline = ref(props.formInline);
 const { t } = useI18n();
-const isCurrentUserSuperAdmin = computed(() => useUserStoreHook().is_super_admin);
+const isCurrentUserSuperAdmin = computed(
+  () => useUserStoreHook().is_super_admin
+);
 
 const formRules = reactive({
   nickname: [{ required: true, message: "用户昵称为必填项", trigger: "blur" }],
@@ -30,7 +32,12 @@ const formRules = reactive({
         if (!value) {
           callback(new Error("密码为必填项"));
         } else if (!REGEXP_PWD.test(value)) {
-          callback(new Error(t("login.purePassWordRuleReg") || "密码格式应为8-18位数字、字母、符号的任意两种组合"));
+          callback(
+            new Error(
+              t("login.purePassWordRuleReg") ||
+                "密码格式应为8-18位数字、字母、符号的任意两种组合"
+            )
+          );
         } else {
           callback();
         }
@@ -43,8 +50,13 @@ const formRules = reactive({
       validator: (rule, value, callback) => {
         if (!value) {
           callback(new Error("请确认密码"));
-        } else if (newFormInline.value.password && value !== newFormInline.value.password) {
-          callback(new Error(t("login.purePassWordDifferentReg") || "两次密码不一致!"));
+        } else if (
+          newFormInline.value.password &&
+          value !== newFormInline.value.password
+        ) {
+          callback(
+            new Error(t("login.purePassWordDifferentReg") || "两次密码不一致!")
+          );
         } else {
           callback();
         }
@@ -73,7 +85,10 @@ defineExpose({ getRef });
         <el-form-item :label="t('admin.username')" prop="username">
           <el-input
             v-model="newFormInline.username"
-            :disabled="!isCurrentUserSuperAdmin && newFormInline.title !== t('admin.addAdmin')"
+            :disabled="
+              !isCurrentUserSuperAdmin &&
+              newFormInline.title !== t('admin.addAdmin')
+            "
             clearable
           />
         </el-form-item>
@@ -85,7 +100,7 @@ defineExpose({ getRef });
             v-model="newFormInline.is_super_admin"
             :disabled="!isCurrentUserSuperAdmin"
           >
-            {{ t('admin.isSuperAdmin') }}
+            {{ t("admin.isSuperAdmin") }}
           </el-checkbox>
         </el-form-item>
       </re-col>

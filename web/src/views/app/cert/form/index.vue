@@ -61,7 +61,10 @@ async function handleGenerate() {
   genLoading.value = true;
   const rawSans = genConfig.sans_str.trim();
   const dnsNames = rawSans
-    ? rawSans.split(",").map(s => s.trim()).filter(Boolean)
+    ? rawSans
+        .split(",")
+        .map(s => s.trim())
+        .filter(Boolean)
     : [cn, "*." + cn];
 
   const res = await generateSelfSignedCert({
@@ -76,7 +79,8 @@ async function handleGenerate() {
     newFormInline.value.cert_content = res.data.cert_content;
     newFormInline.value.type = "SELF-STD";
     if (!newFormInline.value.cert_id) {
-      newFormInline.value.cert_id = "id-" + Math.floor(100 + Math.random() * 900);
+      newFormInline.value.cert_id =
+        "id-" + Math.floor(100 + Math.random() * 900);
     }
     showGenPanel.value = false;
     message(t("cert.genSuccess"), { type: "success" });
@@ -98,12 +102,16 @@ defineExpose({ getRef });
     :model="newFormInline"
     :rules="formRules"
     label-width="auto"
-    class="cert-form px-1 sm:px-2 py-1"
+    class="cert-form p-1 sm:px-2"
   >
     <el-row :gutter="16">
       <re-col :value="24" :xs="24" :sm="24">
-        <div class="mb-3 flex flex-col sm:flex-row sm:items-center justify-between gap-2">
-          <span class="text-xs text-[var(--el-text-color-secondary)]">{{ t('cert.pasteOrGenTip') }}</span>
+        <div
+          class="mb-3 flex flex-col sm:flex-row sm:items-center justify-between gap-2"
+        >
+          <span class="text-xs text-(--el-text-color-secondary)">{{
+            t("cert.pasteOrGenTip")
+          }}</span>
           <el-button
             type="success"
             plain
@@ -112,7 +120,7 @@ defineExpose({ getRef });
             class="self-start sm:self-auto shrink-0"
             @click="showGenPanel = !showGenPanel"
           >
-            {{ t('cert.autoGenerate') }}
+            {{ t("cert.autoGenerate") }}
           </el-button>
         </div>
 
@@ -123,13 +131,20 @@ defineExpose({ getRef });
           class="mb-4 bg-gray-50 dark:bg-gray-800 border-dashed border-green-300 rounded-xl"
         >
           <template #header>
-            <div class="flex items-center justify-between text-sm font-semibold">
-              <span class="text-green-700 dark:text-green-400 font-bold inline-flex items-center gap-1">
+            <div class="flex-bc text-sm font-semibold">
+              <span
+                class="text-green-700 dark:text-green-400 font-bold inline-flex items-center gap-1"
+              >
                 <IconifyIconOffline icon="ri:magic-line" />
-                {{ t('cert.autoGenerate') }}
+                {{ t("cert.autoGenerate") }}
               </span>
-              <el-button link type="info" size="small" @click="showGenPanel = false">
-                {{ t('cert.closePanel') }}
+              <el-button
+                link
+                type="info"
+                size="small"
+                @click="showGenPanel = false"
+              >
+                {{ t("cert.closePanel") }}
               </el-button>
             </div>
           </template>
@@ -167,7 +182,7 @@ defineExpose({ getRef });
                 :icon="useRenderIcon('ri/check-line')"
                 @click="handleGenerate"
               >
-                {{ t('cert.genBtn') }}
+                {{ t("cert.genBtn") }}
               </el-button>
             </div>
           </el-form>

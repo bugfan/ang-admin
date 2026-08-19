@@ -78,17 +78,21 @@ function parseHostsJSON(hostsJsonStr: string) {
     if (!aaaaGroupMap[ip].includes(domain)) aaaaGroupMap[ip].push(domain);
   }
 
-  const aList: GroupedHost[] = Object.entries(aGroupMap).map(([ip, domains]) => ({
-    ip,
-    isIPv6: false,
-    domains
-  }));
+  const aList: GroupedHost[] = Object.entries(aGroupMap).map(
+    ([ip, domains]) => ({
+      ip,
+      isIPv6: false,
+      domains
+    })
+  );
 
-  const aaaaList: GroupedHost[] = Object.entries(aaaaGroupMap).map(([ip, domains]) => ({
-    ip,
-    isIPv6: true,
-    domains
-  }));
+  const aaaaList: GroupedHost[] = Object.entries(aaaaGroupMap).map(
+    ([ip, domains]) => ({
+      ip,
+      isIPv6: true,
+      domains
+    })
+  );
 
   return {
     aCount: Object.keys(aMap).length,
@@ -134,7 +138,10 @@ function getDefaultFormInline() {
     upstream_method: "round_robin",
     upstream_servers: JSON.stringify([{ target: "1.1.1.1:53", weight: 1 }]),
     hosts_text: "127.0.0.1 localhost\n::1 localhost",
-    hosts_json: JSON.stringify({ A: { localhost: "127.0.0.1" }, AAAA: { localhost: "::1" } }),
+    hosts_json: JSON.stringify({
+      A: { localhost: "127.0.0.1" },
+      AAAA: { localhost: "::1" }
+    }),
     remark: ""
   };
 }
@@ -150,10 +157,15 @@ function getFormInlineFromRow(row: any) {
     tunnel_type: row?.TunnelType ?? row?.tunnel_type ?? "quic",
     tunnel_id: row?.TunnelId ?? row?.tunnel_id ?? "",
     tunnel_token: row?.TunnelToken ?? row?.tunnel_token ?? "",
-    upstream_method: row?.UpstreamMethod ?? row?.upstream_method ?? "round_robin",
-    upstream_servers: row?.UpstreamServers ?? row?.upstream_servers ?? JSON.stringify([{ target: "1.1.1.1:53", weight: 1 }]),
+    upstream_method:
+      row?.UpstreamMethod ?? row?.upstream_method ?? "round_robin",
+    upstream_servers:
+      row?.UpstreamServers ??
+      row?.upstream_servers ??
+      JSON.stringify([{ target: "1.1.1.1:53", weight: 1 }]),
     hosts_text: row?.HostsText ?? row?.hosts_text ?? "",
-    hosts_json: row?.HostsJSON ?? row?.hosts_json ?? JSON.stringify({ A: {}, AAAA: {} }),
+    hosts_json:
+      row?.HostsJSON ?? row?.hosts_json ?? JSON.stringify({ A: {}, AAAA: {} }),
     remark: row?.Remark ?? row?.remark ?? ""
   };
 }
@@ -191,14 +203,18 @@ async function handleSaveSubmit() {
             message(msg, { type: "error" });
             return;
           }
-          message(`${t("dns.addDns")} ${t("dns.success", "成功")}`, { type: "success" });
+          message(`${t("dns.addDns")} ${t("dns.success", "成功")}`, {
+            type: "success"
+          });
         } else {
           const { code, message: msg } = await updateDns(curData);
           if (code !== 0) {
             message(msg, { type: "error" });
             return;
           }
-          message(`${t("dns.editDns")} ${t("dns.success", "成功")}`, { type: "success" });
+          message(`${t("dns.editDns")} ${t("dns.success", "成功")}`, {
+            type: "success"
+          });
         }
         showView.value = "list";
         onSearch();
@@ -221,14 +237,14 @@ async function handleSaveSubmit() {
         ref="searchFormRef"
         :inline="true"
         :model="form"
-        class="search-form bg-bg_color w-full px-3 sm:px-6 pt-3 pb-1 overflow-auto mb-3 rounded-xl border border-[var(--el-border-color-lighter)] shadow-2xs"
+        class="search-form bg-bg_color w-full px-3 sm:px-6 pt-3 pb-1 overflow-auto mb-3 rounded-xl border border-(--el-border-color-lighter) shadow-2xs"
       >
         <el-form-item :label="t('dns.port')" prop="port">
           <el-input
             v-model="form.port"
             :placeholder="t('dns.searchPortPlaceholder')"
             clearable
-            class="w-full sm:!w-[180px]"
+            class="w-full sm:w-45!"
             @keyup.enter="onSearch"
             @clear="onSearch"
           />
@@ -239,7 +255,7 @@ async function handleSaveSubmit() {
             v-model="form.address"
             :placeholder="t('dns.searchAddressPlaceholder')"
             clearable
-            class="w-full sm:!w-[180px]"
+            class="w-full sm:w-45!"
             @keyup.enter="onSearch"
             @clear="onSearch"
           />
@@ -252,13 +268,13 @@ async function handleSaveSubmit() {
             :loading="loading"
             @click="onSearch"
           >
-            {{ t('dns.search') }}
+            {{ t("dns.search") }}
           </el-button>
           <el-button
             :icon="useRenderIcon('ri:refresh-line')"
             @click="resetForm(searchFormRef)"
           >
-            {{ t('dns.reset') }}
+            {{ t("dns.reset") }}
           </el-button>
         </el-form-item>
       </el-form>
@@ -275,23 +291,34 @@ async function handleSaveSubmit() {
             :icon="useRenderIcon(AddFill)"
             @click="handleAddPage"
           >
-            {{ t('dns.addDns') }}
+            {{ t("dns.addDns") }}
           </el-button>
         </template>
         <template v-slot="{ size, dynamicColumns }">
           <div
             v-if="selectedNum > 0"
-            class="bg-[var(--el-color-primary-light-9)] text-[var(--el-color-primary)] border border-[var(--el-color-primary-light-7)] px-4 py-2 rounded-lg text-sm mb-3 flex items-center justify-between"
+            class="bg-(--el-color-primary-light-9) text-(--el-color-primary) border border-(--el-color-primary-light-7) px-4 py-2 rounded-lg text-sm mb-3 flex-bc"
           >
-            <span>{{ t('dns.selected') }} {{ selectedNum }} {{ t('dns.items') }}</span>
+            <span
+              >{{ t("dns.selected") }} {{ selectedNum }}
+              {{ t("dns.items") }}</span
+            >
             <div>
-              <el-button type="primary" link size="small" @click="onSelectionCancel">
-                {{ t('dns.cancelSelection') }}
+              <el-button
+                type="primary"
+                link
+                size="small"
+                @click="onSelectionCancel"
+              >
+                {{ t("dns.cancelSelection") }}
               </el-button>
-              <el-popconfirm :title="t('dns.confirmDelete')" @confirm="onbatchDel">
+              <el-popconfirm
+                :title="t('dns.confirmDelete')"
+                @confirm="onbatchDel"
+              >
                 <template #reference>
                   <el-button type="danger" link size="small">
-                    {{ t('dns.batchDelete') }}
+                    {{ t("dns.batchDelete") }}
                   </el-button>
                 </template>
               </el-popconfirm>
@@ -324,63 +351,136 @@ async function handleSaveSubmit() {
               <el-popover placement="top" :width="360" trigger="hover">
                 <template #reference>
                   <div class="inline-flex items-center gap-1.5 cursor-pointer">
-                    <template v-if="parseHostsJSON(row.hosts_json || row.HostsJSON).aCount > 0 || parseHostsJSON(row.hosts_json || row.HostsJSON).aaaaCount > 0">
-                      <el-tag size="small" type="primary" effect="light" class="font-mono font-bold">
-                        A: {{ parseHostsJSON(row.hosts_json || row.HostsJSON).aCount }}
+                    <template
+                      v-if="
+                        parseHostsJSON(row.hosts_json || row.HostsJSON).aCount >
+                          0 ||
+                        parseHostsJSON(row.hosts_json || row.HostsJSON)
+                          .aaaaCount > 0
+                      "
+                    >
+                      <el-tag
+                        size="small"
+                        type="primary"
+                        effect="light"
+                        class="font-mono font-bold"
+                      >
+                        A:
+                        {{
+                          parseHostsJSON(row.hosts_json || row.HostsJSON).aCount
+                        }}
                       </el-tag>
-                      <el-tag size="small" type="success" effect="light" class="font-mono font-bold">
-                        AAAA: {{ parseHostsJSON(row.hosts_json || row.HostsJSON).aaaaCount }}
+                      <el-tag
+                        size="small"
+                        type="success"
+                        effect="light"
+                        class="font-mono font-bold"
+                      >
+                        AAAA:
+                        {{
+                          parseHostsJSON(row.hosts_json || row.HostsJSON)
+                            .aaaaCount
+                        }}
                       </el-tag>
                     </template>
-                    <el-tag v-else type="info" size="small" effect="plain" class="text-gray-400">
-                      {{ t('dns.noHostsConfig') }}
+                    <el-tag
+                      v-else
+                      type="info"
+                      size="small"
+                      effect="plain"
+                      class="text-gray-400"
+                    >
+                      {{ t("dns.noHostsConfig") }}
                     </el-tag>
                   </div>
                 </template>
 
                 <!-- Popover 浮层内容 -->
                 <div class="p-1 text-xs">
-                  <div class="font-bold border-b pb-1 mb-2 flex justify-between items-center">
+                  <div class="font-bold border-b pb-1 mb-2 flex-bc">
                     <span class="inline-flex items-center gap-1">
                       <IconifyIconOffline icon="ri:file-list-3-line" />
-                      {{ t('dns.hostsList') }}
+                      {{ t("dns.hostsList") }}
                     </span>
-                    <span class="text-gray-400 font-mono">ID: {{ row.Id || row.id }}</span>
+                    <span class="text-gray-400 font-mono"
+                      >ID: {{ row.Id || row.id }}</span
+                    >
                   </div>
 
                   <div
-                    v-if="parseHostsJSON(row.hosts_json || row.HostsJSON).aCount === 0 && parseHostsJSON(row.hosts_json || row.HostsJSON).aaaaCount === 0"
+                    v-if="
+                      parseHostsJSON(row.hosts_json || row.HostsJSON).aCount ===
+                        0 &&
+                      parseHostsJSON(row.hosts_json || row.HostsJSON)
+                        .aaaaCount === 0
+                    "
                     class="text-gray-400 text-center py-2"
                   >
-                    {{ t('dns.noHostsConfig') }}
+                    {{ t("dns.noHostsConfig") }}
                   </div>
 
                   <div v-else class="space-y-2 max-h-60 overflow-auto">
                     <!-- A 记录 (IPv4) -->
-                    <div v-if="parseHostsJSON(row.hosts_json || row.HostsJSON).aList.length > 0" class="space-y-1">
-                      <div class="font-semibold text-blue-600 dark:text-blue-400 text-[11px]">{{ t('dns.aRecord') }}</div>
+                    <div
+                      v-if="
+                        parseHostsJSON(row.hosts_json || row.HostsJSON).aList
+                          .length > 0
+                      "
+                      class="space-y-1"
+                    >
                       <div
-                        v-for="item in parseHostsJSON(row.hosts_json || row.HostsJSON).aList"
-                        :key="item.ip"
-                        class="p-1.5 bg-[var(--el-fill-color-light)] rounded font-mono flex items-center justify-between gap-2 border border-[var(--el-border-color-lighter)] text-xs overflow-hidden"
+                        class="font-semibold text-blue-600 dark:text-blue-400 text-[11px]"
                       >
-                        <span class="font-semibold text-blue-600 dark:text-blue-400 shrink-0">{{ item.ip }}</span>
-                        <span class="text-[var(--el-text-color-primary)] font-medium truncate text-right" :title="item.domains.join(' ')">
+                        {{ t("dns.aRecord") }}
+                      </div>
+                      <div
+                        v-for="item in parseHostsJSON(
+                          row.hosts_json || row.HostsJSON
+                        ).aList"
+                        :key="item.ip"
+                        class="p-1.5 bg-(--el-fill-color-light) rounded font-mono flex-bc gap-2 border border-(--el-border-color-lighter) text-xs overflow-hidden"
+                      >
+                        <span
+                          class="font-semibold text-blue-600 dark:text-blue-400 shrink-0"
+                          >{{ item.ip }}</span
+                        >
+                        <span
+                          class="text-(--el-text-color-primary) font-medium truncate text-right"
+                          :title="item.domains.join(' ')"
+                        >
                           {{ formatDomains(item.domains) }}
                         </span>
                       </div>
                     </div>
 
                     <!-- AAAA 记录 (IPv6) -->
-                    <div v-if="parseHostsJSON(row.hosts_json || row.HostsJSON).aaaaList.length > 0" class="space-y-1">
-                      <div class="font-semibold text-emerald-600 dark:text-emerald-400 text-[11px]">{{ t('dns.aaaaRecord') }}</div>
+                    <div
+                      v-if="
+                        parseHostsJSON(row.hosts_json || row.HostsJSON).aaaaList
+                          .length > 0
+                      "
+                      class="space-y-1"
+                    >
                       <div
-                        v-for="item in parseHostsJSON(row.hosts_json || row.HostsJSON).aaaaList"
-                        :key="item.ip"
-                        class="p-1.5 bg-[var(--el-fill-color-light)] rounded font-mono flex items-center justify-between gap-2 border border-[var(--el-border-color-lighter)] text-xs overflow-hidden"
+                        class="font-semibold text-emerald-600 dark:text-emerald-400 text-[11px]"
                       >
-                        <span class="font-semibold text-emerald-600 dark:text-emerald-400 shrink-0">{{ item.ip }}</span>
-                        <span class="text-[var(--el-text-color-primary)] font-medium truncate text-right" :title="item.domains.join(' ')">
+                        {{ t("dns.aaaaRecord") }}
+                      </div>
+                      <div
+                        v-for="item in parseHostsJSON(
+                          row.hosts_json || row.HostsJSON
+                        ).aaaaList"
+                        :key="item.ip"
+                        class="p-1.5 bg-(--el-fill-color-light) rounded font-mono flex-bc gap-2 border border-(--el-border-color-lighter) text-xs overflow-hidden"
+                      >
+                        <span
+                          class="font-semibold text-emerald-600 dark:text-emerald-400 shrink-0"
+                          >{{ item.ip }}</span
+                        >
+                        <span
+                          class="text-(--el-text-color-primary) font-medium truncate text-right"
+                          :title="item.domains.join(' ')"
+                        >
                           {{ formatDomains(item.domains) }}
                         </span>
                       </div>
@@ -394,7 +494,9 @@ async function handleSaveSubmit() {
             <template #backend="{ row }">
               <el-popover placement="top" :width="380" trigger="hover">
                 <template #reference>
-                  <div class="inline-flex items-center gap-1.5 flex-wrap cursor-pointer">
+                  <div
+                    class="inline-flex items-center gap-1.5 flex-wrap cursor-pointer"
+                  >
                     <el-tag
                       v-if="row.tunnel_id || row.TunnelId"
                       type="primary"
@@ -403,76 +505,161 @@ async function handleSaveSubmit() {
                       class="font-mono font-medium inline-flex items-center gap-1"
                     >
                       <IconifyIconOffline icon="ri:route-line" />
-                      Tunnel #{{ row.tunnel_id || row.TunnelId }} ({{ (row.tunnel_type || row.TunnelType || 'quic').toUpperCase() }})
+                      Tunnel #{{ row.tunnel_id || row.TunnelId }} ({{
+                        (
+                          row.tunnel_type ||
+                          row.TunnelType ||
+                          "quic"
+                        ).toUpperCase()
+                      }})
                     </el-tag>
 
                     <el-tag
-                      v-if="parseUpstreamServers(row.upstream_servers || row.UpstreamServers).length > 0"
+                      v-if="
+                        parseUpstreamServers(
+                          row.upstream_servers || row.UpstreamServers
+                        ).length > 0
+                      "
                       type="success"
                       effect="light"
                       size="small"
                       class="font-mono font-medium inline-flex items-center gap-1"
                     >
                       <IconifyIconOffline icon="ri:global-line" />
-                      Upstream ({{ parseUpstreamServers(row.upstream_servers || row.UpstreamServers).length }} / {{ row.upstream_method || row.UpstreamMethod || 'round_robin' }})
+                      Upstream ({{
+                        parseUpstreamServers(
+                          row.upstream_servers || row.UpstreamServers
+                        ).length
+                      }}
+                      /
+                      {{
+                        row.upstream_method ||
+                        row.UpstreamMethod ||
+                        "round_robin"
+                      }})
                     </el-tag>
 
                     <el-tag
-                      v-if="!(row.tunnel_id || row.TunnelId) && parseUpstreamServers(row.upstream_servers || row.UpstreamServers).length === 0"
+                      v-if="
+                        !(row.tunnel_id || row.TunnelId) &&
+                        parseUpstreamServers(
+                          row.upstream_servers || row.UpstreamServers
+                        ).length === 0
+                      "
                       type="info"
                       size="small"
                       effect="plain"
                       class="text-gray-400"
                     >
-                      {{ t('dns.noUpstream') }}
+                      {{ t("dns.noUpstream") }}
                     </el-tag>
                   </div>
                 </template>
 
                 <!-- Popover 浮层内容 -->
                 <div class="p-1 text-xs">
-                  <div class="font-bold border-b pb-1 mb-2 flex justify-between items-center">
+                  <div class="font-bold border-b pb-1 mb-2 flex-bc">
                     <span class="inline-flex items-center gap-1">
                       <IconifyIconOffline icon="ri:global-line" />
-                      {{ t('dns.upstreamConfig') }}
+                      {{ t("dns.upstreamConfig") }}
                     </span>
-                    <span class="text-gray-400 font-mono">ID: {{ row.Id || row.id }}</span>
+                    <span class="text-gray-400 font-mono"
+                      >ID: {{ row.Id || row.id }}</span
+                    >
                   </div>
 
                   <div
-                    v-if="!(row.tunnel_id || row.TunnelId) && parseUpstreamServers(row.upstream_servers || row.UpstreamServers).length === 0"
+                    v-if="
+                      !(row.tunnel_id || row.TunnelId) &&
+                      parseUpstreamServers(
+                        row.upstream_servers || row.UpstreamServers
+                      ).length === 0
+                    "
                     class="text-gray-400 text-center py-2"
                   >
-                    {{ t('dns.noUpstreamConfig') }}
+                    {{ t("dns.noUpstreamConfig") }}
                   </div>
 
                   <div v-else class="space-y-2.5 max-h-60 overflow-auto">
-                    <div v-if="row.tunnel_id || row.TunnelId" class="p-2 bg-blue-50/60 dark:bg-blue-900/20 rounded border border-blue-100 dark:border-blue-800/40">
-                      <div class="font-semibold text-blue-600 dark:text-blue-400 text-[11px] mb-1 inline-flex items-center gap-1">
+                    <div
+                      v-if="row.tunnel_id || row.TunnelId"
+                      class="p-2 bg-blue-50/60 dark:bg-blue-900/20 rounded border border-blue-100 dark:border-blue-800/40"
+                    >
+                      <div
+                        class="font-semibold text-blue-600 dark:text-blue-400 text-[11px] mb-1 inline-flex items-center gap-1"
+                      >
                         <IconifyIconOffline icon="ri:route-line" />
-                        {{ t('dns.tunnelConfig') }}
+                        {{ t("dns.tunnelConfig") }}
                       </div>
-                      <div class="font-mono text-gray-700 dark:text-gray-300 space-y-0.5">
-                        <div><span class="text-gray-400">Tunnel ID:</span> #{{ row.tunnel_id || row.TunnelId }}</div>
-                        <div><span class="text-gray-400">Type:</span> {{ (row.tunnel_type || row.TunnelType || 'quic').toUpperCase() }}</div>
+                      <div
+                        class="font-mono text-gray-700 dark:text-gray-300 space-y-0.5"
+                      >
+                        <div>
+                          <span class="text-gray-400">Tunnel ID:</span> #{{
+                            row.tunnel_id || row.TunnelId
+                          }}
+                        </div>
+                        <div>
+                          <span class="text-gray-400">Type:</span>
+                          {{
+                            (
+                              row.tunnel_type ||
+                              row.TunnelType ||
+                              "quic"
+                            ).toUpperCase()
+                          }}
+                        </div>
                       </div>
                     </div>
 
-                    <div v-if="parseUpstreamServers(row.upstream_servers || row.UpstreamServers).length > 0" class="space-y-1">
-                      <div class="font-semibold text-emerald-600 dark:text-emerald-400 text-[11px] flex justify-between items-center">
+                    <div
+                      v-if="
+                        parseUpstreamServers(
+                          row.upstream_servers || row.UpstreamServers
+                        ).length > 0
+                      "
+                      class="space-y-1"
+                    >
+                      <div
+                        class="font-semibold text-emerald-600 dark:text-emerald-400 text-[11px] flex-bc"
+                      >
                         <span class="inline-flex items-center gap-1">
                           <IconifyIconOffline icon="ri:server-line" />
-                          {{ t('dns.upstreamServersTitle') }} ({{ t('dns.strategy') }}: {{ row.upstream_method || row.UpstreamMethod || 'round_robin' }})
+                          {{ t("dns.upstreamServersTitle") }} ({{
+                            t("dns.strategy")
+                          }}:
+                          {{
+                            row.upstream_method ||
+                            row.UpstreamMethod ||
+                            "round_robin"
+                          }})
                         </span>
-                        <span class="text-gray-400 font-mono">Total: {{ parseUpstreamServers(row.upstream_servers || row.UpstreamServers).length }}</span>
+                        <span class="text-gray-400 font-mono"
+                          >Total:
+                          {{
+                            parseUpstreamServers(
+                              row.upstream_servers || row.UpstreamServers
+                            ).length
+                          }}</span
+                        >
                       </div>
                       <div
-                        v-for="(s, idx) in parseUpstreamServers(row.upstream_servers || row.UpstreamServers)"
+                        v-for="(s, idx) in parseUpstreamServers(
+                          row.upstream_servers || row.UpstreamServers
+                        )"
                         :key="idx"
-                        class="p-1.5 bg-[var(--el-fill-color-light)] rounded font-mono flex justify-between items-center border border-[var(--el-border-color-lighter)]"
+                        class="p-1.5 bg-(--el-fill-color-light) rounded font-mono flex-bc border border-(--el-border-color-lighter)"
                       >
-                        <span class="text-blue-600 dark:text-blue-400 font-medium truncate mr-2">{{ s.target }}</span>
-                        <el-tag size="small" type="info" effect="plain" class="font-mono scale-90 origin-right">
+                        <span
+                          class="text-blue-600 dark:text-blue-400 font-medium truncate mr-2"
+                          >{{ s.target }}</span
+                        >
+                        <el-tag
+                          size="small"
+                          type="info"
+                          effect="plain"
+                          class="font-mono scale-90 origin-right"
+                        >
                           W: {{ s.weight }}
                         </el-tag>
                       </div>
@@ -484,51 +671,125 @@ async function handleSaveSubmit() {
 
             <!-- 3. 折叠展开明细行 -->
             <template #expand="{ row }">
-              <div class="p-3 sm:p-4 bg-[var(--el-fill-color-light)] rounded-xl my-1 sm:my-2 mx-1 sm:mx-4 border border-[var(--el-border-color-lighter)] space-y-3 text-xs">
-                <div v-if="row.hosts_text || parseHostsJSON(row.hosts_json || row.HostsJSON).aCount > 0 || parseHostsJSON(row.hosts_json || row.HostsJSON).aaaaCount > 0" class="space-y-1.5">
-                  <div class="font-bold text-[var(--el-text-color-primary)] flex items-center justify-between flex-wrap gap-1">
+              <div
+                class="p-3 sm:p-4 bg-(--el-fill-color-light) rounded-xl m-1 sm:my-2 sm:mx-4 border border-(--el-border-color-lighter) space-y-3 text-xs"
+              >
+                <div
+                  v-if="
+                    row.hosts_text ||
+                    parseHostsJSON(row.hosts_json || row.HostsJSON).aCount >
+                      0 ||
+                    parseHostsJSON(row.hosts_json || row.HostsJSON).aaaaCount >
+                      0
+                  "
+                  class="space-y-1.5"
+                >
+                  <div
+                    class="font-bold text-(--el-text-color-primary) flex-bc flex-wrap gap-1"
+                  >
                     <span class="inline-flex items-center gap-1">
                       <IconifyIconOffline icon="ri:file-text-line" />
-                      {{ t('dns.hostsTab') }}:
+                      {{ t("dns.hostsTab") }}:
                     </span>
                     <span class="text-gray-400 font-mono">
-                      A: {{ parseHostsJSON(row.hosts_json || row.HostsJSON).aCount }} / AAAA: {{ parseHostsJSON(row.hosts_json || row.HostsJSON).aaaaCount }}
+                      A:
+                      {{
+                        parseHostsJSON(row.hosts_json || row.HostsJSON).aCount
+                      }}
+                      / AAAA:
+                      {{
+                        parseHostsJSON(row.hosts_json || row.HostsJSON)
+                          .aaaaCount
+                      }}
                     </span>
                   </div>
-                  <pre v-if="row.hosts_text" class="p-3 bg-gray-900 text-gray-100 rounded-lg text-xs font-mono overflow-auto max-h-40 leading-relaxed">{{ row.hosts_text }}</pre>
-                  <div v-else class="text-gray-400 text-xs">{{ t('dns.noHostsConfig') }}</div>
+                  <pre
+                    v-if="row.hosts_text"
+                    class="p-3 bg-gray-900 text-gray-100 rounded-lg text-xs/relaxed font-mono overflow-auto max-h-40"
+                    >{{ row.hosts_text }}</pre>
+                  <div v-else class="text-gray-400 text-xs">
+                    {{ t("dns.noHostsConfig") }}
+                  </div>
                 </div>
 
-                <div v-if="parseUpstreamServers(row.upstream_servers || row.UpstreamServers).length > 0" class="space-y-1.5">
-                  <div class="font-bold text-[var(--el-text-color-primary)] flex items-center justify-between flex-wrap gap-1">
+                <div
+                  v-if="
+                    parseUpstreamServers(
+                      row.upstream_servers || row.UpstreamServers
+                    ).length > 0
+                  "
+                  class="space-y-1.5"
+                >
+                  <div
+                    class="font-bold text-(--el-text-color-primary) flex-bc flex-wrap gap-1"
+                  >
                     <span class="inline-flex items-center gap-1">
                       <IconifyIconOffline icon="ri:global-line" />
-                      {{ t('dns.upstreamServersTitle') }} ({{ t('dns.strategy') }}: {{ row.upstream_method || row.UpstreamMethod || 'round_robin' }})
+                      {{ t("dns.upstreamServersTitle") }} ({{
+                        t("dns.strategy")
+                      }}:
+                      {{
+                        row.upstream_method ||
+                        row.UpstreamMethod ||
+                        "round_robin"
+                      }})
                     </span>
-                    <span class="text-gray-400 font-mono">Total: {{ parseUpstreamServers(row.upstream_servers || row.UpstreamServers).length }}</span>
+                    <span class="text-gray-400 font-mono"
+                      >Total:
+                      {{
+                        parseUpstreamServers(
+                          row.upstream_servers || row.UpstreamServers
+                        ).length
+                      }}</span
+                    >
                   </div>
                   <el-table
-                    :data="parseUpstreamServers(row.upstream_servers || row.UpstreamServers)"
+                    :data="
+                      parseUpstreamServers(
+                        row.upstream_servers || row.UpstreamServers
+                      )
+                    "
                     border
                     size="small"
                     class="w-full"
-                    :header-cell-style="{ background: 'var(--el-fill-color)', color: 'var(--el-text-color-primary)' }"
+                    :header-cell-style="{
+                      background: 'var(--el-fill-color)',
+                      color: 'var(--el-text-color-primary)'
+                    }"
                   >
                     <el-table-column label="#" width="50" align="center">
                       <template #default="{ $index }">
-                        <span class="font-mono text-gray-400">{{ $index + 1 }}</span>
+                        <span class="font-mono text-gray-400">{{
+                          $index + 1
+                        }}</span>
                       </template>
                     </el-table-column>
-                    <el-table-column prop="target" label="服务器 Target (IP/Port 或 DoH)" min-width="180">
+                    <el-table-column
+                      prop="target"
+                      label="服务器 Target (IP/Port 或 DoH)"
+                      min-width="180"
+                    >
                       <template #default="{ row: s }">
-                        <span class="font-mono font-semibold text-blue-600 dark:text-blue-400">
+                        <span
+                          class="font-mono font-semibold text-blue-600 dark:text-blue-400"
+                        >
                           {{ s.target }}
                         </span>
                       </template>
                     </el-table-column>
-                    <el-table-column prop="weight" label="权重 Weight" width="90" align="center">
+                    <el-table-column
+                      prop="weight"
+                      label="权重 Weight"
+                      width="90"
+                      align="center"
+                    >
                       <template #default="{ row: s }">
-                        <el-tag size="small" type="info" effect="plain" class="font-mono">
+                        <el-tag
+                          size="small"
+                          type="info"
+                          effect="plain"
+                          class="font-mono"
+                        >
                           {{ s.weight }}
                         </el-tag>
                       </template>
@@ -540,7 +801,7 @@ async function handleSaveSubmit() {
 
             <!-- 操作列 -->
             <template #operation="{ row }">
-              <div class="flex items-center justify-center space-x-1">
+              <div class="flex-c space-x-1">
                 <el-button
                   class="reset-margin"
                   link
@@ -549,7 +810,7 @@ async function handleSaveSubmit() {
                   :icon="useRenderIcon(EditPen)"
                   @click="handleEditPage(row)"
                 >
-                  {{ t('dns.edit') }}
+                  {{ t("dns.edit") }}
                 </el-button>
                 <el-popconfirm
                   :title="t('dns.confirmDelete')"
@@ -563,7 +824,7 @@ async function handleSaveSubmit() {
                       :size="size"
                       :icon="useRenderIcon(Delete)"
                     >
-                      {{ t('dns.delete') }}
+                      {{ t("dns.delete") }}
                     </el-button>
                   </template>
                 </el-popconfirm>
@@ -575,7 +836,10 @@ async function handleSaveSubmit() {
     </div>
 
     <!-- Create / Edit Full Page View Mode -->
-    <div v-else-if="showView === 'new' || showView === 'edit'" class="p-3 sm:p-5 bg-bg_color rounded-xl border border-[var(--el-border-color-lighter)] shadow-2xs">
+    <div
+      v-else-if="showView === 'new' || showView === 'edit'"
+      class="p-3 sm:p-5 bg-bg_color rounded-xl border border-(--el-border-color-lighter) shadow-2xs"
+    >
       <!-- Full Page Header Bar -->
       <PageHeader
         :title="formInline.title"
@@ -584,10 +848,7 @@ async function handleSaveSubmit() {
         @back="handleCancelPage"
       >
         <template #actions>
-          <el-button
-            :icon="useRenderIcon(CloseIcon)"
-            @click="handleCancelPage"
-          >
+          <el-button :icon="useRenderIcon(CloseIcon)" @click="handleCancelPage">
             取消
           </el-button>
           <el-button
@@ -605,11 +866,10 @@ async function handleSaveSubmit() {
       <editForm ref="createEditFormRef" :formInline="formInline" />
 
       <!-- Bottom Action Bar -->
-      <div class="flex items-center justify-end space-x-3 pt-4 mt-4 border-t border-[var(--el-border-color-lighter)]">
-        <el-button
-          :icon="useRenderIcon(CloseIcon)"
-          @click="handleCancelPage"
-        >
+      <div
+        class="flex items-center justify-end space-x-3 pt-4 mt-4 border-t border-(--el-border-color-lighter)"
+      >
+        <el-button :icon="useRenderIcon(CloseIcon)" @click="handleCancelPage">
           取消
         </el-button>
         <el-button

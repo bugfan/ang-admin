@@ -54,10 +54,19 @@ export const getHttpProxyList = async (params?: object) => {
     if (res && typeof res === "object" && res.list) {
       return { code: 0, message: "success", data: res };
     }
-    return { code: 0, message: "success", data: { list: [], total: 0, pageSize: 10, currentPage: 1 } };
+    return {
+      code: 0,
+      message: "success",
+      data: { list: [], total: 0, pageSize: 10, currentPage: 1 }
+    };
   } catch (err: any) {
-    const msg = err?.response?.data?.message || err?.message || "获取 HTTP 代理列表失败";
-    return { code: 1, message: msg, data: { list: [], total: 0, pageSize: 10, currentPage: 1 } };
+    const msg =
+      err?.response?.data?.message || err?.message || "获取 HTTP 代理列表失败";
+    return {
+      code: 1,
+      message: msg,
+      data: { list: [], total: 0, pageSize: 10, currentPage: 1 }
+    };
   }
 };
 
@@ -65,12 +74,18 @@ export const getHttpProxyList = async (params?: object) => {
 export const createHttpProxy = async (data?: object) => {
   try {
     const res = await http.request<any>("post", "/api/http-proxy", { data });
-    if (res && typeof res === "object" && res.code !== undefined && res.code !== 0) {
+    if (
+      res &&
+      typeof res === "object" &&
+      res.code !== undefined &&
+      res.code !== 0
+    ) {
       return res;
     }
     return { code: 0, message: "success", data: res };
   } catch (err: any) {
-    const msg = err?.response?.data?.message || err?.message || "创建 HTTP 代理失败";
+    const msg =
+      err?.response?.data?.message || err?.message || "创建 HTTP 代理失败";
     return { code: 1, message: msg };
   }
 };
@@ -79,13 +94,21 @@ export const createHttpProxy = async (data?: object) => {
 export const updateHttpProxy = async (data: any) => {
   try {
     const id = data?.id || data?.Id;
-    const res = await http.request<any>("put", `/api/http-proxy/${id}`, { data });
-    if (res && typeof res === "object" && res.code !== undefined && res.code !== 0) {
+    const res = await http.request<any>("put", `/api/http-proxy/${id}`, {
+      data
+    });
+    if (
+      res &&
+      typeof res === "object" &&
+      res.code !== undefined &&
+      res.code !== 0
+    ) {
       return res;
     }
     return { code: 0, message: "success", data: res };
   } catch (err: any) {
-    const msg = err?.response?.data?.message || err?.message || "更新 HTTP 代理失败";
+    const msg =
+      err?.response?.data?.message || err?.message || "更新 HTTP 代理失败";
     return { code: 1, message: msg };
   }
 };
@@ -98,12 +121,13 @@ export const deleteHttpProxy = async (param: any) => {
         await http.request<any>("delete", `/api/http-proxy/${id}`);
       }
     } else {
-      const id = typeof param === "object" ? (param.id || param.Id) : param;
+      const id = typeof param === "object" ? param.id || param.Id : param;
       await http.request<any>("delete", `/api/http-proxy/${id}`);
     }
     return { code: 0, message: "success" };
   } catch (err: any) {
-    const msg = err?.response?.data?.message || err?.message || "删除 HTTP 代理失败";
+    const msg =
+      err?.response?.data?.message || err?.message || "删除 HTTP 代理失败";
     return { code: 1, message: msg };
   }
 };

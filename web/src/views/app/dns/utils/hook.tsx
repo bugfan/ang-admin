@@ -28,7 +28,9 @@ export function useDnsProxy(t: any, tableRef: Ref) {
     currentPage: 1,
     background: true,
     size: deviceDetection() ? "small" : "default",
-    layout: deviceDetection() ? "prev, pager, next" : "total, sizes, prev, pager, next, jumper"
+    layout: deviceDetection()
+      ? "prev, pager, next"
+      : "total, sizes, prev, pager, next, jumper"
   });
 
   const columns = computed<TableColumnList>(() => [
@@ -46,17 +48,19 @@ export function useDnsProxy(t: any, tableRef: Ref) {
       label: t("dns.id"),
       prop: "Id",
       width: 80,
-      formatter: (row) => row.Id || row.id
+      formatter: row => row.Id || row.id
     },
     {
       label: t("dns.name", "名称"),
       prop: "Name",
       minWidth: 120,
-      headerRenderer: () => <span class="whitespace-nowrap">{t("dns.name", "名称")}</span>,
+      headerRenderer: () => (
+        <span class="whitespace-nowrap">{t("dns.name", "名称")}</span>
+      ),
       cellRenderer: scope => {
         const name = scope.row.Name || scope.row.name || "-";
         return (
-          <span class="font-semibold text-sm text-[var(--el-text-color-primary)] break-words inline-block leading-snug py-1">
+          <span class="font-semibold text-sm/snug text-(--el-text-color-primary) wrap-break-word inline-block  py-1">
             {name}
           </span>
         );
@@ -69,7 +73,11 @@ export function useDnsProxy(t: any, tableRef: Ref) {
         const addr = scope.row.Address || scope.row.address || "0.0.0.0";
         const port = scope.row.Port || scope.row.port || "";
         return (
-          <el-tag type="primary" effect="light" class="font-mono font-bold whitespace-nowrap">
+          <el-tag
+            type="primary"
+            effect="light"
+            class="font-mono font-bold whitespace-nowrap"
+          >
             {addr}:{port}
           </el-tag>
         );
@@ -92,7 +100,13 @@ export function useDnsProxy(t: any, tableRef: Ref) {
         return (
           <div class="flex flex-wrap gap-1">
             {ruleList.map(r => (
-              <el-tag key={r} size="small" type="info" effect="plain" class="font-mono">
+              <el-tag
+                key={r}
+                size="small"
+                type="info"
+                effect="plain"
+                class="font-mono"
+              >
                 {r}
               </el-tag>
             ))}
@@ -115,14 +129,18 @@ export function useDnsProxy(t: any, tableRef: Ref) {
       prop: "Remark",
       minWidth: 110,
       align: "center",
-      headerRenderer: () => <span class="whitespace-nowrap">{t("dns.remark")}</span>,
+      headerRenderer: () => (
+        <span class="whitespace-nowrap">{t("dns.remark")}</span>
+      ),
       cellRenderer: scope => {
         const remark = scope.row.Remark || scope.row.remark || "-";
         if (!remark || remark === "-") {
-          return <span class="text-xs text-[var(--el-text-color-placeholder)]">-</span>;
+          return (
+            <span class="text-xs text-(--el-text-color-placeholder)">-</span>
+          );
         }
         return (
-          <span class="text-xs text-[var(--el-text-color-regular)] break-words inline-block leading-snug py-1">
+          <span class="text-xs/snug text-(--el-text-color-regular) wrap-break-word inline-block  py-1">
             {remark}
           </span>
         );
@@ -132,7 +150,7 @@ export function useDnsProxy(t: any, tableRef: Ref) {
       label: t("dns.createTime"),
       minWidth: 160,
       prop: "created_at",
-      formatter: (row) => {
+      formatter: row => {
         const timeVal = row.created_at || row.CreatedAt;
         return timeVal && dayjs(timeVal).isValid() && dayjs(timeVal).year() > 1
           ? dayjs(timeVal).format("YYYY-MM-DD HH:mm:ss")
@@ -151,7 +169,10 @@ export function useDnsProxy(t: any, tableRef: Ref) {
     const targetId = row.Id || row.id;
     const { code, message: msg } = await deleteDns({ id: targetId });
     if (code === 0) {
-      message(`${t("dns.delete")} ID: ${targetId} ${t("dns.success", "成功")}`, { type: "success" });
+      message(
+        `${t("dns.delete")} ID: ${targetId} ${t("dns.success", "成功")}`,
+        { type: "success" }
+      );
       onSearch();
     } else {
       message(msg, { type: "error" });
@@ -185,7 +206,9 @@ export function useDnsProxy(t: any, tableRef: Ref) {
     const ids = curSelected.map((item: any) => item.Id || item.id);
     const { code, message: msg } = await deleteDns({ ids });
     if (code === 0) {
-      message(`${t("dns.batchDelete")} ${t("dns.success", "成功")}`, { type: "success" });
+      message(`${t("dns.batchDelete")} ${t("dns.success", "成功")}`, {
+        type: "success"
+      });
       tableRef.value.getTableRef().clearSelection();
       onSearch();
     } else {
@@ -228,11 +251,19 @@ export function useDnsProxy(t: any, tableRef: Ref) {
           hosts_text: row?.HostsText ?? row?.hosts_text ?? "",
           hosts_json: row?.HostsJSON ?? row?.hosts_json ?? "",
           backend_type: row?.BackendType ?? row?.backend_type ?? "upstream",
-          tunnel_type: (row?.TunnelType ?? row?.tunnel_type ?? "quic").toLowerCase(),
+          tunnel_type: (
+            row?.TunnelType ??
+            row?.tunnel_type ??
+            "quic"
+          ).toLowerCase(),
           tunnel_id: row?.TunnelId ?? row?.tunnel_id ?? "",
           tunnel_token: row?.TunnelToken ?? row?.tunnel_token ?? "",
-          upstream_method: row?.UpstreamMethod ?? row?.upstream_method ?? "round_robin",
-          upstream_servers: row?.UpstreamServers ?? row?.upstream_servers ?? JSON.stringify([{ target: "8.8.8.8:53", weight: 1 }]),
+          upstream_method:
+            row?.UpstreamMethod ?? row?.upstream_method ?? "round_robin",
+          upstream_servers:
+            row?.UpstreamServers ??
+            row?.upstream_servers ??
+            JSON.stringify([{ target: "8.8.8.8:53", weight: 1 }]),
           remark: row?.Remark ?? row?.remark ?? ""
         }
       },
@@ -261,7 +292,9 @@ export function useDnsProxy(t: any, tableRef: Ref) {
                 return;
               }
             }
-            message(`${title} ${t("dns.success", "成功")}`, { type: "success" });
+            message(`${title} ${t("dns.success", "成功")}`, {
+              type: "success"
+            });
             done();
             onSearch();
           }

@@ -70,7 +70,14 @@ export function setToken(data: DataInfo<Date>) {
       : {}
   );
 
-  function setUserKey({ avatar, username, nickname, is_super_admin, roles, permissions }) {
+  function setUserKey({
+    avatar,
+    username,
+    nickname,
+    is_super_admin,
+    roles,
+    permissions
+  }) {
     if (avatar && avatar.startsWith("/api/avatar.png")) {
       avatar = avatar.replace("/api/avatar.png", "/avatar.png");
     }
@@ -111,7 +118,8 @@ export function setToken(data: DataInfo<Date>) {
     const nickname =
       storageLocal().getItem<DataInfo<number>>(userKey)?.nickname ?? "";
     const is_super_admin =
-      storageLocal().getItem<DataInfo<number>>(userKey)?.is_super_admin ?? false;
+      storageLocal().getItem<DataInfo<number>>(userKey)?.is_super_admin ??
+      false;
     const roles =
       storageLocal().getItem<DataInfo<number>>(userKey)?.roles ?? [];
     const permissions =

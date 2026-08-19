@@ -54,5 +54,5 @@ export default [
       title: $t("buttons.pureAccountSettings"),
       showLink: false
     }
-  },
+  }
 ] satisfies Array<RouteConfigsTable>;

@@ -74,7 +74,7 @@ const {
             :loading="loading"
             @click="onSearch"
           >
-            {{ t('admin.search') }}
+            {{ t("admin.search") }}
           </el-button>
         </el-form-item>
       </el-form>
@@ -91,7 +91,7 @@ const {
             :icon="useRenderIcon(AddFill)"
             @click="openDialog(t('admin.addAdmin'))"
           >
-            {{ t('admin.addAdmin') }}
+            {{ t("admin.addAdmin") }}
           </el-button>
         </template>
         <template v-slot="{ size, dynamicColumns }">
@@ -105,23 +105,27 @@ const {
                 style="font-size: var(--el-font-size-base)"
                 class="text-[rgba(42,46,54,0.5)] dark:text-[rgba(220,220,242,0.5)]"
               >
-                {{ t('admin.selected') }} {{ selectedNum }} {{ t('admin.items') }}
+                {{ t("admin.selected") }} {{ selectedNum }}
+                {{ t("admin.items") }}
               </span>
               <el-button type="primary" text @click="onSelectionCancel">
-                {{ t('admin.cancelSelection') }}
+                {{ t("admin.cancelSelection") }}
               </el-button>
             </div>
-            <el-popconfirm :title="t('admin.confirmDelete')" @confirm="onbatchDel">
+            <el-popconfirm
+              :title="t('admin.confirmDelete')"
+              @confirm="onbatchDel"
+            >
               <template #reference>
                 <el-button type="danger" text class="mr-1!">
-                  {{ t('admin.batchDelete') }}
+                  {{ t("admin.batchDelete") }}
                 </el-button>
               </template>
             </el-popconfirm>
           </div>
           <pure-table
             ref="tableRef"
-            :row-key="(row) => row.Id || row.id"
+            :row-key="row => row.Id || row.id"
             adaptive
             :adaptiveConfig="{ offsetBottom: 108 }"
             align-whole="center"
@@ -148,7 +152,7 @@ const {
                 :icon="useRenderIcon(EditPen)"
                 @click="openDialog(t('admin.edit'), row)"
               >
-                {{ t('admin.edit') }}
+                {{ t("admin.edit") }}
               </el-button>
               <el-popconfirm
                 v-if="isSuperAdmin"
@@ -163,7 +167,7 @@ const {
                     :size="size"
                     :icon="useRenderIcon(Delete)"
                   >
-                    {{ t('admin.delete') }}
+                    {{ t("admin.delete") }}
                   </el-button>
                 </template>
               </el-popconfirm>

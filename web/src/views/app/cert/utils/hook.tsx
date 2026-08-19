@@ -28,7 +28,9 @@ export function useCert(t: any, tableRef: Ref) {
     currentPage: 1,
     background: true,
     size: deviceDetection() ? "small" : "default",
-    layout: deviceDetection() ? "prev, pager, next" : "total, sizes, prev, pager, next, jumper"
+    layout: deviceDetection()
+      ? "prev, pager, next"
+      : "total, sizes, prev, pager, next, jumper"
   });
 
   const columns = computed<TableColumnList>(() => [
@@ -42,17 +44,19 @@ export function useCert(t: any, tableRef: Ref) {
       label: t("cert.id"),
       prop: "Id",
       width: 70,
-      formatter: (row) => row.Id || row.id
+      formatter: row => row.Id || row.id
     },
     {
       label: t("cert.certId"),
       prop: "CertId",
       minWidth: 120,
-      headerRenderer: () => <span class="whitespace-nowrap">{t("cert.certId")}</span>,
+      headerRenderer: () => (
+        <span class="whitespace-nowrap">{t("cert.certId")}</span>
+      ),
       cellRenderer: scope => {
         const certId = scope.row.CertId || scope.row.cert_id || "-";
         return (
-          <span class="font-semibold text-sm text-[var(--el-text-color-primary)] break-words inline-block leading-snug py-1">
+          <span class="font-semibold text-sm/snug text-(--el-text-color-primary) wrap-break-word inline-block  py-1">
             {certId}
           </span>
         );
@@ -64,7 +68,8 @@ export function useCert(t: any, tableRef: Ref) {
       minWidth: 120,
       cellRenderer: scope => {
         const certType = scope.row.Type || scope.row.type || "";
-        let tagType: "primary" | "success" | "warning" | "info" | "danger" = "primary";
+        let tagType: "primary" | "success" | "warning" | "info" | "danger" =
+          "primary";
         let labelText = certType;
         if (certType === "STD") {
           tagType = "success";
@@ -87,7 +92,7 @@ export function useCert(t: any, tableRef: Ref) {
       label: t("cert.subjectCn"),
       prop: "SubjectCN",
       minWidth: 140,
-      formatter: (row) => row.SubjectCN || row.subject_cn || "-"
+      formatter: row => row.SubjectCN || row.subject_cn || "-"
     },
     {
       label: t("cert.sans"),
@@ -121,10 +126,16 @@ export function useCert(t: any, tableRef: Ref) {
       cellRenderer: scope => {
         const notBefore = scope.row.NotBefore || scope.row.not_before;
         const notAfter = scope.row.NotAfter || scope.row.not_after;
-        if (!notBefore || !notAfter) return <span class="text-gray-400">-</span>;
+        if (!notBefore || !notAfter)
+          return <span class="text-gray-400">-</span>;
         const startDay = dayjs(notBefore);
         const endDay = dayjs(notAfter);
-        if (!startDay.isValid() || !endDay.isValid() || startDay.year() <= 1 || endDay.year() <= 1) {
+        if (
+          !startDay.isValid() ||
+          !endDay.isValid() ||
+          startDay.year() <= 1 ||
+          endDay.year() <= 1
+        ) {
           return <span class="text-gray-400">-</span>;
         }
         const startStr = startDay.format("YYYY-MM-DD");
@@ -132,11 +143,17 @@ export function useCert(t: any, tableRef: Ref) {
         const isExpired = dayjs().isAfter(endDay);
         return (
           <div class="flex flex-col text-xs">
-            <span>{startStr} ~ {endStr}</span>
+            <span>
+              {startStr} ~ {endStr}
+            </span>
             {isExpired ? (
-              <span class="text-red-500 font-semibold">{t("cert.expired")}</span>
+              <span class="text-red-500 font-semibold">
+                {t("cert.expired")}
+              </span>
             ) : (
-              <span class="text-green-600 font-semibold">{t("cert.valid")}</span>
+              <span class="text-green-600 font-semibold">
+                {t("cert.valid")}
+              </span>
             )}
           </div>
         );
@@ -147,14 +164,18 @@ export function useCert(t: any, tableRef: Ref) {
       prop: "Remark",
       minWidth: 110,
       align: "center",
-      headerRenderer: () => <span class="whitespace-nowrap">{t("cert.remark")}</span>,
+      headerRenderer: () => (
+        <span class="whitespace-nowrap">{t("cert.remark")}</span>
+      ),
       cellRenderer: scope => {
         const remark = scope.row.Remark || scope.row.remark || "-";
         if (!remark || remark === "-") {
-          return <span class="text-xs text-[var(--el-text-color-placeholder)]">-</span>;
+          return (
+            <span class="text-xs text-(--el-text-color-placeholder)">-</span>
+          );
         }
         return (
-          <span class="text-xs text-[var(--el-text-color-regular)] break-words inline-block leading-snug py-1">
+          <span class="text-xs/snug text-(--el-text-color-regular) wrap-break-word inline-block  py-1">
             {remark}
           </span>
         );
@@ -164,7 +185,7 @@ export function useCert(t: any, tableRef: Ref) {
       label: t("cert.createTime"),
       minWidth: 160,
       prop: "created_at",
-      formatter: (row) => {
+      formatter: row => {
         const timeVal = row.created_at || row.CreatedAt;
         return timeVal && dayjs(timeVal).isValid() && dayjs(timeVal).year() > 1
           ? dayjs(timeVal).format("YYYY-MM-DD HH:mm:ss")
@@ -183,7 +204,10 @@ export function useCert(t: any, tableRef: Ref) {
     const targetId = row.Id || row.id;
     const { code, message: msg } = await deleteCert({ id: targetId });
     if (code === 0) {
-      message(`${t("cert.delete")} ID: ${targetId} ${t("cert.success", "成功")}`, { type: "success" });
+      message(
+        `${t("cert.delete")} ID: ${targetId} ${t("cert.success", "成功")}`,
+        { type: "success" }
+      );
       onSearch();
     } else {
       message(msg, { type: "error" });
@@ -217,7 +241,9 @@ export function useCert(t: any, tableRef: Ref) {
     const ids = curSelected.map((item: any) => item.Id || item.id);
     const { code, message: msg } = await deleteCert({ ids });
     if (code === 0) {
-      message(`${t("cert.batchDelete")} ${t("cert.success", "成功")}`, { type: "success" });
+      message(`${t("cert.batchDelete")} ${t("cert.success", "成功")}`, {
+        type: "success"
+      });
       tableRef.value.getTableRef().clearSelection();
       onSearch();
     } else {
@@ -284,7 +310,9 @@ export function useCert(t: any, tableRef: Ref) {
                 return;
               }
             }
-            message(`${title} ${t("cert.success", "成功")}`, { type: "success" });
+            message(`${title} ${t("cert.success", "成功")}`, {
+              type: "success"
+            });
             done();
             onSearch();
           }
@@ -311,39 +339,65 @@ export function useCert(t: any, tableRef: Ref) {
       contentRenderer: () => (
         <div class="space-y-3 text-sm p-2">
           <div class="flex border-b pb-2">
-            <span class="w-32 text-gray-500 font-medium">{t("cert.certId")}:</span>
-            <span class="font-semibold text-blue-600">{row.CertId || row.cert_id}</span>
+            <span class="w-32 text-gray-500 font-medium">
+              {t("cert.certId")}:
+            </span>
+            <span class="font-semibold text-blue-600">
+              {row.CertId || row.cert_id}
+            </span>
           </div>
           <div class="flex border-b pb-2">
-            <span class="w-32 text-gray-500 font-medium">{t("cert.type")}:</span>
+            <span class="w-32 text-gray-500 font-medium">
+              {t("cert.type")}:
+            </span>
             <span>{row.Type || row.type}</span>
           </div>
           <div class="flex border-b pb-2">
-            <span class="w-32 text-gray-500 font-medium">{t("cert.subjectCn")}:</span>
-            <span class="font-mono">{row.SubjectCN || row.subject_cn || "-"}</span>
+            <span class="w-32 text-gray-500 font-medium">
+              {t("cert.subjectCn")}:
+            </span>
+            <span class="font-mono">
+              {row.SubjectCN || row.subject_cn || "-"}
+            </span>
           </div>
           <div class="flex border-b pb-2">
-            <span class="w-32 text-gray-500 font-medium">{t("cert.sans")}:</span>
-            <span class="font-mono break-all">{row.SANs || row.sans || "-"}</span>
+            <span class="w-32 text-gray-500 font-medium">
+              {t("cert.sans")}:
+            </span>
+            <span class="font-mono break-all">
+              {row.SANs || row.sans || "-"}
+            </span>
           </div>
           <div class="flex border-b pb-2">
-            <span class="w-32 text-gray-500 font-medium">{t("cert.issuer")}:</span>
+            <span class="w-32 text-gray-500 font-medium">
+              {t("cert.issuer")}:
+            </span>
             <span>{row.Issuer || row.issuer || "-"}</span>
           </div>
           <div class="flex border-b pb-2">
-            <span class="w-32 text-gray-500 font-medium">{t("cert.serialNumber")}:</span>
-            <span class="font-mono text-xs break-all">{row.SerialNumber || row.serial_number || "-"}</span>
+            <span class="w-32 text-gray-500 font-medium">
+              {t("cert.serialNumber")}:
+            </span>
+            <span class="font-mono text-xs break-all">
+              {row.SerialNumber || row.serial_number || "-"}
+            </span>
           </div>
           <div class="flex border-b pb-2">
-            <span class="w-32 text-gray-500 font-medium">{t("cert.notBefore")}:</span>
+            <span class="w-32 text-gray-500 font-medium">
+              {t("cert.notBefore")}:
+            </span>
             <span>{formatDialogDate(row.NotBefore || row.not_before)}</span>
           </div>
           <div class="flex border-b pb-2">
-            <span class="w-32 text-gray-500 font-medium">{t("cert.notAfter")}:</span>
+            <span class="w-32 text-gray-500 font-medium">
+              {t("cert.notAfter")}:
+            </span>
             <span>{formatDialogDate(row.NotAfter || row.not_after)}</span>
           </div>
           <div class="flex">
-            <span class="w-32 text-gray-500 font-medium">{t("cert.remark")}:</span>
+            <span class="w-32 text-gray-500 font-medium">
+              {t("cert.remark")}:
+            </span>
             <span>{row.Remark || row.remark || "-"}</span>
           </div>
         </div>
