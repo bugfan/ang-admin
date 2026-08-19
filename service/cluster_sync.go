@@ -232,9 +232,50 @@ func buildHTTPMap(rulesMap map[string]models.Rule) map[string]entity.HTTPConfig 
 		}
 
 		// Parse Backend Locations
+		var rawLocations []entity.HTTPLocation
 		var locations []entity.HTTPLocation
 		if item.LocationJSON != "" {
-			_ = json.Unmarshal([]byte(item.LocationJSON), &locations)
+			if err := json.Unmarshal([]byte(item.LocationJSON), &rawLocations); err == nil {
+				for _, loc := range rawLocations {
+					uType := loc.Upstream.Type
+					if uType == "root" || uType == "alias" {
+						// Clean legacy fields if any
+						var dir string
+						if mData, ok := loc.Upstream.Data.(map[string]interface{}); ok {
+							if d, exists := mData["Dir"].(string); exists {
+								dir = d
+							}
+						}
+						if dir == "" {
+							dir = "./static"
+						}
+						loc.Upstream.Data = map[string]interface{}{
+							"Dir": dir,
+						}
+					} else {
+						// proxy_pass
+						var method string
+						var servers interface{}
+						if mData, ok := loc.Upstream.Data.(map[string]interface{}); ok {
+							if m, exists := mData["Method"].(string); exists {
+								method = m
+							}
+							if s, exists := mData["Servers"]; exists {
+								servers = s
+							}
+						}
+						if method == "" {
+							method = "round_robin"
+						}
+						loc.Upstream.Type = "proxy_pass"
+						loc.Upstream.Data = map[string]interface{}{
+							"Method":  method,
+							"Servers": servers,
+						}
+					}
+					locations = append(locations, loc)
+				}
+			}
 		}
 
 		// Parse Backend Tunnel

@@ -14,8 +14,9 @@ export interface LocationItem {
   Upstream: {
     Type: string;
     Data: {
-      Method: string;
-      Servers: Array<{ Target: string; Weight: number }>;
+      Method?: string;
+      Servers?: Array<{ Target: string; Weight: number }>;
+      Dir?: string;
     };
   };
 }
@@ -130,7 +131,34 @@ function initFormState() {
       const parsed = typeof newFormInline.value.location_json === "string"
         ? JSON.parse(newFormInline.value.location_json)
         : newFormInline.value.location_json;
-      if (Array.isArray(parsed)) locationList.value = parsed;
+      if (Array.isArray(parsed)) {
+        locationList.value = parsed.map((loc: any) => {
+          const type = loc?.Upstream?.Type || "proxy_pass";
+          if (type === "root" || type === "alias") {
+            return {
+              Path: loc.Path || "/",
+              Upstream: {
+                Type: type,
+                Data: {
+                  Dir: loc?.Upstream?.Data?.Dir || "./static"
+                }
+              }
+            };
+          }
+          return {
+            Path: loc.Path || "/",
+            Upstream: {
+              Type: "proxy_pass",
+              Data: {
+                Method: loc?.Upstream?.Data?.Method || "round_robin",
+                Servers: Array.isArray(loc?.Upstream?.Data?.Servers) && loc.Upstream.Data.Servers.length > 0
+                  ? loc.Upstream.Data.Servers
+                  : [{ Target: "http://127.0.0.1:8080", Weight: 1 }]
+              }
+            }
+          };
+        });
+      }
     }
   } catch (e) {}
 
@@ -146,6 +174,7 @@ function initFormState() {
       }
     });
   }
+  syncLocationJSON();
 }
 
 async function fetchCertificates() {
@@ -287,7 +316,7 @@ function handleTunnelChange(val: string) {
 
 function addLocation() {
   locationList.value.push({
-    Path: `/path-${locationList.value.length + 1}`,
+    Path: locationList.value.length === 0 ? "/" : `/path-${locationList.value.length + 1}`,
     Upstream: {
       Type: "proxy_pass",
       Data: {
@@ -299,6 +328,43 @@ function addLocation() {
   syncLocationJSON();
 }
 
+function handleLocationTypeChange(loc: LocationItem) {
+  const type = loc.Upstream.Type;
+  if (type === "proxy_pass") {
+    if (!loc.Upstream.Data) loc.Upstream.Data = {};
+    if (!loc.Upstream.Data.Method) loc.Upstream.Data.Method = "round_robin";
+    if (!Array.isArray(loc.Upstream.Data.Servers) || loc.Upstream.Data.Servers.length === 0) {
+      loc.Upstream.Data.Servers = [{ Target: "http://127.0.0.1:8080", Weight: 1 }];
+    }
+    delete loc.Upstream.Data.Dir;
+  } else if (type === "root" || type === "alias") {
+    if (!loc.Upstream.Data) loc.Upstream.Data = {};
+    if (!loc.Upstream.Data.Dir) loc.Upstream.Data.Dir = "./static";
+    delete loc.Upstream.Data.Method;
+    delete loc.Upstream.Data.Servers;
+  }
+  syncLocationJSON();
+}
+
+function quickSetPathPrefix(loc: LocationItem, prefix: string) {
+  let curPath = (loc.Path || "").trim();
+  // Strip existing prefix if any (=, ~*, ~)
+  curPath = curPath.replace(/^(=\/?|~\*?\/?|\/?)/, "");
+  if (!curPath.startsWith("/")) {
+    curPath = "/" + curPath;
+  }
+  if (prefix === "=") {
+    loc.Path = "=" + curPath;
+  } else if (prefix === "~") {
+    loc.Path = "~" + curPath;
+  } else if (prefix === "~*") {
+    loc.Path = "~*" + curPath;
+  } else {
+    loc.Path = curPath;
+  }
+  syncLocationJSON();
+}
+
 function removeLocation(idx: number) {
   if (locationList.value.length <= 1) return;
   locationList.value.splice(idx, 1);
@@ -306,18 +372,51 @@ function removeLocation(idx: number) {
 }
 
 function addUpstreamServer(locIdx: number) {
-  locationList.value[locIdx].Upstream.Data.Servers.push({ Target: "http://127.0.0.1:8081", Weight: 1 });
+  const loc = locationList.value[locIdx];
+  if (!loc || loc.Upstream.Type !== "proxy_pass") return;
+  if (!loc.Upstream.Data) loc.Upstream.Data = {};
+  if (!Array.isArray(loc.Upstream.Data.Servers)) loc.Upstream.Data.Servers = [];
+  loc.Upstream.Data.Servers.push({ Target: "http://127.0.0.1:8081", Weight: 1 });
   syncLocationJSON();
 }
 
 function removeUpstreamServer(locIdx: number, serverIdx: number) {
-  if (locationList.value[locIdx].Upstream.Data.Servers.length <= 1) return;
-  locationList.value[locIdx].Upstream.Data.Servers.splice(serverIdx, 1);
+  const loc = locationList.value[locIdx];
+  if (!loc || loc.Upstream.Type !== "proxy_pass" || !loc.Upstream.Data?.Servers) return;
+  if (loc.Upstream.Data.Servers.length <= 1) return;
+  loc.Upstream.Data.Servers.splice(serverIdx, 1);
   syncLocationJSON();
 }
 
 function syncLocationJSON() {
-  newFormInline.value.location_json = JSON.stringify(locationList.value, null, 2);
+  const cleanedLocations = locationList.value.map(loc => {
+    const type = loc.Upstream?.Type || "proxy_pass";
+    if (type === "root" || type === "alias") {
+      return {
+        Path: loc.Path,
+        Upstream: {
+          Type: type,
+          Data: {
+            Dir: loc.Upstream?.Data?.Dir || "./static"
+          }
+        }
+      };
+    }
+    return {
+      Path: loc.Path,
+      Upstream: {
+        Type: "proxy_pass",
+        Data: {
+          Method: loc.Upstream?.Data?.Method || "round_robin",
+          Servers: (loc.Upstream?.Data?.Servers || [{ Target: "http://127.0.0.1:8080", Weight: 1 }]).map(s => ({
+            Target: s.Target,
+            Weight: s.Weight || 1
+          }))
+        }
+      }
+    };
+  });
+  newFormInline.value.location_json = JSON.stringify(cleanedLocations, null, 2);
 }
 
 const formRules = reactive({
@@ -589,16 +688,38 @@ defineExpose({ getRef, syncLocationJSON });
                 </div>
 
                 <el-row :gutter="12">
-                  <re-col :value="12" :xs="24">
+                  <re-col :value="10" :xs="24">
                     <el-form-item :label="t('http.matchPath')" class="!mb-3" required>
-                      <el-input
-                        v-model="loc.Path"
-                        placeholder="/ or /api"
-                        @input="syncLocationJSON"
-                      />
+                      <div class="w-full space-y-1">
+                        <el-input
+                          v-model="loc.Path"
+                          placeholder="/ or =/api or ~*\.(jpg|png)$"
+                          @input="syncLocationJSON"
+                        />
+                        <div class="flex items-center gap-1 flex-wrap">
+                          <span class="text-[11px] text-[var(--el-text-color-secondary)]">{{ t("http.matchMode") }}</span>
+                          <el-button size="small" link type="primary" @click="quickSetPathPrefix(loc, '/')">{{ t("http.prefixMatch") }}</el-button>
+                          <el-button size="small" link type="success" @click="quickSetPathPrefix(loc, '=')">{{ t("http.exactMatch") }}</el-button>
+                          <el-button size="small" link type="warning" @click="quickSetPathPrefix(loc, '~')">{{ t("http.regexMatch") }}</el-button>
+                          <el-button size="small" link type="danger" @click="quickSetPathPrefix(loc, '~*')">{{ t("http.regexIgnoreMatch") }}</el-button>
+                        </div>
+                      </div>
                     </el-form-item>
                   </re-col>
-                  <re-col :value="12" :xs="24">
+                  <re-col :value="8" :xs="24">
+                    <el-form-item :label="t('http.upstreamType')" class="!mb-3">
+                      <el-select
+                        v-model="loc.Upstream.Type"
+                        class="w-full"
+                        @change="handleLocationTypeChange(loc)"
+                      >
+                        <el-option :label="t('http.proxyPass')" value="proxy_pass" />
+                        <el-option :label="t('http.rootDir')" value="root" />
+                        <el-option :label="t('http.aliasDir')" value="alias" />
+                      </el-select>
+                    </el-form-item>
+                  </re-col>
+                  <re-col v-if="loc.Upstream.Type === 'proxy_pass'" :value="6" :xs="24">
                     <el-form-item :label="t('http.lbAlgorithm')" class="!mb-3">
                       <el-select
                         v-model="loc.Upstream.Data.Method"
@@ -613,15 +734,15 @@ defineExpose({ getRef, syncLocationJSON });
                   </re-col>
                 </el-row>
 
-                <!-- Upstream Target Servers -->
-                <div class="mt-1 p-2.5 sm:p-3 bg-[var(--el-bg-color)] rounded-lg border border-[var(--el-border-color-lighter)] space-y-2">
+                <!-- Case A: Upstream Target Servers (proxy_pass) -->
+                <div v-if="loc.Upstream.Type === 'proxy_pass'" class="mt-1 p-2.5 sm:p-3 bg-[var(--el-bg-color)] rounded-lg border border-[var(--el-border-color-lighter)] space-y-2">
                   <div class="flex items-center justify-between text-xs font-bold text-[var(--el-text-color-primary)]">
                     <span>{{ t("http.targetUrl") }}</span>
                     <el-button size="small" link type="primary" @click="addUpstreamServer(lIdx)">{{ t("http.addBackendNode") }}</el-button>
                   </div>
 
                   <div
-                    v-for="(srv, sIdx) in loc.Upstream.Data.Servers"
+                    v-for="(srv, sIdx) in (loc.Upstream.Data.Servers || [])"
                     :key="sIdx"
                     class="flex flex-wrap sm:flex-nowrap items-center gap-2 pb-2 sm:pb-0 border-b sm:border-b-0 border-[var(--el-border-color-lighter)] last:border-b-0"
                   >
@@ -646,11 +767,26 @@ defineExpose({ getRef, syncLocationJSON });
                         size="small"
                         link
                         type="danger"
-                        :disabled="loc.Upstream.Data.Servers.length <= 1"
+                        :disabled="(loc.Upstream.Data.Servers || []).length <= 1"
                         :icon="useRenderIcon(Delete)"
                         @click="removeUpstreamServer(lIdx, sIdx)"
                       />
                     </div>
+                  </div>
+                </div>
+
+                <!-- Case B: Static Dir (root or alias) -->
+                <div v-else class="mt-1 p-2.5 sm:p-3 bg-[var(--el-bg-color)] rounded-lg border border-[var(--el-border-color-lighter)] space-y-2">
+                  <el-form-item :label="t('http.staticDir')" class="!mb-0" required>
+                    <el-input
+                      v-model="loc.Upstream.Data.Dir"
+                      :placeholder="t('http.staticDirPlaceholder')"
+                      @input="syncLocationJSON"
+                    />
+                  </el-form-item>
+                  <div class="text-[11px] text-[var(--el-text-color-secondary)]">
+                    <span v-if="loc.Upstream.Type === 'root'">{{ t("http.rootTip") }}</span>
+                    <span v-else>{{ t("http.aliasTip") }}</span>
                   </div>
                 </div>
               </div>

@@ -56,7 +56,7 @@ export const deleteTunnelClient = async (param: any) => {
   }
 };
 
-/** 获取 ang 引擎内存中当前在线连接列表 (用于下拉选择) */
+/** 获取引擎内存中当前在线连接列表 (用于下拉选择) */
 export const getActiveTunnelConnections = async () => {
   try {
     const res = await http.request<any>("get", "/api/tunnel-client/active-connections");

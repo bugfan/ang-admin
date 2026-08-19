@@ -103,6 +103,24 @@ export function useHttpProxy(t: any, tableRef: Ref) {
           <div class="space-y-1 py-1">
             {locations.map((loc: any, idx: number) => {
               const path = loc.Path || "/";
+              const uType = loc.Upstream?.Type || "proxy_pass";
+              if (uType === "root" || uType === "alias") {
+                const dir = loc.Upstream?.Data?.Dir || "./static";
+                return (
+                  <div key={idx} class="text-xs flex items-center gap-1.5 flex-wrap">
+                    <el-tag size="small" type="info" effect="light" class="font-mono font-bold">
+                      {path}
+                    </el-tag>
+                    <el-tag size="small" type={uType === "root" ? "success" : "warning"} effect="plain" class="font-bold font-mono">
+                      {uType}
+                    </el-tag>
+                    <span class="font-mono text-xs text-[var(--el-text-color-regular)] bg-[var(--el-fill-color-light)] px-1.5 py-0.5 rounded border border-[var(--el-border-color-lighter)]">
+                      ➔ {dir}
+                    </span>
+                  </div>
+                );
+              }
+
               const servers = loc.Upstream?.Data?.Servers || [];
               const method = loc.Upstream?.Data?.Method || "round_robin";
               return (
