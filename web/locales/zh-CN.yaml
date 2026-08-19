@@ -334,6 +334,13 @@ tunnel:
   unsavedCount: "待保存"
   unsavedBannerTip: "检测到 {count} 个客户端正在实时连接但尚未保存配置，点击“存为节点”即可使用。"
   clickToExpand: "点击展开节点明细列表"
+  clientNodesDetail: "节点明细列表"
+  certDeletedTip: "引用的证书已被删除，请编辑重选"
+  invalidAssoc: "关联失效"
+  pageDesc: "配置内网穿透 Tunnel 隧道监听端口、传输协议 (TLS/QUIC) 及 SNI 证书匹配"
+  backToList: "返回隧道列表"
+  cancel: "取消"
+  save: "保存"
   remarkPlaceholder: "选填"
 
 cert:
@@ -449,6 +456,8 @@ tunnelClient:
   unsavedNode: "待配置节点"
   unsavedId: "未存库"
   saveAsNode: "存为节点"
+  remoteAddr: "客户端地址"
+  confirmDeleteNode: "是否确认删除该节点？"
   remarkPlaceholder: "请输入备注信息 (选填)"
 dns:
   address: "地址"

@@ -334,6 +334,13 @@ tunnel:
   unsavedCount: "Unsaved"
   unsavedBannerTip: "Detected {count} live client(s) connected without saved config. Click 'Save as Node' to use."
   clickToExpand: "Click to expand node list"
+  clientNodesDetail: "Node Detail List"
+  certDeletedTip: "The referenced cert has been deleted. Please edit and reselect."
+  invalidAssoc: "Invalid"
+  pageDesc: "Configure Tunnel server listening port, protocol (TLS/QUIC), and SNI certificate matching"
+  backToList: "Back to Tunnel List"
+  cancel: "Cancel"
+  save: "Save"
   remarkPlaceholder: "Optional"
 
 cert:
@@ -449,6 +456,8 @@ tunnelClient:
   unsavedNode: "Unconfigured Node"
   unsavedId: "Unsaved"
   saveAsNode: "Save as Node"
+  remoteAddr: "Client Address"
+  confirmDeleteNode: "Are you sure you want to delete this node?"
   remarkPlaceholder: "Please enter remark (optional)"
 dns:
   address: "Address"

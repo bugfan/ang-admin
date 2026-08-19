@@ -118,9 +118,9 @@ export function useTunnel(t: any, tableRef: Ref) {
             {cert}
           </el-tag>
         ) : (
-          <el-tooltip content="引用的证书已被删除，请编辑重选" placement="top">
+          <el-tooltip content={t("tunnel.certDeletedTip", "引用的证书已被删除，请编辑重选")} placement="top">
             <el-tag type="danger" size="small" effect="light" class="font-bold">
-              {cert} (关联失效)
+              {cert} ({t("tunnel.invalidAssoc", "关联失效")})
             </el-tag>
           </el-tooltip>
         );
@@ -376,7 +376,7 @@ export function useTunnel(t: any, tableRef: Ref) {
       row.total_count = updated.total_count || 0;
       row.online_count = updated.online_count || 0;
       row.unsaved_count = updated.unsaved_count || 0;
-      message(`刷新隧道 ID: ${targetId} 节点列表成功`, { type: "success" });
+      message(`${t("tunnelClient.refreshNodesSuccess", "刷新节点成功")} [ID: ${targetId}]`, { type: "success" });
     } else {
       onSearch();
     }

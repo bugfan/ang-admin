@@ -37,9 +37,13 @@ const {
   dataList,
   selectedNum,
   pagination,
+  refreshingRowId,
+  refreshSingleTunnel,
   onSearch,
   resetForm,
   onbatchDel,
+  openClientDialog,
+  handleDeleteClient,
   handleDelete,
   handleSizeChange,
   onSelectionCancel,
@@ -291,13 +295,26 @@ async function handleSaveSubmit() {
                       class="p-2 bg-[var(--el-fill-color-light)] rounded font-mono border border-[var(--el-border-color-lighter)] text-xs space-y-1"
                     >
                       <div class="flex justify-between items-center">
-                        <span class="font-bold text-blue-600 dark:text-blue-400">{{ c.name || c.id || 'Node' }}</span>
-                        <el-tag size="small" :type="c.is_online ? 'success' : 'info'" effect="light">
-                          {{ c.is_online ? '在线 (online)' : '离线 (offline)' }}
-                        </el-tag>
+                        <span class="font-bold text-blue-600 dark:text-blue-400 cursor-pointer hover:underline" @click="openClientDialog(c.is_saved || c.id ? t('tunnelClient.editClient') : t('tunnelClient.addClient'), row, c)">
+                          {{ c.name || c.id || 'Node' }}
+                        </span>
+                        <div class="flex items-center gap-1.5">
+                          <el-tag size="small" :type="c.is_online ? 'success' : 'info'" effect="light">
+                            {{ c.is_online ? t('tunnelClient.online') : t('tunnelClient.offline') }}
+                          </el-tag>
+                          <el-button
+                            type="primary"
+                            link
+                            size="small"
+                            class="!p-0 text-xs"
+                            @click="openClientDialog(c.is_saved || c.id ? t('tunnelClient.editClient') : t('tunnelClient.addClient'), row, c)"
+                          >
+                            {{ c.is_saved || c.id ? t('tunnel.edit') : t('tunnelClient.saveAsNode') }}
+                          </el-button>
+                        </div>
                       </div>
                       <div class="text-[11px] text-gray-500 truncate">Token: {{ c.token || '-' }}</div>
-                      <div v-if="c.remote_addr" class="text-[11px] text-gray-400">Addr: {{ c.remote_addr }}</div>
+                      <div v-if="c.remote_addr" class="text-[11px] text-gray-400">{{ t('tunnelClient.remoteAddr') }}: {{ c.remote_addr }}</div>
                     </div>
                   </div>
                 </div>
@@ -307,14 +324,32 @@ async function handleSaveSubmit() {
             <!-- 2. 折叠展开明细行 -->
             <template #expand="{ row }">
               <div class="p-3 sm:p-4 bg-[var(--el-fill-color-light)] rounded-xl my-1 sm:my-2 mx-1 sm:mx-4 border border-[var(--el-border-color-lighter)] space-y-3 text-xs">
-                <div class="font-bold text-[var(--el-text-color-primary)] flex items-center justify-between flex-wrap gap-1">
-                  <span class="inline-flex items-center gap-1">
+                <div class="font-bold text-[var(--el-text-color-primary)] flex items-center justify-between flex-wrap gap-2">
+                  <div class="flex items-center space-x-2">
                     <IconifyIconOffline icon="ri:router-line" />
-                    {{ t('tunnel.clientNodes') }} 明细列表:
-                  </span>
-                  <span class="text-gray-400 font-mono">
-                    Total Nodes: {{ getClientNodes(row).length }}
-                  </span>
+                    <span>{{ t('tunnel.clientNodesDetail') }}</span>
+                    <el-tag size="small" type="info" effect="plain" class="font-mono">
+                      Total: {{ getClientNodes(row).length }}
+                    </el-tag>
+                  </div>
+                  <div class="flex items-center gap-2">
+                    <el-button
+                      type="primary"
+                      size="small"
+                      :icon="useRenderIcon(AddFill)"
+                      @click="openClientDialog(t('tunnelClient.addClient'), row)"
+                    >
+                      {{ t('tunnelClient.addClient') }}
+                    </el-button>
+                    <el-button
+                      size="small"
+                      :icon="useRenderIcon('ri:refresh-line')"
+                      :loading="refreshingRowId === (row.Id || row.id)"
+                      @click="refreshSingleTunnel(row)"
+                    >
+                      {{ t('tunnelClient.refreshNodes') }}
+                    </el-button>
+                  </div>
                 </div>
 
                 <div v-if="getClientNodes(row).length > 0">
@@ -330,32 +365,85 @@ async function handleSaveSubmit() {
                         <span class="font-mono text-gray-400">{{ $index + 1 }}</span>
                       </template>
                     </el-table-column>
-                    <el-table-column prop="name" label="节点名称 Name" min-width="140">
+                    <el-table-column prop="name" :label="t('tunnelClient.name')" min-width="140">
                       <template #default="{ row: c }">
-                        <span class="font-mono font-semibold text-blue-600 dark:text-blue-400">
+                        <span
+                          class="font-mono font-semibold text-blue-600 dark:text-blue-400 cursor-pointer hover:underline"
+                          @click="openClientDialog(c.is_saved || c.id ? t('tunnelClient.editClient') : t('tunnelClient.addClient'), row, c)"
+                        >
                           {{ c.name || c.id || 'Client Node' }}
                         </span>
                       </template>
                     </el-table-column>
-                    <el-table-column prop="token" label="节点鉴权 Token" min-width="180">
+                    <el-table-column prop="token" :label="t('tunnelClient.token')" min-width="180">
                       <template #default="{ row: c }">
                         <span class="font-mono text-gray-600 dark:text-gray-300">
                           {{ c.token || '-' }}
                         </span>
                       </template>
                     </el-table-column>
-                    <el-table-column prop="remote_addr" label="客户端地址 Remote Addr" min-width="150">
+                    <el-table-column prop="remote_addr" :label="t('tunnelClient.remoteAddr')" min-width="150">
                       <template #default="{ row: c }">
                         <span class="font-mono text-gray-500">
                           {{ c.remote_addr || '-' }}
                         </span>
                       </template>
                     </el-table-column>
-                    <el-table-column prop="is_online" label="状态 Status" width="120" align="center">
+                    <el-table-column prop="remark" :label="t('tunnel.remark')" min-width="120">
+                      <template #default="{ row: c }">
+                        <span class="text-gray-500">
+                          {{ c.remark || '-' }}
+                        </span>
+                      </template>
+                    </el-table-column>
+                    <el-table-column prop="is_online" :label="t('tunnelClient.status')" width="140" align="center">
                       <template #default="{ row: c }">
                         <el-tag size="small" :type="c.is_online ? 'success' : 'info'" effect="light">
-                          {{ c.is_online ? '在线 (online)' : '离线 (offline)' }}
+                          {{ c.is_online ? t('tunnelClient.online') : t('tunnelClient.offline') }}
                         </el-tag>
+                      </template>
+                    </el-table-column>
+                    <el-table-column :label="t('tunnel.operation')" width="140" align="center" fixed="right">
+                      <template #default="{ row: c }">
+                        <div class="flex items-center justify-center space-x-2">
+                          <el-button
+                            v-if="c.is_saved || c.id"
+                            link
+                            type="primary"
+                            size="small"
+                            :icon="useRenderIcon(EditPen)"
+                            @click="openClientDialog(t('tunnelClient.editClient'), row, c)"
+                          >
+                            {{ t('tunnel.edit') }}
+                          </el-button>
+                          <el-button
+                            v-else
+                            link
+                            type="success"
+                            size="small"
+                            :icon="useRenderIcon(AddFill)"
+                            @click="openClientDialog(t('tunnelClient.addClient'), row, c)"
+                          >
+                            {{ t('tunnelClient.saveAsNode') }}
+                          </el-button>
+
+                          <el-popconfirm
+                            v-if="c.is_saved || c.id"
+                            :title="t('tunnelClient.confirmDeleteNode')"
+                            @confirm="handleDeleteClient(c)"
+                          >
+                            <template #reference>
+                              <el-button
+                                link
+                                type="danger"
+                                size="small"
+                                :icon="useRenderIcon(Delete)"
+                              >
+                                {{ t('tunnel.delete') }}
+                              </el-button>
+                            </template>
+                          </el-popconfirm>
+                        </div>
                       </template>
                     </el-table-column>
                   </el-table>
@@ -407,8 +495,8 @@ async function handleSaveSubmit() {
       <!-- Full Page Header Bar -->
       <PageHeader
         :title="formInline.title"
-        description="配置内网穿透 Tunnel 隧道监听端口、传输协议 (TLS/QUIC) 及 SNI 证书匹配"
-        :backTitle="t('tunnel.backToList', '返回隧道列表')"
+        :description="t('tunnel.pageDesc')"
+        :backTitle="t('tunnel.backToList')"
         @back="handleCancelPage"
       >
         <template #actions>
@@ -416,7 +504,7 @@ async function handleSaveSubmit() {
             :icon="useRenderIcon(CloseIcon)"
             @click="handleCancelPage"
           >
-            取消
+            {{ t('tunnel.cancel') }}
           </el-button>
           <el-button
             type="primary"
@@ -424,7 +512,7 @@ async function handleSaveSubmit() {
             :icon="useRenderIcon(CheckIcon)"
             @click="handleSaveSubmit"
           >
-            保存
+            {{ t('tunnel.save') }}
           </el-button>
         </template>
       </PageHeader>
@@ -438,7 +526,7 @@ async function handleSaveSubmit() {
           :icon="useRenderIcon(CloseIcon)"
           @click="handleCancelPage"
         >
-          取消
+          {{ t('tunnel.cancel') }}
         </el-button>
         <el-button
           type="primary"
@@ -446,7 +534,7 @@ async function handleSaveSubmit() {
           :icon="useRenderIcon(CheckIcon)"
           @click="handleSaveSubmit"
         >
-          保存
+          {{ t('tunnel.save') }}
         </el-button>
       </div>
     </div>

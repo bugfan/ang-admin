@@ -187,7 +187,7 @@ const {
                 {{ t('tunnel.edit') }}
               </el-button>
               <el-popconfirm
-                :title="t('tunnel.confirmDelete')"
+                :title="t('tunnelClient.confirmDeleteNode')"
                 @confirm="handleDelete(row)"
               >
                 <template #reference>
