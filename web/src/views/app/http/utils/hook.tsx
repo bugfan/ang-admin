@@ -15,8 +15,7 @@ import { type Ref, h, ref, computed, toRaw, reactive, onMounted } from "vue";
 
 export function useHttpProxy(t: any, tableRef: Ref) {
   const form = reactive({
-    hostname: "",
-    name: ""
+    keyword: ""
   });
   const formRef = ref();
   const dataList = ref([]);
@@ -43,145 +42,118 @@ export function useHttpProxy(t: any, tableRef: Ref) {
       reserveSelection: true
     },
     {
-      label: "#",
-      prop: "Id",
-      width: 70,
-      align: "center",
-      formatter: (row) => row.Id || row.id
-    },
-    {
       label: t("http.name", "名称"),
       prop: "Name",
-      minWidth: 140,
+      minWidth: 120,
+      headerRenderer: () => <span class="whitespace-nowrap">{t("http.name", "名称")}</span>,
       cellRenderer: scope => {
         const name = scope.row.Name || scope.row.name || "-";
         return (
-          <span class="font-semibold text-[var(--el-text-color-primary)]">{name}</span>
+          <span class="font-semibold text-sm text-[var(--el-text-color-primary)] break-words inline-block leading-snug py-1">
+            {name}
+          </span>
         );
       }
     },
     {
-      label: t("http.hostname", "Hostname"),
-      prop: "Hostname",
+      label: t("http.hostAndPort", "监听"),
       minWidth: 160,
+      headerRenderer: () => <span class="whitespace-nowrap">{t("http.hostAndPort", "监听")}</span>,
       cellRenderer: scope => {
         const host = scope.row.Hostname || scope.row.hostname || "-";
-        return (
-          <span class="font-mono text-xs text-[var(--el-text-color-regular)]">{host}</span>
-        );
-      }
-    },
-    {
-      label: t("http.port", "监听端口"),
-      prop: "Port",
-      width: 100,
-      align: "center",
-      cellRenderer: scope => {
         const port = scope.row.Port || scope.row.port || "80";
         return (
-          <el-tag size="small" type="primary" effect="plain" class="font-mono font-bold">
-            {port}
-          </el-tag>
-        );
-      }
-    },
-    {
-      label: t("http.backendSection"),
-      minWidth: 260,
-      cellRenderer: scope => {
-        let locations: any[] = [];
-        try {
-          const locStr = scope.row.LocationJSON || scope.row.location_json;
-          if (locStr) locations = typeof locStr === "string" ? JSON.parse(locStr) : locStr;
-        } catch (e) {}
-
-        if (!locations || locations.length === 0) {
-          return <span class="text-[var(--el-text-color-placeholder)] text-xs">-</span>;
-        }
-
-        return (
-          <div class="space-y-1 py-1">
-            {locations.map((loc: any, idx: number) => {
-              const path = loc.Path || "/";
-              const uType = loc.Upstream?.Type || "proxy_pass";
-              if (uType === "root" || uType === "alias") {
-                const dir = loc.Upstream?.Data?.Dir || "./static";
-                return (
-                  <div key={idx} class="text-xs flex items-center gap-1.5 flex-wrap">
-                    <el-tag size="small" type="info" effect="light" class="font-mono font-bold">
-                      {path}
-                    </el-tag>
-                    <el-tag size="small" type={uType === "root" ? "success" : "warning"} effect="plain" class="font-bold font-mono">
-                      {uType}
-                    </el-tag>
-                    <span class="font-mono text-xs text-[var(--el-text-color-regular)] bg-[var(--el-fill-color-light)] px-1.5 py-0.5 rounded border border-[var(--el-border-color-lighter)]">
-                      ➔ {dir}
-                    </span>
-                  </div>
-                );
-              }
-
-              const servers = loc.Upstream?.Data?.Servers || [];
-              const method = loc.Upstream?.Data?.Method || "round_robin";
-              return (
-                <div key={idx} class="text-xs flex items-center gap-1.5 flex-wrap">
-                  <el-tag size="small" type="info" effect="light" class="font-mono font-bold">
-                    {path}
-                  </el-tag>
-                  <span class="text-[var(--el-text-color-secondary)] text-[11px]">({method}):</span>
-                  {servers.map((srv: any, sIdx: number) => (
-                    <span key={sIdx} class="font-mono font-medium text-[var(--el-text-color-primary)] bg-[var(--el-fill-color-light)] px-1.5 py-0.5 rounded border border-[var(--el-border-color-lighter)] text-[11px]">
-                      {srv.Target} <span class="text-gray-400">({srv.Weight || 1})</span>
-                    </span>
-                  ))}
-                </div>
-              );
-            })}
+          <div class="font-mono text-sm font-bold text-[var(--el-text-color-primary)] py-1 inline-flex items-center gap-0.5">
+            <span>{host}</span>
+            <span>:{port}</span>
           </div>
         );
       }
     },
     {
       label: t("http.featureSection"),
-      minWidth: 220,
+      minWidth: 160,
       align: "center",
       cellRenderer: scope => {
         const row = scope.row;
+        const isHttp = row.HTTP ?? row.http;
         const isTls = row.TLS ?? row.tls;
         const isH2 = row.H2 ?? row.h2;
         const isHsts = row.HSTS ?? row.hsts;
         const isCompress = row.Compress ?? row.compress;
         const cert = row.Certificate || row.certificate;
 
-        return (
-          <div class="flex items-center justify-center gap-1.5 flex-wrap py-1">
-            <el-tooltip content={isTls ? "HTTPS ON" : "HTTP OFF"} placement="top">
-              <el-tag size="small" type={isTls ? "success" : "danger"} effect={isTls ? "dark" : "plain"} class="font-bold">
-                {isTls ? "HTTPS" : "HTTP"}
+        const featureTags: any[] = [];
+        if (isHttp) {
+          featureTags.push(
+            <el-tooltip content="HTTP ON" placement="top">
+              <el-tag size="small" type="primary" effect="light" class="font-bold">
+                HTTP
               </el-tag>
             </el-tooltip>
-            {isH2 && (
-              <el-tooltip content="HTTP/2" placement="top">
-                <el-tag size="small" type="warning" effect="light" class="font-bold">H2</el-tag>
-              </el-tooltip>
-            )}
-            {isHsts && (
-              <el-tooltip content="HSTS" placement="top">
-                <el-tag size="small" type="danger" effect="light" class="font-bold">HSTS</el-tag>
-              </el-tooltip>
-            )}
-            {isCompress && (
-              <el-tooltip content="Gzip/Brotli Compress" placement="top">
-                <el-tag size="small" type="primary" effect="light" class="font-bold">Compress</el-tag>
-              </el-tooltip>
-            )}
-            {cert && (
-              <el-tooltip content={`Cert: ${cert}`} placement="top">
-                <el-tag size="small" type="info" effect="plain" class="font-mono">
-                  Cert: {cert}
-                </el-tag>
-              </el-tooltip>
-            )}
+          );
+        }
+        if (isTls) {
+          featureTags.push(
+            <el-tooltip content="HTTPS (TLS) ON" placement="top">
+              <el-tag size="small" type="success" effect="dark" class="font-bold">
+                HTTPS
+              </el-tag>
+            </el-tooltip>
+          );
+        }
+        if (!isHttp && !isTls) {
+          featureTags.push(
+            <el-tooltip content="OFF" placement="top">
+              <el-tag size="small" type="info" effect="plain">
+                -
+              </el-tag>
+            </el-tooltip>
+          );
+        }
+        if (isH2) {
+          featureTags.push(
+            <el-tooltip content="HTTP/2 Enabled" placement="top">
+              <el-tag size="small" type="warning" effect="light" class="font-bold">H2</el-tag>
+            </el-tooltip>
+          );
+        }
+        if (isHsts) {
+          featureTags.push(
+            <el-tooltip content="HSTS Security" placement="top">
+              <el-tag size="small" type="danger" effect="light" class="font-bold">HSTS</el-tag>
+            </el-tooltip>
+          );
+        }
+        if (isCompress) {
+          featureTags.push(
+            <el-tooltip content="Compression Enabled" placement="top">
+              <el-tag size="small" type="primary" effect="plain" class="font-bold">Compress</el-tag>
+            </el-tooltip>
+          );
+        }
+        if (cert) {
+          featureTags.push(
+            <el-tooltip content={`Cert: ${cert}`} placement="top">
+              <el-tag size="small" type="info" effect="plain" class="font-mono">
+                Cert: {cert}
+              </el-tag>
+            </el-tooltip>
+          );
+        }
+
+        const tagChunks: any[][] = [];
+        for (let i = 0; i < featureTags.length; i += 3) {
+          tagChunks.push(featureTags.slice(i, i + 3));
+        }
+
+        return (
+          <div class="space-y-1 py-1">
+            {tagChunks.map((chunk: any[], cIdx: number) => (
+              <div key={cIdx} class="flex items-center justify-center gap-1.5 flex-wrap">
+                {chunk}
+              </div>
+            ))}
           </div>
         );
       }
@@ -201,6 +173,105 @@ export function useHttpProxy(t: any, tableRef: Ref) {
           <el-tag size="small" type="primary" effect="light" class="font-mono font-bold">
             {count} Rules
           </el-tag>
+        );
+      }
+    },
+    {
+      label: t("http.backendSection"),
+      minWidth: 160,
+      cellRenderer: scope => {
+        let locations: any[] = [];
+        try {
+          const locStr = scope.row.LocationJSON || scope.row.location_json;
+          if (locStr) locations = typeof locStr === "string" ? JSON.parse(locStr) : locStr;
+        } catch (e) {}
+
+        if (!locations || locations.length === 0) {
+          return <span class="text-[var(--el-text-color-placeholder)] text-xs">-</span>;
+        }
+
+        return (
+          <div class="space-y-1.5 py-1">
+            {locations.map((loc: any, idx: number) => {
+              const path = loc.Path || "/";
+              const uType = loc.Upstream?.Type || "proxy_pass";
+
+              if (uType === "root" || uType === "alias") {
+                const dir = loc.Upstream?.Data?.Dir || "./static";
+                return (
+                  <div key={idx} class="p-1.5 rounded-lg border border-[var(--el-border-color-lighter)] bg-[var(--el-fill-color-light)] flex flex-wrap items-center gap-1.5">
+                    <el-tag size="small" type="info" effect="dark" class="font-mono font-bold">
+                      {path}
+                    </el-tag>
+                    <el-tag size="small" type={uType === "root" ? "success" : "warning"} effect="plain" class="font-bold font-mono">
+                      {uType}
+                    </el-tag>
+                    <span class="font-mono text-xs text-[var(--el-text-color-regular)] bg-[var(--el-bg-color)] px-2 py-0.5 rounded border border-[var(--el-border-color-lighter)] truncate max-w-[200px]">
+                      ➔ {dir}
+                    </span>
+                  </div>
+                );
+              }
+
+              const servers: any[] = loc.Upstream?.Data?.Servers || [];
+              const method = loc.Upstream?.Data?.Method || "round_robin";
+
+              const serverChunks: any[][] = [];
+              for (let i = 0; i < servers.length; i += 2) {
+                serverChunks.push(servers.slice(i, i + 2));
+              }
+
+              return (
+                <div key={idx} class="p-1.5 rounded-lg border border-[var(--el-border-color-lighter)] bg-[var(--el-fill-color-light)] space-y-1">
+                  <div class="flex items-center gap-1.5 flex-wrap">
+                    <el-tag size="small" type="info" effect="dark" class="font-mono font-bold">
+                      {path}
+                    </el-tag>
+                    <el-tag size="small" type="primary" effect="plain" class="font-bold font-mono">
+                      proxy_pass
+                    </el-tag>
+                    <el-tag size="small" type="info" effect="plain" class="text-[11px] font-mono">
+                      {method}
+                    </el-tag>
+                  </div>
+
+                  <div class="space-y-1 pt-0.5">
+                    {serverChunks.map((chunk: any[], cIdx: number) => (
+                      <div key={cIdx} class="flex items-center gap-1.5 flex-wrap">
+                        {chunk.map((srv: any, sIdx: number) => (
+                          <span
+                            key={sIdx}
+                            class="inline-flex items-center gap-1 font-mono text-[11px] bg-[var(--el-bg-color)] px-1.5 py-0.5 rounded border border-[var(--el-border-color-lighter)] shrink-0"
+                          >
+                            <span class="font-medium text-[var(--el-text-color-primary)]">{srv.Target}</span>
+                            <span class="text-[10px] text-gray-400 font-normal">({srv.Weight || 1})</span>
+                          </span>
+                        ))}
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+        );
+      }
+    },
+    {
+      label: t("http.remark", "备注"),
+      prop: "Remark",
+      minWidth: 110,
+      align: "center",
+      headerRenderer: () => <span class="whitespace-nowrap">{t("http.remark", "备注")}</span>,
+      cellRenderer: scope => {
+        const remark = scope.row.Remark || scope.row.remark || "-";
+        if (!remark || remark === "-") {
+          return <span class="text-xs text-[var(--el-text-color-placeholder)]">-</span>;
+        }
+        return (
+          <span class="text-xs text-[var(--el-text-color-regular)] break-words inline-block leading-snug py-1">
+            {remark}
+          </span>
         );
       }
     },

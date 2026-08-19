@@ -242,21 +242,12 @@ function formatJSON(row: any) {
         :model="form"
         class="search-form bg-bg_color w-full px-3 sm:px-6 pt-3 pb-1 overflow-auto mb-3 rounded-xl border border-[var(--el-border-color-lighter)] shadow-2xs"
       >
-        <el-form-item :label="t('http.hostname') + '：'" prop="hostname">
+        <el-form-item prop="keyword">
           <el-input
-            v-model="form.hostname"
-            :placeholder="t('http.searchHostnamePlaceholder')"
+            v-model="form.keyword"
+            :placeholder="t('http.keywordPlaceholder', '搜索名称、Hostname、端口或备注')"
             clearable
-            class="w-full sm:!w-[200px]"
-            @keyup.enter="onSearch"
-          />
-        </el-form-item>
-        <el-form-item :label="t('http.name') + '：'" prop="name">
-          <el-input
-            v-model="form.name"
-            :placeholder="t('http.searchNamePlaceholder')"
-            clearable
-            class="w-full sm:!w-[200px]"
+            class="w-full sm:!w-[280px]"
             @keyup.enter="onSearch"
           />
         </el-form-item>
@@ -342,7 +333,7 @@ function formatJSON(row: any) {
                 <div class="text-xs font-bold text-[var(--el-text-color-regular)] mb-2 flex items-center justify-between flex-wrap gap-1">
                   <div class="flex items-center space-x-2">
                     <div class="w-2 h-2 bg-[var(--el-color-primary)] rounded-full"></div>
-                    <span>ang HTTP JSON [ID: {{ row.Id || row.id }}]</span>
+                    <span>{{ t("http.engineJsonTitle") }} [ID: {{ row.Id || row.id }}]</span>
                   </div>
                   <span class="text-[var(--el-text-color-secondary)] font-mono text-[11px]">HTTP Server JSON</span>
                 </div>
@@ -446,6 +437,11 @@ function formatJSON(row: any) {
 <style scoped>
 .search-form :deep(.el-form-item) {
   margin-bottom: 12px;
+}
+
+:deep(.el-table .el-table__header th.el-table__cell .cell) {
+  white-space: nowrap !important;
+  word-break: keep-all !important;
 }
 
 @media (max-width: 640px) {

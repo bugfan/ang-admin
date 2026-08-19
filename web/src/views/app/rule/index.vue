@@ -143,7 +143,7 @@ async function handleSaveSubmit() {
         :model="form"
         class="search-form bg-bg_color w-full px-3 sm:px-6 pt-3 pb-1 overflow-auto mb-3 rounded-xl border border-[var(--el-border-color-lighter)] shadow-2xs"
       >
-        <el-form-item :label="t('rule.ruleGroupName') + '：'" prop="name">
+        <el-form-item :label="t('rule.name', '名称') + '：'" prop="name">
           <el-input
             v-model="form.name"
             :placeholder="t('rule.ruleGroupSearchPlaceholder')"

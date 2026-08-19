@@ -51,11 +51,14 @@ export function useDnsProxy(t: any, tableRef: Ref) {
     {
       label: t("dns.name", "名称"),
       prop: "Name",
-      minWidth: 140,
+      minWidth: 120,
+      headerRenderer: () => <span class="whitespace-nowrap">{t("dns.name", "名称")}</span>,
       cellRenderer: scope => {
         const name = scope.row.Name || scope.row.name || "-";
         return (
-          <span class="font-semibold text-[var(--el-text-color-primary)]">{name}</span>
+          <span class="font-semibold text-sm text-[var(--el-text-color-primary)] break-words inline-block leading-snug py-1">
+            {name}
+          </span>
         );
       }
     },
@@ -110,8 +113,20 @@ export function useDnsProxy(t: any, tableRef: Ref) {
     {
       label: t("dns.remark"),
       prop: "Remark",
-      minWidth: 140,
-      formatter: (row) => row.Remark || row.remark || "-"
+      minWidth: 110,
+      align: "center",
+      headerRenderer: () => <span class="whitespace-nowrap">{t("dns.remark")}</span>,
+      cellRenderer: scope => {
+        const remark = scope.row.Remark || scope.row.remark || "-";
+        if (!remark || remark === "-") {
+          return <span class="text-xs text-[var(--el-text-color-placeholder)]">-</span>;
+        }
+        return (
+          <span class="text-xs text-[var(--el-text-color-regular)] break-words inline-block leading-snug py-1">
+            {remark}
+          </span>
+        );
+      }
     },
     {
       label: t("dns.createTime"),

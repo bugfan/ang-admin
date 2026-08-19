@@ -47,11 +47,14 @@ export function useCert(t: any, tableRef: Ref) {
     {
       label: t("cert.certId"),
       prop: "CertId",
-      minWidth: 140,
+      minWidth: 120,
+      headerRenderer: () => <span class="whitespace-nowrap">{t("cert.certId")}</span>,
       cellRenderer: scope => {
         const certId = scope.row.CertId || scope.row.cert_id || "-";
         return (
-          <span class="font-semibold text-[var(--el-text-color-primary)]">{certId}</span>
+          <span class="font-semibold text-sm text-[var(--el-text-color-primary)] break-words inline-block leading-snug py-1">
+            {certId}
+          </span>
         );
       }
     },
@@ -142,8 +145,20 @@ export function useCert(t: any, tableRef: Ref) {
     {
       label: t("cert.remark"),
       prop: "Remark",
-      minWidth: 120,
-      formatter: (row) => row.Remark || row.remark || "-"
+      minWidth: 110,
+      align: "center",
+      headerRenderer: () => <span class="whitespace-nowrap">{t("cert.remark")}</span>,
+      cellRenderer: scope => {
+        const remark = scope.row.Remark || scope.row.remark || "-";
+        if (!remark || remark === "-") {
+          return <span class="text-xs text-[var(--el-text-color-placeholder)]">-</span>;
+        }
+        return (
+          <span class="text-xs text-[var(--el-text-color-regular)] break-words inline-block leading-snug py-1">
+            {remark}
+          </span>
+        );
+      }
     },
     {
       label: t("cert.createTime"),

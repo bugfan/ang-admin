@@ -147,7 +147,7 @@ async function handleSaveSubmit() {
         <el-form-item :label="t('cert.type')" prop="type">
           <el-select
             v-model="form.type"
-            :placeholder="t('cert.selectTypePlaceholder')"
+            :placeholder="t('cert.searchTypePlaceholder', '请选择类型')"
             clearable
             class="w-full sm:!w-[180px]"
             @change="onSearch"
