@@ -63,7 +63,7 @@ export function useHttpProxy(t: any, tableRef: Ref) {
         const host = scope.row.Hostname || scope.row.hostname || "-";
         const port = scope.row.Port || scope.row.port || "80";
         return (
-          <div class="font-mono text-sm font-bold text-[var(--el-text-color-primary)] py-1 inline-flex items-center gap-0.5">
+          <div class="font-mono text-xs font-normal text-[var(--el-text-color-secondary)] py-1 inline-flex items-center gap-0.5">
             <span>{host}</span>
             <span>:{port}</span>
           </div>

@@ -499,7 +499,7 @@ dns:
   portFormatError: "端口必须为有效数字 (1-65535)"
   hostsPlaceholder: "# 格式: IP 域名1 域名2... (支持精确域名与通配符 *.example.com / www.*.com)\n1.2.3.4 baidu.com *.baidu.com www.*.com\n2.3.9.4 qq.com\n::1 ipv6.baidu.com"
   selectTunnelPlaceholder: "请选择已经配置的 QUIC Tunnel 隧道"
-  tunnelTip: "提示: 当前 DNS 模式仅支持关联 QUIC 类型的隧道（后续开启 DoH 功能后将支持 TLS 隧道）"
+  tunnelTip: "提示: 当前 DNS 模式仅支持关联 QUIC 类型的隧道"
   selectRulesPlaceholder: "请选择中间件规则 (可多选并调整顺序)"
   hostsTip: "提示: 支持每行配置单个 IP 及多个域名/通配符 (如 *.domain.com)，底层采用 glob 库高效正则校验与解析。"
   baseInfoTab: "基础监听与规则"

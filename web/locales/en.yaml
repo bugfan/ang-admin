@@ -499,7 +499,7 @@ dns:
   portFormatError: "Port must be a valid number (1-65535)"
   hostsPlaceholder: "# Format: IP Domain1 Domain2... (Supports exact domain and wildcards *.example.com / www.*.com)\n1.2.3.4 baidu.com *.baidu.com www.*.com\n2.3.9.4 qq.com\n::1 ipv6.baidu.com"
   selectTunnelPlaceholder: "Select configured QUIC Tunnel"
-  tunnelTip: "Tip: Currently DNS mode only supports QUIC Tunnels (TLS Tunnels will be supported when DoH is enabled)"
+  tunnelTip: "Tip: Currently DNS mode only supports QUIC Tunnels"
   selectRulesPlaceholder: "Select middleware rules (multi-select and orderable)"
   hostsTip: "Tip: Supports single IP with multiple domains/wildcards per line. Validated using glob pattern matching."
   baseInfoTab: "Base Listeners & Rules"
