@@ -460,10 +460,16 @@ tunnelClient:
   confirmDeleteNode: "是否确认删除该节点？"
   remarkPlaceholder: "请输入备注信息 (选填)"
 dns:
+  remarkPlaceholder: "请输入备注信息 (选填)"
+
+  ruleSection: "规则"
+  rulesTip: "提示: DNS 代理属于传输层 (L4) 服务，下拉列表仅展示在“规则”菜单中配置的传输层 (L4) 中间件规则 (如 ip_matcher / reset_conn_action)，HTTP 应用层规则不适用于 DNS。"
+
+
   address: "地址"
   port: "端口"
   listenAddressPort: "监听地址 / 端口"
-  rules: "中间件 (Rules)"
+  rules: "中间件"
   hosts: "Hosts 域名映射"
   backend: "上游"
   backendType: "后端类型"
@@ -500,7 +506,7 @@ dns:
   hostsPlaceholder: "# 格式: IP 域名1 域名2... (支持精确域名与通配符 *.example.com / www.*.com)\n1.2.3.4 baidu.com *.baidu.com www.*.com\n2.3.9.4 qq.com\n::1 ipv6.baidu.com"
   selectTunnelPlaceholder: "请选择已经配置的 QUIC Tunnel 隧道"
   tunnelTip: "提示: 当前 DNS 模式仅支持关联 QUIC 类型的隧道"
-  selectRulesPlaceholder: "请选择中间件规则 (可多选并调整顺序)"
+  selectRulesPlaceholder: "请选择中间件"
   hostsTip: "提示: 支持每行配置单个 IP 及多个域名/通配符 (如 *.domain.com)，底层采用 glob 库高效正则校验与解析。"
   baseInfoTab: "基础监听与规则"
   hostsTab: "Hosts 域名映射"
@@ -596,6 +602,8 @@ http:
   frontSection: "基本信息"
   featureSection: "特性"
   ruleSection: "规则"
+  rulesTip: "提示: DNS 代理属于传输层 (L4) 服务，下拉列表仅展示在“规则”菜单中配置的传输层 (L4) 中间件规则 (如 ip_matcher / reset_conn_action)，HTTP 应用层规则不适用于 DNS。"
+
   backendSection: "目标与上游"
   enableHttp: "开启 HTTP"
   enableTls: "开启 HTTPS (TLS)"

@@ -460,10 +460,16 @@ tunnelClient:
   confirmDeleteNode: "Are you sure you want to delete this node?"
   remarkPlaceholder: "Please enter remark (optional)"
 dns:
+  remarkPlaceholder: "Please enter remark (optional)"
+
+  ruleSection: "Rules"
+  rulesTip: "Tip: DNS Proxy is a Layer 4 (L4) service. The dropdown only displays L4 middleware rules configured in the Rules menu (e.g., ip_matcher / reset_conn_action). HTTP application rules are not applicable to DNS."
+
+
   address: "Address"
   port: "Port"
   listenAddressPort: "Listen Address / Port"
-  rules: "Middleware Rules"
+  rules: "Middleware"
   hosts: "Hosts Mapping"
   backend: "Upstream"
   backendType: "Backend Type"
@@ -500,7 +506,7 @@ dns:
   hostsPlaceholder: "# Format: IP Domain1 Domain2... (Supports exact domain and wildcards *.example.com / www.*.com)\n1.2.3.4 baidu.com *.baidu.com www.*.com\n2.3.9.4 qq.com\n::1 ipv6.baidu.com"
   selectTunnelPlaceholder: "Select configured QUIC Tunnel"
   tunnelTip: "Tip: Currently DNS mode only supports QUIC Tunnels"
-  selectRulesPlaceholder: "Select middleware rules (multi-select and orderable)"
+  selectRulesPlaceholder: "Select middleware"
   hostsTip: "Tip: Supports single IP with multiple domains/wildcards per line. Validated using glob pattern matching."
   baseInfoTab: "Base Listeners & Rules"
   hostsTab: "Hosts Mapping"
@@ -596,6 +602,8 @@ http:
   frontSection: "Basic Information"
   featureSection: "Features"
   ruleSection: "Rules"
+  rulesTip: "Tip: DNS Proxy is a Layer 4 (L4) service. The dropdown only displays L4 middleware rules configured in the Rules menu (e.g., ip_matcher / reset_conn_action). HTTP application rules are not applicable to DNS."
+
   backendSection: "Target & Upstream"
   enableHttp: "Enable HTTP"
   enableTls: "Enable HTTPS (TLS)"

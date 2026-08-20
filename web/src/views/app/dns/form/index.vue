@@ -9,8 +9,6 @@ import { message } from "@/utils/message";
 import { useRenderIcon } from "@/components/ReIcon/src/hooks";
 import AddFill from "~icons/ri/add-line";
 import Delete from "~icons/ep/delete";
-import ArrowUp from "~icons/ep/arrow-up";
-import ArrowDown from "~icons/ep/arrow-down";
 
 const props = withDefaults(defineProps<{ formInline: any }>(), {
   formInline: () => ({
@@ -131,21 +129,7 @@ function handleRulesChange(vals: string[]) {
   syncRulesJSON();
 }
 
-function moveRuleUp(index: number) {
-  if (index <= 0) return;
-  const temp = selectedRules.value[index];
-  selectedRules.value[index] = selectedRules.value[index - 1];
-  selectedRules.value[index - 1] = temp;
-  syncRulesJSON();
-}
 
-function moveRuleDown(index: number) {
-  if (index >= selectedRules.value.length - 1) return;
-  const temp = selectedRules.value[index];
-  selectedRules.value[index] = selectedRules.value[index + 1];
-  selectedRules.value[index + 1] = temp;
-  syncRulesJSON();
-}
 
 function syncRulesJSON() {
   newFormInline.value.rules = JSON.stringify(selectedRules.value);
@@ -525,86 +509,6 @@ defineExpose({ getRef });
           </el-form-item>
         </re-col>
 
-        <!-- 中间件规则多选与排序 -->
-        <re-col :value="24" :xs="24" :sm="24">
-          <el-form-item :label="t('dns.rules')" prop="rules">
-            <div class="w-full space-y-2">
-              <el-select
-                v-model="selectedRules"
-                multiple
-                clearable
-                class="w-full"
-                :placeholder="t('dns.selectRulesPlaceholder')"
-                @change="handleRulesChange"
-              >
-                <el-option
-                  v-for="r in availableRules"
-                  :key="r.value"
-                  :label="r.label"
-                  :value="r.value"
-                />
-              </el-select>
-
-              <div
-                class="text-xs/relaxed text-(--el-text-color-secondary) mt-1"
-              >
-                提示: DNS 代理属于传输层 (L4)
-                服务，下拉列表仅展示在“规则”菜单中配置的传输层 (L4) 中间件规则
-                (如 ip_matcher / reset_conn_action)，HTTP 应用层规则不适用于
-                DNS。
-              </div>
-
-              <!-- 已选中规则的排序清单 -->
-              <div
-                v-if="selectedRules.length > 0"
-                class="p-2.5 bg-(--el-fill-color-light) rounded-lg border border-(--el-border-color-lighter) text-xs"
-              >
-                <div
-                  class="text-(--el-text-color-secondary) mb-1.5 font-medium flex-bc"
-                >
-                  <span class="inline-flex items-center gap-1">
-                    <IconifyIconOffline icon="ri:settings-3-line" />
-                    {{ t("dns.ruleOrderTip") }}
-                  </span>
-                  <span class="font-mono"
-                    >共 {{ selectedRules.length }} 项</span
-                  >
-                </div>
-                <div class="space-y-1">
-                  <div
-                    v-for="(ruleVal, idx) in selectedRules"
-                    :key="ruleVal"
-                    class="flex-bc p-2 bg-(--el-bg-color) rounded-lg border border-(--el-border-color-lighter)"
-                  >
-                    <span class="font-mono text-(--el-text-color-primary)">
-                      <span class="text-gray-400 font-bold mr-1.5"
-                        >#{{ idx + 1 }}</span
-                      >
-                      {{ ruleVal }}
-                    </span>
-                    <div class="flex items-center space-x-1">
-                      <el-button
-                        size="small"
-                        link
-                        :disabled="idx === 0"
-                        :icon="useRenderIcon(ArrowUp)"
-                        @click="moveRuleUp(idx)"
-                      />
-                      <el-button
-                        size="small"
-                        link
-                        :disabled="idx === selectedRules.length - 1"
-                        :icon="useRenderIcon(ArrowDown)"
-                        @click="moveRuleDown(idx)"
-                      />
-                    </div>
-                  </div>
-                </div>
-              </div>
-            </div>
-          </el-form-item>
-        </re-col>
-
         <!-- 备注 -->
         <re-col :value="24" :xs="24" :sm="24">
           <el-form-item :label="t('dns.remark')" prop="remark">
@@ -677,6 +581,49 @@ defineExpose({ getRef });
       </div>
     </el-card>
 
+    <!-- 中间件规则 (Rule) 模块 -->
+    <el-card
+      shadow="never"
+      class="border-(--el-border-color-lighter)! rounded-xl"
+    >
+      <template #header>
+        <div class="flex items-center space-x-2">
+          <div class="w-1.5 h-4 bg-amber-500 rounded-full" />
+          <span
+            class="font-bold text-sm sm:text-base text-(--el-text-color-primary)"
+          >
+            {{ t("dns.ruleSection") }}
+          </span>
+        </div>
+      </template>
+      <el-form-item :label="t('dns.rules')" prop="rules">
+        <div class="w-full space-y-2">
+          <el-select
+            v-model="selectedRules"
+            multiple
+            clearable
+            class="w-full"
+            :placeholder="t('dns.selectRulesPlaceholder')"
+            @change="handleRulesChange"
+          >
+            <el-option
+              v-for="r in availableRules"
+              :key="r.value"
+              :label="r.label"
+              :value="r.value"
+            />
+          </el-select>
+
+          <div
+            class="text-xs/relaxed text-(--el-text-color-secondary) mt-1"
+          >
+            {{ t("dns.rulesTip") }}
+          </div>
+
+        </div>
+      </el-form-item>
+    </el-card>
+
     <!-- 板块 3: 上游配置 -->
     <el-card
       shadow="never"
@@ -738,10 +685,10 @@ defineExpose({ getRef });
                       class="font-semibold text-(--el-text-color-primary) font-mono"
                       >{{ item.cName || "Node" }}</span
                     >
-                  </div>
+        </div>
                   <div v-else class="text-xs text-gray-400 py-0.5">
                     {{ item.cName }}
-                  </div>
+        </div>
                 </el-option>
               </el-option-group>
             </el-select>

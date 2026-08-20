@@ -84,6 +84,11 @@ export function useDnsProxy(t: any, tableRef: Ref) {
       }
     },
     {
+      label: t("dns.hosts"),
+      minWidth: 180,
+      slot: "hosts"
+    },
+    {
       label: t("dns.rules"),
       minWidth: 160,
       cellRenderer: scope => {
@@ -113,11 +118,6 @@ export function useDnsProxy(t: any, tableRef: Ref) {
           </div>
         );
       }
-    },
-    {
-      label: t("dns.hosts"),
-      minWidth: 180,
-      slot: "hosts"
     },
     {
       label: t("dns.backend"),
