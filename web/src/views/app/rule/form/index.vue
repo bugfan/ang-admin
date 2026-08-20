@@ -18,8 +18,22 @@ interface RuleItemConfig {
   matcherName: string;
   ipAddressText: string;
   httpIpAddressText: string;
+  urlMethod: string;
+  urlPath: string;
+  jsScript: string;
   actionName: string;
   resetContent: string;
+  authGuardLoginUrl: string;
+  forwardUrl: string;
+  modifyStatusCode: number | string;
+  replaceReqBodyMap: string;
+  replaceRespBodyMap: string;
+  replaceReqHeaderMap: string;
+  replaceRespHeaderMap: string;
+  respTextCode: string;
+  respTextContent: string;
+  respTextHeader: string;
+  webvpnSites: string;
 }
 
 const props = withDefaults(defineProps<{ formInline: any }>(), {
@@ -52,14 +66,38 @@ const newFormInline = ref(props.formInline);
 // Supported Matcher options
 const matcherOptions = [
   {
+    label: "Always True (always_true_matcher)",
+    value: "always_true_matcher",
+    tag: "L4",
+    tagType: "primary"
+  },
+  {
     label: "TCP / L4 IP (ip_matcher)",
     value: "ip_matcher",
     tag: "L4",
     tagType: "primary"
   },
   {
+    label: "TCP / L4 CIDR (cidr_matcher)",
+    value: "cidr_matcher",
+    tag: "L4",
+    tagType: "primary"
+  },
+  {
     label: "HTTP Proxy IP (http_ip_matcher)",
     value: "http_ip_matcher",
+    tag: "HTTP",
+    tagType: "success"
+  },
+  {
+    label: "HTTP URL (url_matcher)",
+    value: "url_matcher",
+    tag: "HTTP",
+    tagType: "success"
+  },
+  {
+    label: "HTTP JS Script (js_matcher)",
+    value: "js_matcher",
     tag: "HTTP",
     tagType: "success"
   }
@@ -78,6 +116,66 @@ const actionOptions = [
     value: "hide_version_action",
     tag: "HTTP",
     tagType: "warning"
+  },
+  {
+    label: "Auth Guard (auth_guard_action)",
+    value: "auth_guard_action",
+    tag: "HTTP",
+    tagType: "warning"
+  },
+  {
+    label: "Auth Portal (auth_portal_action)",
+    value: "auth_portal_action",
+    tag: "HTTP",
+    tagType: "warning"
+  },
+  {
+    label: "Forward Request (forward_request_action)",
+    value: "forward_request_action",
+    tag: "HTTP",
+    tagType: "warning"
+  },
+  {
+    label: "Modify Status (modify_status_action)",
+    value: "modify_status_action",
+    tag: "HTTP",
+    tagType: "warning"
+  },
+  {
+    label: "Replace Request Body (replace_request_body_action)",
+    value: "replace_request_body_action",
+    tag: "HTTP",
+    tagType: "warning"
+  },
+  {
+    label: "Replace Response Body (replace_response_body_action)",
+    value: "replace_response_body_action",
+    tag: "HTTP",
+    tagType: "warning"
+  },
+  {
+    label: "Replace Request Header (replace_request_header_action)",
+    value: "replace_request_header_action",
+    tag: "HTTP",
+    tagType: "warning"
+  },
+  {
+    label: "Replace Response Header (replace_response_header_action)",
+    value: "replace_response_header_action",
+    tag: "HTTP",
+    tagType: "warning"
+  },
+  {
+    label: "Response Text (response_text_action)",
+    value: "response_text_action",
+    tag: "HTTP",
+    tagType: "warning"
+  },
+  {
+    label: "Subdomain WebVPN (subdomain_webvpn_action)",
+    value: "subdomain_webvpn_action",
+    tag: "HTTP",
+    tagType: "warning"
   }
 ];
 
@@ -92,8 +190,22 @@ const itemForm = reactive<RuleItemConfig>({
   matcherName: "ip_matcher",
   ipAddressText: "127.0.0.1",
   httpIpAddressText: "192.168.1.0/24",
+  urlMethod: "ALL",
+  urlPath: "/",
+  jsScript: "return true;",
   actionName: "reset_conn_action",
-  resetContent: "Connection reset by rule"
+  resetContent: "Connection reset by rule",
+  authGuardLoginUrl: "/login",
+  forwardUrl: "",
+  modifyStatusCode: 403,
+  replaceReqBodyMap: "{}",
+  replaceRespBodyMap: "{}",
+  replaceReqHeaderMap: "{}",
+  replaceRespHeaderMap: "{}",
+  respTextCode: "403",
+  respTextContent: "Forbidden",
+  respTextHeader: "{}",
+  webvpnSites: "{}"
 });
 
 onInitForm();
@@ -102,10 +214,24 @@ function createDefaultItem(): RuleItemConfig {
   return {
     id: String(Date.now() + Math.random()),
     matcherName: "ip_matcher",
-    ipAddressText: "127.0.0.1",
-    httpIpAddressText: "192.168.1.0/24",
+    ipAddressText: "",
+    httpIpAddressText: "",
+    urlMethod: "ALL",
+    urlPath: "/",
+    jsScript: "return true;",
     actionName: "reset_conn_action",
-    resetContent: "Connection reset by rule"
+    resetContent: "",
+    authGuardLoginUrl: "/login",
+    forwardUrl: "",
+    modifyStatusCode: 403,
+    replaceReqBodyMap: "{}",
+    replaceRespBodyMap: "{}",
+    replaceReqHeaderMap: "{}",
+    replaceRespHeaderMap: "{}",
+    respTextCode: "403",
+    respTextContent: "Forbidden",
+    respTextHeader: "{}",
+    webvpnSites: "{}"
   };
 }
 
@@ -129,33 +255,81 @@ function onInitForm() {
 
           let ipText = "127.0.0.1";
           let httpIpText = "192.168.1.0/24";
+          let urlMethod = "ALL";
+          let urlPath = "/";
+          let jsScript = "return true;";
+
           if (mName === "ip_matcher" && Array.isArray(mCfg.Address)) {
             ipText = mCfg.Address.join("\n");
-          }
-          if (mName === "http_ip_matcher" && Array.isArray(mCfg.Address)) {
+          } else if (mName === "cidr_matcher" && Array.isArray(mCfg.CIDRs)) {
+            ipText = mCfg.CIDRs.join("\n");
+          } else if (mName === "http_ip_matcher" && Array.isArray(mCfg.Address)) {
             httpIpText = mCfg.Address.join("\n");
+          } else if (mName === "url_matcher") {
+            urlMethod = mCfg.Method || "ALL";
+            urlPath = mCfg.Path || "/";
+          } else if (mName === "js_matcher") {
+            jsScript = mCfg.Script || "";
           }
+
+          let resetContent = "";
+          let authGuardLoginUrl = "/login";
+          let forwardUrl = "";
+          let modifyStatusCode = 403;
+          let replaceReqBodyMap = "{}";
+          let replaceRespBodyMap = "{}";
+          let replaceReqHeaderMap = "{}";
+          let replaceRespHeaderMap = "{}";
+          let respTextCode = "403";
+          let respTextContent = "";
+          let respTextHeader = "{}";
+          let webvpnSites = "{}";
+
+          if (aName === "reset_conn_action") resetContent = aCfg.Content || "";
+          if (aName === "auth_guard_action") authGuardLoginUrl = aCfg.LoginURL || "";
+          if (aName === "forward_request_action") forwardUrl = aCfg.Url || "";
+          if (aName === "modify_status_action") modifyStatusCode = aCfg.Code || 403;
+          if (aName === "replace_request_body_action") replaceReqBodyMap = aCfg.Map ? JSON.stringify(aCfg.Map, null, 2) : "{}";
+          if (aName === "replace_response_body_action") replaceRespBodyMap = aCfg.Map ? JSON.stringify(aCfg.Map, null, 2) : "{}";
+          if (aName === "replace_request_header_action") replaceReqHeaderMap = aCfg.Map ? JSON.stringify(aCfg.Map, null, 2) : "{}";
+          if (aName === "replace_response_header_action") replaceRespHeaderMap = aCfg.Map ? JSON.stringify(aCfg.Map, null, 2) : "{}";
+          if (aName === "response_text_action") {
+             respTextCode = aCfg.Code || "403";
+             respTextContent = aCfg.Content || "";
+             respTextHeader = aCfg.Header ? JSON.stringify(aCfg.Header, null, 2) : "{}";
+          }
+          if (aName === "subdomain_webvpn_action") webvpnSites = aCfg.Sites ? JSON.stringify(aCfg.Sites, null, 2) : "{}";
 
           itemList.value.push({
             id: String(Math.random()),
-            matcherName:
-              mName === "http_ip_matcher" ? "http_ip_matcher" : "ip_matcher",
+            matcherName: mName,
             ipAddressText: ipText,
             httpIpAddressText: httpIpText,
-            actionName:
-              aName === "hide_version_action"
-                ? "hide_version_action"
-                : "reset_conn_action",
-            resetContent: aCfg.Content ?? "Connection reset by rule"
+            urlMethod,
+            urlPath,
+            jsScript,
+            actionName: aName,
+            resetContent,
+            authGuardLoginUrl,
+            forwardUrl,
+            modifyStatusCode,
+            replaceReqBodyMap,
+            replaceRespBodyMap,
+            replaceReqHeaderMap,
+            replaceRespHeaderMap,
+            respTextCode,
+            respTextContent,
+            respTextHeader,
+            webvpnSites
           });
         }
       }
     }
   } catch (e) {}
 
-  if (itemList.value.length === 0) {
-    itemList.value.push(createDefaultItem());
-  }
+  // if (itemList.value.length === 0) {
+  //   itemList.value.push(createDefaultItem());
+  // }
 
   syncToFormJSON();
 }
@@ -190,8 +364,22 @@ function saveItemFromDialog() {
     matcherName: itemForm.matcherName,
     ipAddressText: itemForm.ipAddressText,
     httpIpAddressText: itemForm.httpIpAddressText,
+    urlMethod: itemForm.urlMethod,
+    urlPath: itemForm.urlPath,
+    jsScript: itemForm.jsScript,
     actionName: itemForm.actionName,
-    resetContent: itemForm.resetContent
+    resetContent: itemForm.resetContent,
+    authGuardLoginUrl: itemForm.authGuardLoginUrl,
+    forwardUrl: itemForm.forwardUrl,
+    modifyStatusCode: itemForm.modifyStatusCode,
+    replaceReqBodyMap: itemForm.replaceReqBodyMap,
+    replaceRespBodyMap: itemForm.replaceRespBodyMap,
+    replaceReqHeaderMap: itemForm.replaceReqHeaderMap,
+    replaceRespHeaderMap: itemForm.replaceRespHeaderMap,
+    respTextCode: itemForm.respTextCode,
+    respTextContent: itemForm.respTextContent,
+    respTextHeader: itemForm.respTextHeader,
+    webvpnSites: itemForm.webvpnSites
   };
 
   if (editingIndex.value !== null && editingIndex.value >= 0) {
@@ -205,9 +393,6 @@ function saveItemFromDialog() {
 }
 
 function removeItem(idx: number) {
-  if (itemList.value.length <= 1) {
-    return;
-  }
   itemList.value.splice(idx, 1);
   syncToFormJSON();
 }
@@ -233,35 +418,37 @@ function syncToFormJSON() {
   for (const item of itemList.value) {
     let matcherObj: any = {};
     if (item.matcherName === "http_ip_matcher") {
-      const addrs = item.httpIpAddressText
-        .split("\n")
-        .map(s => s.trim())
-        .filter(Boolean);
-      matcherObj = { Name: "http_ip_matcher", Config: { Address: addrs } };
+      matcherObj = { Name: "http_ip_matcher", Config: { Address: item.httpIpAddressText.split("\n").map(s => s.trim()).filter(Boolean) } };
+    } else if (item.matcherName === "url_matcher") {
+      matcherObj = { Name: "url_matcher", Config: { Method: item.urlMethod, Path: item.urlPath } };
+    } else if (item.matcherName === "js_matcher") {
+      matcherObj = { Name: "js_matcher", Config: { Script: item.jsScript } };
+    } else if (item.matcherName === "cidr_matcher") {
+      matcherObj = { Name: "cidr_matcher", Config: { CIDRs: item.ipAddressText.split("\n").map(s => s.trim()).filter(Boolean) } };
+    } else if (item.matcherName === "always_true_matcher") {
+      matcherObj = { Name: "always_true_matcher", Config: {} };
     } else {
-      const addrs = item.ipAddressText
-        .split("\n")
-        .map(s => s.trim())
-        .filter(Boolean);
-      matcherObj = { Name: "ip_matcher", Config: { Address: addrs } };
+      matcherObj = { Name: "ip_matcher", Config: { Address: item.ipAddressText.split("\n").map(s => s.trim()).filter(Boolean) } };
     }
 
     let actionObj: any = {};
-    if (item.actionName === "hide_version_action") {
-      actionObj = { Name: "hide_version_action", Config: {} };
-    } else {
-      actionObj = {
-        Name: "reset_conn_action",
-        Config: { Content: item.resetContent }
-      };
-    }
+    const tryParse = (str: string) => { try { return JSON.parse(str); } catch(e) { return {}; } };
 
-    result.push({
-      Matcher: matcherObj,
-      Action: actionObj
-    });
+    if (item.actionName === "hide_version_action") actionObj = { Name: "hide_version_action", Config: {} };
+    else if (item.actionName === "auth_portal_action") actionObj = { Name: "auth_portal_action", Config: {} };
+    else if (item.actionName === "auth_guard_action") actionObj = { Name: "auth_guard_action", Config: { LoginURL: item.authGuardLoginUrl } };
+    else if (item.actionName === "forward_request_action") actionObj = { Name: "forward_request_action", Config: { Url: item.forwardUrl, Forward: true } };
+    else if (item.actionName === "modify_status_action") actionObj = { Name: "modify_status_action", Config: { Code: Number(item.modifyStatusCode) } };
+    else if (item.actionName === "replace_request_body_action") actionObj = { Name: "replace_request_body_action", Config: { Map: tryParse(item.replaceReqBodyMap) } };
+    else if (item.actionName === "replace_response_body_action") actionObj = { Name: "replace_response_body_action", Config: { Map: tryParse(item.replaceRespBodyMap) } };
+    else if (item.actionName === "replace_request_header_action") actionObj = { Name: "replace_request_header_action", Config: { Map: tryParse(item.replaceReqHeaderMap) } };
+    else if (item.actionName === "replace_response_header_action") actionObj = { Name: "replace_response_header_action", Config: { Map: tryParse(item.replaceRespHeaderMap) } };
+    else if (item.actionName === "response_text_action") actionObj = { Name: "response_text_action", Config: { Code: String(item.respTextCode), Content: item.respTextContent, Header: tryParse(item.respTextHeader) } };
+    else if (item.actionName === "subdomain_webvpn_action") actionObj = { Name: "subdomain_webvpn_action", Config: { Sites: tryParse(item.webvpnSites) } };
+    else actionObj = { Name: "reset_conn_action", Config: { Content: item.resetContent } };
+
+    result.push({ Matcher: matcherObj, Action: actionObj });
   }
-
   newFormInline.value.items = JSON.stringify(result, null, 2);
 }
 
@@ -270,26 +457,21 @@ function getMatcherSummary(item: RuleItemConfig): {
   tagType: string;
   summary: string;
 } {
-  if (item.matcherName === "http_ip_matcher") {
+  const matchOpt = matcherOptions.find(o => o.value === item.matcherName);
+  const tagType = matchOpt ? matchOpt.tagType : "info";
+
+  if (item.matcherName === "always_true_matcher") {
+    return { name: "always_true_matcher", tagType, summary: "Match All" };
+  } else if (item.matcherName === "http_ip_matcher") {
     const lines = item.httpIpAddressText.split("\n").filter(s => s.trim());
-    return {
-      name: "http_ip_matcher",
-      tagType: "success",
-      summary:
-        lines.length > 0
-          ? `${lines[0]}${lines.length > 1 ? ` (${lines.length})` : ""}`
-          : "No IP"
-    };
+    return { name: "http_ip_matcher", tagType, summary: lines.length > 0 ? `${lines[0]}${lines.length > 1 ? ` (${lines.length})` : ""}` : "No IP" };
+  } else if (item.matcherName === "url_matcher") {
+    return { name: "url_matcher", tagType, summary: `${item.urlMethod} ${item.urlPath}` };
+  } else if (item.matcherName === "js_matcher") {
+    return { name: "js_matcher", tagType, summary: "Custom Script" };
   }
   const lines = item.ipAddressText.split("\n").filter(s => s.trim());
-  return {
-    name: "ip_matcher",
-    tagType: "primary",
-    summary:
-      lines.length > 0
-        ? `${lines[0]}${lines.length > 1 ? ` (${lines.length})` : ""}`
-        : "No IP"
-  };
+  return { name: item.matcherName, tagType, summary: lines.length > 0 ? `${lines[0]}${lines.length > 1 ? ` (${lines.length})` : ""}` : "No Config" };
 }
 
 function getActionSummary(item: RuleItemConfig): {
@@ -297,19 +479,27 @@ function getActionSummary(item: RuleItemConfig): {
   tagType: string;
   summary: string;
 } {
-  if (item.actionName === "hide_version_action") {
-    return {
-      name: "hide_version_action",
-      tagType: "warning",
-      summary: "Hide Server Version"
-    };
-  }
+  const actOpt = actionOptions.find(o => o.value === item.actionName);
+  const tagType = actOpt ? actOpt.tagType : "info";
+
+  let summary = "";
+  if (item.actionName === "reset_conn_action") summary = item.resetContent ? `Msg: ${item.resetContent}` : "Reset Connection";
+  else if (item.actionName === "hide_version_action") summary = "Hide Server Version";
+  else if (item.actionName === "auth_guard_action") summary = `Guard URL: ${item.authGuardLoginUrl}`;
+  else if (item.actionName === "auth_portal_action") summary = "SSO Portal";
+  else if (item.actionName === "forward_request_action") summary = `To: ${item.forwardUrl}`;
+  else if (item.actionName === "modify_status_action") summary = `Status: ${item.modifyStatusCode}`;
+  else if (item.actionName === "replace_request_body_action") summary = "Req Body Map";
+  else if (item.actionName === "replace_response_body_action") summary = "Resp Body Map";
+  else if (item.actionName === "replace_request_header_action") summary = "Req Header Map";
+  else if (item.actionName === "replace_response_header_action") summary = "Resp Header Map";
+  else if (item.actionName === "response_text_action") summary = `Code: ${item.respTextCode}`;
+  else if (item.actionName === "subdomain_webvpn_action") summary = "WebVPN Sites";
+
   return {
-    name: "reset_conn_action",
-    tagType: "danger",
-    summary: item.resetContent
-      ? `Msg: ${item.resetContent}`
-      : "Reset Connection"
+    name: item.actionName,
+    tagType,
+    summary
   };
 }
 
@@ -512,7 +702,7 @@ defineExpose({ getRef });
                   size="small"
                   link
                   type="danger"
-                  :disabled="itemList.length <= 1"
+                  
                   :icon="useRenderIcon(Delete)"
                   @click="removeItem(index)"
                 >
@@ -589,15 +779,19 @@ defineExpose({ getRef });
             </el-select>
           </el-form-item>
 
-          <div v-if="itemForm.matcherName === 'ip_matcher'" class="mt-2">
+          <div v-if="itemForm.matcherName === 'always_true_matcher'" class="mt-2">
+            <el-alert :title="t('rule.matcherAlwaysTrueTip', '无条件匹配所有流量')" type="info" :closable="false" show-icon />
+          </div>
+
+          <div v-if="itemForm.matcherName === 'ip_matcher' || itemForm.matcherName === 'cidr_matcher'" class="mt-2">
             <el-input
               v-model="itemForm.ipAddressText"
               type="textarea"
               :rows="3"
-              placeholder="127.0.0.1&#10;192.168.1.0/24&#10;10.0.0.1-10.0.0.100"
+              placeholder="127.0.0.1\n192.168.1.0/24\n10.0.0.1-10.0.0.100"
             />
             <div class="text-xs text-(--el-text-color-secondary) mt-1">
-              {{ t("rule.matcherIpTip") }}
+              {{ t("rule.matcherIpTip", "多行输入，支持单IP、网段或区间") }}
             </div>
           </div>
 
@@ -606,10 +800,36 @@ defineExpose({ getRef });
               v-model="itemForm.httpIpAddressText"
               type="textarea"
               :rows="3"
-              placeholder="127.0.0.1&#10;192.168.1.0/24"
+              placeholder="127.0.0.1\n192.168.1.0/24"
             />
             <div class="text-xs text-(--el-text-color-secondary) mt-1">
-              {{ t("rule.matcherHttpIpTip") }}
+              {{ t("rule.matcherHttpIpTip", "多行输入，支持单IP或CIDR") }}
+            </div>
+          </div>
+
+          <div v-if="itemForm.matcherName === 'url_matcher'" class="mt-2 space-y-2">
+            <el-select v-model="itemForm.urlMethod" class="w-full" placeholder="Method">
+              <el-option label="ALL" value="ALL" />
+              <el-option label="GET" value="GET" />
+              <el-option label="POST" value="POST" />
+              <el-option label="PUT" value="PUT" />
+              <el-option label="DELETE" value="DELETE" />
+              <el-option label="HEAD" value="HEAD" />
+              <el-option label="OPTIONS" value="OPTIONS" />
+              <el-option label="PATCH" value="PATCH" />
+              <el-option label="TRACE" value="TRACE" />
+              <el-option label="CONNECT" value="CONNECT" />
+            </el-select>
+            <el-input v-model="itemForm.urlPath" placeholder="URL Path (e.g., /api/ or ~^/img/)" />
+            <div class="text-xs text-(--el-text-color-secondary) mt-1">
+              {{ t("rule.matcherUrlTip", "支持前缀匹配，~开头表示正则匹配") }}
+            </div>
+          </div>
+
+          <div v-if="itemForm.matcherName === 'js_matcher'" class="mt-2">
+            <el-input v-model="itemForm.jsScript" type="textarea" :rows="4" placeholder="return true;" class="font-mono text-xs" />
+            <div class="text-xs text-(--el-text-color-secondary) mt-1">
+              {{ t("rule.matcherJsTip", "使用 get_url(), get_header(key) 进行判断，需返回 boolean") }}
             </div>
           </div>
         </div>
@@ -640,20 +860,65 @@ defineExpose({ getRef });
               placeholder="Connection reset by rule"
             />
             <div class="text-xs text-(--el-text-color-secondary) mt-1">
-              {{ t("rule.actionResetTip") }}
+              {{ t("rule.actionResetTip", "TCP直接阻断并发送此文本") }}
             </div>
           </div>
 
-          <div
-            v-if="itemForm.actionName === 'hide_version_action'"
-            class="mt-2"
-          >
+          <div v-if="itemForm.actionName === 'hide_version_action'" class="mt-2">
             <el-alert
-              :title="t('rule.actionHideVersionAlert')"
+              :title="t('rule.actionHideVersionAlert', '将隐藏 HTTP 响应头中的 Server 等服务器版本信息')"
               type="info"
               :closable="false"
               show-icon
             />
+          </div>
+
+          <div v-if="itemForm.actionName === 'auth_guard_action'" class="mt-2">
+            <el-input v-model="itemForm.authGuardLoginUrl" placeholder="/login" />
+            <div class="text-xs text-(--el-text-color-secondary) mt-1">
+              {{ t("rule.actionAuthGuardTip", "配置拦截时的登录跳转地址") }}
+            </div>
+          </div>
+
+          <div v-if="itemForm.actionName === 'auth_portal_action'" class="mt-2">
+            <el-alert :title="t('rule.actionAuthPortalAlert', '提供内置的 SSO Portal 登录面板与接口')" type="info" :closable="false" show-icon />
+          </div>
+
+          <div v-if="itemForm.actionName === 'forward_request_action'" class="mt-2">
+            <el-input v-model="itemForm.forwardUrl" placeholder="http://other-backend.com" />
+            <div class="text-xs text-(--el-text-color-secondary) mt-1">
+              {{ t("rule.actionForwardTip", "命中时直接将流量重写转发到此地址") }}
+            </div>
+          </div>
+
+          <div v-if="itemForm.actionName === 'modify_status_action'" class="mt-2">
+            <el-input-number v-model="itemForm.modifyStatusCode" :min="100" :max="599" class="w-full" />
+            <div class="text-xs text-(--el-text-color-secondary) mt-1">
+              {{ t("rule.actionModifyStatusTip", "强制覆盖 HTTP 响应状态码") }}
+            </div>
+          </div>
+
+          <div v-if="['replace_request_body_action', 'replace_response_body_action', 'replace_request_header_action', 'replace_response_header_action'].includes(itemForm.actionName)" class="mt-2">
+            <el-input v-model="itemForm.replaceReqBodyMap" type="textarea" :rows="4" class="font-mono text-xs" placeholder='{ "old": "new" }' v-if="itemForm.actionName === 'replace_request_body_action'" />
+            <el-input v-model="itemForm.replaceRespBodyMap" type="textarea" :rows="4" class="font-mono text-xs" placeholder='{ "old": "new" }' v-if="itemForm.actionName === 'replace_response_body_action'" />
+            <el-input v-model="itemForm.replaceReqHeaderMap" type="textarea" :rows="4" class="font-mono text-xs" placeholder='{ "old": "new" }' v-if="itemForm.actionName === 'replace_request_header_action'" />
+            <el-input v-model="itemForm.replaceRespHeaderMap" type="textarea" :rows="4" class="font-mono text-xs" placeholder='{ "old": "new" }' v-if="itemForm.actionName === 'replace_response_header_action'" />
+            <div class="text-xs text-(--el-text-color-secondary) mt-1">
+              {{ t("rule.actionReplaceMapTip", "JSON格式 Map，Key为被替换的正则表达式，Value为替换后内容") }}
+            </div>
+          </div>
+
+          <div v-if="itemForm.actionName === 'response_text_action'" class="mt-2 space-y-2">
+            <el-input v-model="itemForm.respTextCode" placeholder="HTTP Status Code (e.g., 403)" />
+            <el-input v-model="itemForm.respTextContent" type="textarea" :rows="2" placeholder="Response Content" />
+            <el-input v-model="itemForm.respTextHeader" type="textarea" :rows="2" class="font-mono text-xs" placeholder='{ "Content-Type": "text/plain" }' />
+          </div>
+
+          <div v-if="itemForm.actionName === 'subdomain_webvpn_action'" class="mt-2">
+            <el-input v-model="itemForm.webvpnSites" type="textarea" :rows="6" class="font-mono text-xs" placeholder='{ "site_1": { "Protected": true, "Host": { "real.com": "vpn-real.com" } } }' />
+            <div class="text-xs text-(--el-text-color-secondary) mt-1">
+              {{ t("rule.actionWebvpnTip", "高级WebVPN配置，格式请参考官方文档") }}
+            </div>
           </div>
         </div>
       </div>

@@ -62,19 +62,7 @@ function getDefaultFormInline() {
     title: t("rule.addRule"),
     id: undefined,
     name: "",
-    items: JSON.stringify(
-      [
-        {
-          Matcher: { Name: "ip_matcher", Config: { Address: ["127.0.0.1"] } },
-          Action: {
-            Name: "reset_conn_action",
-            Config: { Content: "Connection reset by rule" }
-          }
-        }
-      ],
-      null,
-      2
-    ),
+    items: "[]",
     remark: ""
   };
 }
@@ -110,6 +98,10 @@ async function handleSaveSubmit() {
 
   FormRef.validate(async (valid: boolean) => {
     if (valid) {
+      if (!formInline.value.items || formInline.value.items === "[]") {
+        message(t("rule.itemsRequired", "请至少添加一条规则配置"), { type: "error" });
+        return;
+      }
       saving.value = true;
       try {
         const curData = formInline.value;
