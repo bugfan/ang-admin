@@ -127,68 +127,68 @@ defineExpose({ getRef });
         </div>
 
         <!-- 自动生成参数面板 -->
-        <el-card
-          v-if="showGenPanel"
-          shadow="never"
-          class="mb-4 bg-gray-50 dark:bg-gray-800 border-dashed border-green-300 rounded-xl"
-        >
-          <template #header>
-            <div class="flex-bc text-sm font-semibold">
-              <span
-                class="text-green-700 dark:text-green-400 font-bold inline-flex items-center gap-1"
-              >
-                <IconifyIconOffline icon="ri:magic-line" />
-                {{ t("cert.autoGenerate") }}
-              </span>
-              <el-button
-                link
-                type="info"
-                size="small"
-                @click="showGenPanel = false"
-              >
-                {{ t("cert.closePanel") }}
-              </el-button>
-            </div>
-          </template>
-          <el-form :label-position="deviceDetection() ? 'top' : 'right'" label-width="100px" size="small" class="pt-1">
-            <el-form-item :label="t('cert.genCnLabel')">
-              <el-input
-                v-model="genConfig.common_name"
-                :placeholder="t('cert.genCnPlaceholder')"
-                clearable
-              />
-            </el-form-item>
-            <el-form-item :label="t('cert.genSansLabel')">
-              <el-input
-                v-model="genConfig.sans_str"
-                :placeholder="t('cert.genSansPlaceholder')"
-                clearable
-              />
-            </el-form-item>
-            <el-form-item :label="t('cert.genValidityLabel')">
-              <el-select v-model="genConfig.valid_days" class="w-full">
-                <el-option :label="t('cert.month1')" :value="30" />
-                <el-option :label="t('cert.month3')" :value="90" />
-                <el-option :label="t('cert.month6')" :value="180" />
-                <el-option :label="t('cert.year1')" :value="365" />
-                <el-option :label="t('cert.year3')" :value="1095" />
-                <el-option :label="t('cert.year10')" :value="3650" />
-                <el-option :label="t('cert.year20')" :value="7300" />
-              </el-select>
-            </el-form-item>
-            <div class="flex justify-end mt-2">
-              <el-button
-                type="success"
-                size="small"
-                :loading="genLoading"
-                :icon="useRenderIcon('ri/check-line')"
-                @click="handleGenerate"
-              >
-                {{ t("cert.genBtn") }}
-              </el-button>
-            </div>
-          </el-form>
-        </el-card>
+        <el-form-item label=" " v-if="showGenPanel" class="mb-4">
+          <el-card
+            shadow="never"
+            class="w-full bg-gray-50 dark:bg-gray-800 border-dashed border-green-300 rounded-xl !border-2"
+          >
+            <template #header>
+              <div class="flex-bc text-sm font-semibold">
+                <span
+                  class="text-green-700 dark:text-green-400 font-bold inline-flex items-center gap-1"
+                >
+                  <IconifyIconOffline icon="ri:magic-line" />
+                  {{ t("cert.autoGenerate") }}
+                </span>
+                <el-button
+                  link
+                  type="info"
+                  size="small"
+                  @click="showGenPanel = false"
+                >
+                  {{ t("cert.closePanel") }}
+                </el-button>
+              </div>
+            </template>
+            <el-form label-position="top" label-width="auto" size="small" class="pt-1">
+              <el-form-item :label="t('cert.genCnLabel')">
+                <el-input
+                  v-model="genConfig.common_name"
+                  :placeholder="t('cert.genCnPlaceholder')"
+                  clearable
+                />
+              </el-form-item>
+              <el-form-item :label="t('cert.genSansLabel')">
+                <el-input
+                  v-model="genConfig.sans_str"
+                  :placeholder="t('cert.genSansPlaceholder')"
+                  clearable
+                />
+              </el-form-item>
+              <el-form-item :label="t('cert.genValidityLabel')">
+                <el-select v-model="genConfig.valid_days" class="w-full">
+                  <el-option :label="t('cert.month1')" :value="30" />
+                  <el-option :label="t('cert.month3')" :value="90" />
+                  <el-option :label="t('cert.month6')" :value="180" />
+                  <el-option :label="t('cert.year1')" :value="365" />
+                  <el-option :label="t('cert.year3')" :value="1095" />
+                  <el-option :label="t('cert.year10')" :value="3650" />
+                  <el-option :label="t('cert.year20')" :value="7300" />
+                </el-select>
+              </el-form-item>
+              <div class="text-right">
+                <el-button
+                  type="success"
+                  size="small"
+                  :loading="genLoading"
+                  @click="handleGenerate"
+                >
+                  {{ t("cert.genBtn") }}
+                </el-button>
+              </div>
+            </el-form>
+          </el-card>
+        </el-form-item>
       </re-col>
 
       <re-col :value="12" :xs="24" :sm="12">

@@ -61,7 +61,7 @@ func InitDB(dsn string) {
 		log.Fatalf("Failed to query admin user: %v", err)
 	}
 	if !has {
-		hashedPassword, _ := bcrypt.GenerateFromPassword([]byte("admin@9527"), bcrypt.DefaultCost)
+		hashedPassword, _ := bcrypt.GenerateFromPassword([]byte("admin@123"), bcrypt.DefaultCost)
 		admin.Password = string(hashedPassword)
 		admin.IsSuperAdmin = true
 		_, err = engine.Insert(admin)

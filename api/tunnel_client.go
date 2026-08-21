@@ -162,22 +162,16 @@ type AngTunnelResponse struct {
 }
 
 func fetchActiveConnectionsFromAng() ([]ActiveConnItem, error) {
-	client := http.Client{Timeout: 2 * time.Second}
-	resp, err := client.Get("http://127.0.0.1:8081/tunnel")
-	if err != nil {
-		return []ActiveConnItem{}, err
-	}
-	defer resp.Body.Close()
+	var nodes []models.ClusterNode
+	_ = models.GetEngine().Find(&nodes)
 
-	if resp.StatusCode != http.StatusOK {
-		return []ActiveConnItem{}, fmt.Errorf("ang engine returned status %d", resp.StatusCode)
+	if len(nodes) == 0 {
+		return []ActiveConnItem{}, fmt.Errorf("no cluster nodes configured")
 	}
 
-	var angData AngTunnelResponse
-	err = json.NewDecoder(resp.Body).Decode(&angData)
-	if err != nil {
-		return []ActiveConnItem{}, err
-	}
+	var allItems []ActiveConnItem
+	var lastErr error
+	client := http.Client{Timeout: 3 * time.Second}
 
 	// Fetch DB Tunnel records to dynamically resolve real TunnelId
 	var dbTunnels []models.Tunnel
@@ -220,52 +214,88 @@ func fetchActiveConnectionsFromAng() ([]ActiveConnItem, error) {
 		return rawGroupIDStr
 	}
 
-	var list []ActiveConnItem
+	// Fetch from all nodes and aggregate
+	for _, node := range nodes {
+		addr := strings.TrimRight(node.Addr, "/")
+		if addr == "" {
+			continue
+		}
 
-	// Parse TLS connections
-	for _, group := range angData.TLS {
-		for _, conn := range group.Connections {
-			realTunnelID := resolveTunnelID("tls", group.ID, conn.LocalAddr, conn.SNI)
-			label := fmt.Sprintf("[TLS] Tunnel: %s | Token: %s | Remote: %s", realTunnelID, conn.Token, conn.RemoteAddr)
-			if conn.SNI != "" {
-				label += fmt.Sprintf(" (%s)", conn.SNI)
+		req, err := http.NewRequest("GET", addr+"/tunnel", nil)
+		if err != nil {
+			lastErr = err
+			continue
+		}
+		if node.Secret != "" {
+			req.Header.Set("X-Ang-Secret", node.Secret)
+		}
+		
+		resp, err := client.Do(req)
+		if err != nil {
+			lastErr = err
+			continue
+		}
+
+		if resp.StatusCode != http.StatusOK {
+			resp.Body.Close()
+			lastErr = fmt.Errorf("node %s returned status %d", node.Name, resp.StatusCode)
+			continue
+		}
+
+		var angData AngTunnelResponse
+		err = json.NewDecoder(resp.Body).Decode(&angData)
+		resp.Body.Close()
+		if err != nil {
+			lastErr = err
+			continue
+		}
+
+		// Process TLS
+		for _, group := range angData.TLS {
+			for _, conn := range group.Connections {
+				realTunnelID := resolveTunnelID("tls", group.ID, conn.LocalAddr, conn.SNI)
+				label := fmt.Sprintf("[%s] [TLS] Tunnel: %s | Token: %s | Remote: %s", node.Name, realTunnelID, conn.Token, conn.RemoteAddr)
+				if conn.SNI != "" {
+					label += fmt.Sprintf(" (%s)", conn.SNI)
+				}
+				allItems = append(allItems, ActiveConnItem{
+					Type:       "tls",
+					TunnelId:   realTunnelID,
+					Token:      conn.Token,
+					RemoteAddr: conn.RemoteAddr,
+					LocalAddr:  conn.LocalAddr,
+					SNI:        conn.SNI,
+					Label:      label,
+				})
 			}
-			list = append(list, ActiveConnItem{
-				Type:       "tls",
-				TunnelId:   realTunnelID,
-				Token:      conn.Token,
-				RemoteAddr: conn.RemoteAddr,
-				LocalAddr:  conn.LocalAddr,
-				SNI:        conn.SNI,
-				Label:      label,
-			})
+		}
+
+		// Process QUIC
+		for _, group := range angData.QUIC {
+			for _, conn := range group.Connections {
+				realTunnelID := resolveTunnelID("quic", group.ID, conn.LocalAddr, conn.SNI)
+				label := fmt.Sprintf("[%s] [QUIC] Tunnel: %s | Token: %s | Remote: %s", node.Name, realTunnelID, conn.Token, conn.RemoteAddr)
+				if conn.SNI != "" {
+					label += fmt.Sprintf(" (%s)", conn.SNI)
+				}
+				allItems = append(allItems, ActiveConnItem{
+					Type:       "quic",
+					TunnelId:   realTunnelID,
+					Token:      conn.Token,
+					RemoteAddr: conn.RemoteAddr,
+					LocalAddr:  conn.LocalAddr,
+					SNI:        conn.SNI,
+					Label:      label,
+				})
+			}
 		}
 	}
 
-	// Parse QUIC connections
-	for _, group := range angData.QUIC {
-		for _, conn := range group.Connections {
-			realTunnelID := resolveTunnelID("quic", group.ID, conn.LocalAddr, conn.SNI)
-			label := fmt.Sprintf("[QUIC] Tunnel: %s | Token: %s | Remote: %s", realTunnelID, conn.Token, conn.RemoteAddr)
-			if conn.SNI != "" {
-				label += fmt.Sprintf(" (%s)", conn.SNI)
-			}
-			list = append(list, ActiveConnItem{
-				Type:       "quic",
-				TunnelId:   realTunnelID,
-				Token:      conn.Token,
-				RemoteAddr: conn.RemoteAddr,
-				LocalAddr:  conn.LocalAddr,
-				SNI:        conn.SNI,
-				Label:      label,
-			})
-		}
+	if len(allItems) == 0 && lastErr != nil {
+		return allItems, lastErr
 	}
-
-	return list, nil
+	return allItems, nil
 }
-
-// GetActiveTunnelConnectionsHandler fetches live tunnel connections from ang engine for dropdown selection
 func GetActiveTunnelConnectionsHandler(c *gin.Context) {
 	list, err := fetchActiveConnectionsFromAng()
 	if err != nil {

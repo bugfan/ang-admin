@@ -71,6 +71,13 @@ const formRules = reactive({
       },
       trigger: "blur"
     }
+  ],
+  certificate: [
+    {
+      required: true,
+      message: () => t("tunnel.certRequired", "请选择关联证书"),
+      trigger: "change"
+    }
   ]
 });
 
