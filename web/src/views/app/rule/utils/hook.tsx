@@ -133,7 +133,7 @@ export function useRule(t: any, tableRef: Ref) {
     const targetId = row.Id || row.id;
     const { code, message: msg } = await deleteRule({ id: targetId });
     if (code === 0) {
-      message(`删除规则组 ID: ${targetId} 成功`, { type: "success" });
+      message(t("rule.deleteSuccess"), { type: "success" });
       onSearch();
     } else {
       message(msg, { type: "error" });
@@ -167,7 +167,7 @@ export function useRule(t: any, tableRef: Ref) {
     const ids = curSelected.map((item: any) => item.Id || item.id);
     const { code, message: msg } = await deleteRule({ ids });
     if (code === 0) {
-      message("批量删除规则组成功", { type: "success" });
+      message(t("rule.batchDeleteSuccess"), { type: "success" });
       tableRef.value.getTableRef().clearSelection();
       onSearch();
     } else {

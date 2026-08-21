@@ -64,7 +64,6 @@ function isL4Rule(r: any): boolean {
           "auth_portal_action",
           "response_text_action",
           "modify_status_action",
-          "forward_request_action",
           "replace_request_body_action",
           "replace_response_body_action",
           "replace_request_header_action",
