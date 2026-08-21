@@ -2,9 +2,9 @@
 ang-admin
 
 # Database
-# *.db
-# *.db-shm
-# *.db-wal
+*.db
+*.db-shm
+*.db-wal
 
 # OS specific
 .DS_Store
@@ -21,3 +21,4 @@ go.work.sum
 # Frontend is ignored in web/.gitignore, but let's make sure
 web/node_modules/
 web/dist/
+ang.db

@@ -324,6 +324,16 @@ func AsyncRoutesHandler(c *gin.Context) {
 							"roles": []string{"admin", "common"},
 						},
 					},
+					{
+						"path":      "/app/cluster",
+						"name":      "AppCluster",
+						"component": "app/cluster/index",
+						"meta": gin.H{
+							"icon":  "ri:server-line",
+							"title": "menus.pureCluster",
+							"roles": []string{"admin", "common"},
+						},
+					},
 				},
 			},
 

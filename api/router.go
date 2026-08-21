@@ -41,6 +41,11 @@ func SetupRouter() *gin.Engine {
 		authorized.POST("/refresh-token", RefreshTokenHandler)
 		authorized.POST("/api/certificate/generate", GenerateCertHandler)
 		authorized.GET("/api/tunnel-client/active-connections", GetActiveTunnelConnectionsHandler)
+		authorized.POST("/api/cluster-node/verify", VerifyClusterNodeHandler)
+		authorized.POST("/api/cluster-node/:id/ping", PingClusterNodeHandler)
+		authorized.POST("/api/cluster-node/:id/sync", SyncClusterNodeHandler)
+		authorized.POST("/api/cluster-node/sync-all", SyncAllClusterNodesHandler)
+		authorized.GET("/api/cluster-node/:id/tunnel", GetClusterNodeTunnelHandler)
 	}
 
 

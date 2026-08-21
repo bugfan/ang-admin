@@ -1,11 +1,14 @@
 package service
 
 import (
+	"bytes"
 	"encoding/json"
 	"fmt"
 	"log"
+	"net/http"
 	"strconv"
 	"strings"
+	"time"
 
 	"github.com/bugfan/ang-admin/cluster"
 	"github.com/bugfan/ang-admin/entity"
@@ -339,11 +342,72 @@ func BuildFullServerConfig() entity.ServerConfig {
 	}
 }
 
+// PushServerConfigToNodes pushes the compiled server.json to all registered ang engine nodes
+func PushServerConfigToNodes(cfg entity.ServerConfig) {
+	engine := models.GetEngine()
+	if engine == nil {
+		return
+	}
+	var nodes []models.ClusterNode
+	if err := engine.Find(&nodes); err != nil || len(nodes) == 0 {
+		return
+	}
+
+	payload := map[string]interface{}{
+		"server_config": cfg,
+	}
+	data, err := json.Marshal(payload)
+	if err != nil {
+		return
+	}
+
+	client := &http.Client{Timeout: 5 * time.Second}
+
+	for _, node := range nodes {
+		addr := strings.TrimRight(node.Addr, "/")
+		if addr == "" {
+			continue
+		}
+		syncURL := addr + "/api/config/sync"
+		req, err := http.NewRequest("POST", syncURL, bytes.NewBuffer(data))
+		if err != nil {
+			continue
+		}
+		req.Header.Set("Content-Type", "application/json")
+		if node.Secret != "" {
+			req.Header.Set("X-Ang-Secret", node.Secret)
+		}
+
+		resp, err := client.Do(req)
+		if err == nil && resp.StatusCode == 200 {
+			resp.Body.Close()
+			node.Status = 1
+			node.LastPing = time.Now()
+			_, _ = engine.ID(node.Id).Cols("status", "last_ping").Update(&node)
+			log.Printf("[cluster_sync] Successfully pushed config to node %s (%s)", node.Name, node.Addr)
+		} else {
+			if resp != nil {
+				resp.Body.Close()
+			}
+			node.Status = 0
+			_, _ = engine.ID(node.Id).Cols("status").Update(&node)
+			log.Printf("[cluster_sync] Failed to push config to node %s (%s)", node.Name, node.Addr)
+		}
+	}
+}
+
+// PingNode sends a heartbeat check to an ang engine node
+func PingNode(node *models.ClusterNode) (bool, string) {
+	return VerifyNode(node.Addr, node.Secret)
+}
+
 // SyncCertificateToCluster queries all certificates, updates cluster and prints server.json
 func SyncCertificateToCluster() {
 	certMap := buildCertMap()
 	cluster.Put("Certificate", certMap)
-	cluster.PrintFullServerConfig(BuildFullServerConfig())
+	cfg := BuildFullServerConfig()
+	cluster.PrintFullServerConfig(cfg)
+	go PushServerConfigToNodes(cfg)
 }
 
 // SyncTunnelToCluster queries all tunnels, updates cluster and prints server.json
@@ -351,7 +415,9 @@ func SyncTunnelToCluster() {
 	tlsMap, quicMap := buildTunnelMaps()
 	cluster.Put("TLS-TUNNEL", tlsMap)
 	cluster.Put("QUIC-TUNNEL", quicMap)
-	cluster.PrintFullServerConfig(BuildFullServerConfig())
+	cfg := BuildFullServerConfig()
+	cluster.PrintFullServerConfig(cfg)
+	go PushServerConfigToNodes(cfg)
 }
 
 // SyncDNSToCluster queries all DNS proxies, updates cluster and prints server.json
@@ -359,14 +425,18 @@ func SyncDNSToCluster() {
 	rulesMap := buildRulesDBMap()
 	dnsMap := buildDNSMap(rulesMap)
 	cluster.Put("DNS", dnsMap)
-	cluster.PrintFullServerConfig(BuildFullServerConfig())
+	cfg := BuildFullServerConfig()
+	cluster.PrintFullServerConfig(cfg)
+	go PushServerConfigToNodes(cfg)
 }
 
 // SyncRuleToCluster queries all rules, updates cluster and prints server.json
 func SyncRuleToCluster() {
 	rulesMap := buildRulesDBMap()
 	cluster.Put("Rule", rulesMap)
-	cluster.PrintFullServerConfig(BuildFullServerConfig())
+	cfg := BuildFullServerConfig()
+	cluster.PrintFullServerConfig(cfg)
+	go PushServerConfigToNodes(cfg)
 }
 
 // SyncHTTPToCluster queries all HTTP proxies, updates cluster and prints server.json
@@ -374,7 +444,9 @@ func SyncHTTPToCluster() {
 	rulesMap := buildRulesDBMap()
 	httpMap := buildHTTPMap(rulesMap)
 	cluster.Put("HTTP", httpMap)
-	cluster.PrintFullServerConfig(BuildFullServerConfig())
+	cfg := BuildFullServerConfig()
+	cluster.PrintFullServerConfig(cfg)
+	go PushServerConfigToNodes(cfg)
 }
 
 // SyncAllToCluster syncs all implemented entities to cluster and prints overall server.json
@@ -384,4 +456,32 @@ func SyncAllToCluster() {
 	SyncDNSToCluster()
 	SyncRuleToCluster()
 	SyncHTTPToCluster()
+}
+
+func VerifyNode(addr, secret string) (bool, string) {
+	addr = strings.TrimRight(addr, "/")
+	if addr == "" {
+		return false, "empty address"
+	}
+	verifyURL := addr + "/api/verify"
+	client := &http.Client{Timeout: 3 * time.Second}
+	req, err := http.NewRequest("GET", verifyURL, nil)
+	if err != nil {
+		return false, err.Error()
+	}
+	if secret != "" {
+		req.Header.Set("X-Ang-Secret", secret)
+	}
+	resp, err := client.Do(req)
+	if err != nil {
+		return false, err.Error()
+	}
+	defer resp.Body.Close()
+	if resp.StatusCode == 200 {
+		return true, "success"
+	}
+	if resp.StatusCode == 401 {
+		return false, "auth_failed"
+	}
+	return false, fmt.Sprintf("http_status_%d", resp.StatusCode)
 }
