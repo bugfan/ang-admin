@@ -64,6 +64,19 @@ export function useTunnelClient(t: any, tableRef: Ref) {
       }
     },
     {
+      label: t("tunnelClient.tunnelId"),
+      prop: "TunnelId",
+      minWidth: 110,
+      cellRenderer: scope => {
+        const tid = scope.row.TunnelId || scope.row.tunnel_id || "";
+        return (
+          <el-tag type="info" effect="light" class="font-mono">
+            ID: {tid}
+          </el-tag>
+        );
+      }
+    },
+    {
       label: t("tunnelClient.type"),
       prop: "Type",
       minWidth: 100,
@@ -77,19 +90,6 @@ export function useTunnelClient(t: any, tableRef: Ref) {
         return (
           <el-tag type={tagType} effect="plain" class="font-bold">
             {clientType.toUpperCase()}
-          </el-tag>
-        );
-      }
-    },
-    {
-      label: t("tunnelClient.tunnelId"),
-      prop: "TunnelId",
-      minWidth: 110,
-      cellRenderer: scope => {
-        const tid = scope.row.TunnelId || scope.row.tunnel_id || "";
-        return (
-          <el-tag type="info" effect="light" class="font-mono">
-            ID: {tid}
           </el-tag>
         );
       }

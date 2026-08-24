@@ -284,16 +284,35 @@ func AsyncRoutesHandler(c *gin.Context) {
 							"roles": []string{"admin", "common"},
 						},
 					},
-					{
-						"path":      "/app/tunnel",
-						"name":      "AppTunnel",
-						"component": "app/tunnel/index",
-						"meta": gin.H{
-							"icon":  "ri:route-line",
-							"title": "menus.pureTunnel",
-							"roles": []string{"admin", "common"},
+						{
+							"path": "/app/tunnel-parent",
+							"name": "AppTunnelParent",
+							"meta": gin.H{
+								"icon":  "ri:route-line",
+								"title": "menus.pureTunnel",
+								"roles": []string{"admin", "common"},
+							},
+							"children": []gin.H{
+								{
+									"path":      "/app/tunnel",
+									"name":      "AppTunnel",
+									"component": "app/tunnel/index",
+									"meta": gin.H{
+										"title": "menus.pureTunnelServer",
+										"roles": []string{"admin", "common"},
+									},
+								},
+								{
+									"path":      "/app/tunnel-client",
+									"name":      "AppTunnelClient",
+									"component": "app/tunnel-client/index",
+									"meta": gin.H{
+										"title": "menus.pureTunnelClient",
+										"roles": []string{"admin", "common"},
+									},
+								},
+							},
 						},
-					},
 					{
 						"path":      "/app/rule",
 						"name":      "AppRule",

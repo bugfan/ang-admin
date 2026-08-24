@@ -34,6 +34,12 @@ type tunnelHandler struct {
 }
 
 func (t *tunnelHandler) Before(g *gin.Context, x *xorm.Engine) bool {
+	method := g.Request.Method
+	if method == http.MethodPost || method == http.MethodPut || method == http.MethodPatch {
+		if t.Type == "TLS-TUNNEL" && t.SNI == "" {
+			t.SNI = "ang"
+		}
+	}
 	return true
 }
 

@@ -99,8 +99,8 @@ defineExpose({ getRef });
 
 <template>
   <el-form
-    :label-position="deviceDetection() ? 'top' : 'right'"
     ref="ruleFormRef"
+    :label-position="deviceDetection() ? 'top' : 'right'"
     :model="newFormInline"
     :rules="formRules"
     label-width="auto"
@@ -127,10 +127,10 @@ defineExpose({ getRef });
         </div>
 
         <!-- 自动生成参数面板 -->
-        <el-form-item label=" " v-if="showGenPanel" class="mb-4">
+        <el-form-item v-if="showGenPanel" label=" " class="mb-4">
           <el-card
             shadow="never"
-            class="w-full bg-gray-50 dark:bg-gray-800 border-dashed border-green-300 rounded-xl !border-2"
+            class="w-full bg-gray-50 dark:bg-gray-800 border-dashed border-green-300 rounded-xl border-2!"
           >
             <template #header>
               <div class="flex-bc text-sm font-semibold">
@@ -150,7 +150,12 @@ defineExpose({ getRef });
                 </el-button>
               </div>
             </template>
-            <el-form label-position="top" label-width="auto" size="small" class="pt-1">
+            <el-form
+              label-position="top"
+              label-width="auto"
+              size="small"
+              class="pt-1"
+            >
               <el-form-item :label="t('cert.genCnLabel')">
                 <el-input
                   v-model="genConfig.common_name"

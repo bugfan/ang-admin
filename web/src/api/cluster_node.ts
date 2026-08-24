@@ -28,7 +28,8 @@ export const getClusterNodeList = async (params?: object) => {
     }
     return { code: 0, message: "success", data: { list: [], total: 0 } };
   } catch (err: any) {
-    const msg = err?.response?.data?.message || err?.message || "获取节点列表失败";
+    const msg =
+      err?.response?.data?.message || err?.message || "获取节点列表失败";
     return { code: 1, message: msg, data: { list: [], total: 0 } };
   }
 };
@@ -37,7 +38,12 @@ export const getClusterNodeList = async (params?: object) => {
 export const createClusterNode = async (data?: object) => {
   try {
     const res = await http.request<any>("post", "/api/cluster-node", { data });
-    if (res && typeof res === "object" && res.code !== undefined && res.code !== 0) {
+    if (
+      res &&
+      typeof res === "object" &&
+      res.code !== undefined &&
+      res.code !== 0
+    ) {
       return res;
     }
     return { code: 0, message: "success", data: res };
@@ -51,8 +57,15 @@ export const createClusterNode = async (data?: object) => {
 export const updateClusterNode = async (data: any) => {
   try {
     const id = data?.id || data?.Id;
-    const res = await http.request<any>("put", `/api/cluster-node/${id}`, { data });
-    if (res && typeof res === "object" && res.code !== undefined && res.code !== 0) {
+    const res = await http.request<any>("put", `/api/cluster-node/${id}`, {
+      data
+    });
+    if (
+      res &&
+      typeof res === "object" &&
+      res.code !== undefined &&
+      res.code !== 0
+    ) {
       return res;
     }
     return { code: 0, message: "success", data: res };
@@ -86,7 +99,8 @@ export const pingClusterNode = async (id: number) => {
     const res = await http.request<any>("post", `/api/cluster-node/${id}/ping`);
     return res;
   } catch (err: any) {
-    const msg = err?.response?.data?.message || err?.message || "测试节点连接失败";
+    const msg =
+      err?.response?.data?.message || err?.message || "测试节点连接失败";
     return { code: 1, message: msg };
   }
 };
@@ -108,7 +122,8 @@ export const syncAllClusterNodes = async () => {
     const res = await http.request<any>("post", "/api/cluster-node/sync-all");
     return res;
   } catch (err: any) {
-    const msg = err?.response?.data?.message || err?.message || "全集群同步失败";
+    const msg =
+      err?.response?.data?.message || err?.message || "全集群同步失败";
     return { code: 1, message: msg };
   }
 };
@@ -116,21 +131,31 @@ export const syncAllClusterNodes = async () => {
 /** 查询节点隧道概览 (GET /api/cluster-node/:id/tunnel) */
 export const getClusterNodeTunnel = async (id: number) => {
   try {
-    const res = await http.request<any>("get", `/api/cluster-node/${id}/tunnel`);
+    const res = await http.request<any>(
+      "get",
+      `/api/cluster-node/${id}/tunnel`
+    );
     return res;
   } catch (err: any) {
-    const msg = err?.response?.data?.message || err?.message || "查询节点隧道失败";
+    const msg =
+      err?.response?.data?.message || err?.message || "查询节点隧道失败";
     return { code: 1, message: msg };
   }
 };
 
 /** 测试节点连通性和密钥 (POST /api/cluster-node/verify) */
-export const verifyClusterNode = async (data: { addr: string; secret: string }) => {
+export const verifyClusterNode = async (data: {
+  addr: string;
+  secret: string;
+}) => {
   try {
-    const res = await http.request<any>("post", "/api/cluster-node/verify", { data });
+    const res = await http.request<any>("post", "/api/cluster-node/verify", {
+      data
+    });
     return res;
   } catch (err: any) {
-    const msg = err?.response?.data?.message || err?.message || "连通性测试失败";
+    const msg =
+      err?.response?.data?.message || err?.message || "连通性测试失败";
     return { code: 1, message: msg };
   }
 };

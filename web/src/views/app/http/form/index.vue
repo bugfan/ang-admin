@@ -642,8 +642,8 @@ defineExpose({ getRef, syncLocationJSON });
 
 <template>
   <el-form
-    :label-position="deviceDetection() ? 'top' : 'right'"
     ref="httpFormRef"
+    :label-position="deviceDetection() ? 'top' : 'right'"
     :model="newFormInline"
     :rules="formRules"
     label-width="auto"
@@ -981,7 +981,7 @@ defineExpose({ getRef, syncLocationJSON });
                         <el-button
                           type="info"
                           link
-                          class="cursor-move drag-handle !text-(--el-text-color-secondary) hover:!text-(--el-color-primary)"
+                          class="cursor-move drag-handle text-(--el-text-color-secondary)! hover:text-(--el-color-primary)!"
                           :icon="useRenderIcon(Rank)"
                         />
                       </el-tooltip>

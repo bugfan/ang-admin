@@ -27,14 +27,33 @@ const appRouter = {
       }
     },
     {
-      path: "/app/tunnel",
-      name: "AppTunnel",
-      component: "app/tunnel/index",
+      path: "/app/tunnel-parent",
+      name: "AppTunnelParent",
       meta: {
         icon: "ri:route-line",
         title: "menus.pureTunnel",
         roles: ["admin", "common"]
-      }
+      },
+      children: [
+        {
+          path: "/app/tunnel",
+          name: "AppTunnel",
+          component: "app/tunnel/index",
+          meta: {
+            title: "menus.pureTunnelServer",
+            roles: ["admin", "common"]
+          }
+        },
+        {
+          path: "/app/tunnel-client",
+          name: "AppTunnelClient",
+          component: "app/tunnel-client/index",
+          meta: {
+            title: "menus.pureTunnelClient",
+            roles: ["admin", "common"]
+          }
+        }
+      ]
     },
     {
       path: "/app/rule",

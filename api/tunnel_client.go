@@ -42,13 +42,13 @@ func (t *tunnelClientHandler) Before(g *gin.Context, x *xorm.Engine) bool {
 
 		token := strings.TrimSpace(t.Token)
 		if token == "" {
-			g.AbortWithStatusJSON(http.StatusOK, gin.H{"code": 1, "message": "请选择并关联有效的在线节点"})
+			g.AbortWithStatusJSON(http.StatusOK, gin.H{"code": 1, "message": "请输入 Token"})
 			return false
 		}
 
 		tunnelId := strings.TrimSpace(t.TunnelId)
 		if tunnelId == "" {
-			g.AbortWithStatusJSON(http.StatusOK, gin.H{"code": 1, "message": "请选择所属隧道"})
+			g.AbortWithStatusJSON(http.StatusOK, gin.H{"code": 1, "message": "请选择所属服务器"})
 			return false
 		}
 
@@ -107,13 +107,25 @@ func (t *tunnelClientHandler) List(c *gin.Context) {
 	activeList, _ := fetchActiveConnectionsFromAng()
 	activeMap := make(map[string]string) // key: "type|tunnel_id|token" -> remote_addr
 	for _, item := range activeList {
-		key := fmt.Sprintf("%s|%s|%s", item.Type, item.TunnelId, item.Token)
+		clientTypeLower := strings.ToLower(item.Type)
+		if clientTypeLower == "tls-tunnel" {
+			clientTypeLower = "tls"
+		} else if clientTypeLower == "quic-tunnel" {
+			clientTypeLower = "quic"
+		}
+		key := fmt.Sprintf("%s|%s|%s", clientTypeLower, item.TunnelId, item.Token)
 		activeMap[key] = item.RemoteAddr
 	}
 
 	resList := make([]tunnelClientHandler, 0, len(clients))
 	for _, item := range clients {
-		key := fmt.Sprintf("%s|%s|%s", item.Type, item.TunnelId, item.Token)
+		clientTypeLower := strings.ToLower(item.Type)
+		if clientTypeLower == "tls-tunnel" {
+			clientTypeLower = "tls"
+		} else if clientTypeLower == "quic-tunnel" {
+			clientTypeLower = "quic"
+		}
+		key := fmt.Sprintf("%s|%s|%s", clientTypeLower, item.TunnelId, item.Token)
 		remoteAddr, isOnline := activeMap[key]
 
 		resList = append(resList, tunnelClientHandler{

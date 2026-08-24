@@ -21,13 +21,25 @@ const { t } = useI18n();
 
 const formRules = reactive({
   name: [
-    { required: true, message: () => t("cluster.nodeNameRequired", "请输入名称"), trigger: "blur" }
+    {
+      required: true,
+      message: () => t("cluster.nodeNameRequired", "请输入名称"),
+      trigger: "blur"
+    }
   ],
   addr: [
-    { required: true, message: () => t("cluster.nodeAddrRequired", "请输入地址"), trigger: "blur" }
+    {
+      required: true,
+      message: () => t("cluster.nodeAddrRequired", "请输入地址"),
+      trigger: "blur"
+    }
   ],
   secret: [
-    { required: true, message: () => t("cluster.nodeSecretRequired", "请输入节点密钥"), trigger: "blur" }
+    {
+      required: true,
+      message: () => t("cluster.nodeSecretRequired", "请输入节点密钥"),
+      trigger: "blur"
+    }
   ]
 });
 
@@ -42,10 +54,12 @@ async function handleTestConnection() {
     return;
   }
   if (!newFormInline.value.secret) {
-    message(t("cluster.nodeSecretRequired", "请输入节点密钥"), { type: "warning" });
+    message(t("cluster.nodeSecretRequired", "请输入节点密钥"), {
+      type: "warning"
+    });
     return;
   }
-  
+
   testing.value = true;
   try {
     const res = await verifyClusterNode({
@@ -53,17 +67,25 @@ async function handleTestConnection() {
       secret: newFormInline.value.secret
     });
     if (res.code === 0) {
-      message(t("cluster.testSuccess", "连接并鉴权成功 (Authorized)"), { type: "success" });
+      message(t("cluster.testSuccess", "连接并鉴权成功 (Authorized)"), {
+        type: "success"
+      });
     } else {
       let errStr = res.message || "";
       if (errStr === "auth_failed") {
         errStr = t("cluster.testAuthFailed", "鉴权失败：密钥不正确");
-      } else if (errStr.includes("timeout") || errStr.includes("connection refused") || errStr.includes("no such host")) {
+      } else if (
+        errStr.includes("timeout") ||
+        errStr.includes("connection refused") ||
+        errStr.includes("no such host")
+      ) {
         errStr = t("cluster.testTimeout", "连接失败：网络不通或地址错误");
       } else if (errStr === "empty address") {
         errStr = t("cluster.nodeAddrRequired", "请输入地址");
       }
-      message(errStr || t("cluster.testFailed", "连通性或鉴权测试失败"), { type: "error" });
+      message(errStr || t("cluster.testFailed", "连通性或鉴权测试失败"), {
+        type: "error"
+      });
     }
   } finally {
     testing.value = false;
@@ -79,8 +101,8 @@ defineExpose({ getRef });
 
 <template>
   <el-form
-    :label-position="deviceDetection() ? 'top' : 'right'"
     ref="ruleFormRef"
+    :label-position="deviceDetection() ? 'top' : 'right'"
     :model="newFormInline"
     :rules="formRules"
     label-width="120px"
@@ -92,7 +114,9 @@ defineExpose({ getRef });
           <el-input
             v-model="newFormInline.name"
             clearable
-            :placeholder="t('cluster.nodeNamePlaceholder', '如 华东主节点 或 Local-Node')"
+            :placeholder="
+              t('cluster.nodeNamePlaceholder', '如 华东主节点 或 Local-Node')
+            "
           />
         </el-form-item>
       </re-col>
@@ -105,11 +129,13 @@ defineExpose({ getRef });
             class="font-mono"
           />
           <p class="text-xs text-(--el-text-color-placeholder) mt-1 w-full">
-            {{ t("cluster.nodeAddrHint", "API 通信地址及端口（默认端口 :8081）") }}
+            {{
+              t("cluster.nodeAddrHint", "API 通信地址及端口（默认端口 :8081）")
+            }}
           </p>
         </el-form-item>
       </re-col>
-      
+
       <re-col :value="24">
         <el-form-item :label="t('cluster.nodeSecret', '密钥')" prop="secret">
           <div class="flex gap-2 w-full">
@@ -117,21 +143,23 @@ defineExpose({ getRef });
               v-model="newFormInline.secret"
               clearable
               show-password
-              :placeholder="t('cluster.nodeSecretPlaceholder', '请输入节点鉴权密钥')"
+              :placeholder="
+                t('cluster.nodeSecretPlaceholder', '请输入节点鉴权密钥')
+              "
               class="flex-1"
             />
-            <el-button 
-              type="primary" 
-              plain 
-              :loading="testing" 
+            <el-button
+              type="primary"
+              plain
+              :loading="testing"
               @click="handleTestConnection"
             >
-              {{ t('cluster.testConnection', '测试连通性') }}
+              {{ t("cluster.testConnection", "测试连通性") }}
             </el-button>
           </div>
         </el-form-item>
       </re-col>
-      
+
       <re-col :value="24">
         <el-form-item :label="t('cluster.remark', '备注')" prop="remark">
           <el-input

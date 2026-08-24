@@ -128,8 +128,6 @@ function handleRulesChange(vals: string[]) {
   syncRulesJSON();
 }
 
-
-
 function syncRulesJSON() {
   newFormInline.value.rules = JSON.stringify(selectedRules.value);
 }
@@ -454,8 +452,8 @@ defineExpose({ getRef });
 
 <template>
   <el-form
-    :label-position="deviceDetection() ? 'top' : 'right'"
     ref="ruleFormRef"
+    :label-position="deviceDetection() ? 'top' : 'right'"
     :model="newFormInline"
     :rules="formRules"
     label-width="auto"
@@ -613,12 +611,9 @@ defineExpose({ getRef });
             />
           </el-select>
 
-          <div
-            class="text-xs/relaxed text-(--el-text-color-secondary) mt-1"
-          >
+          <div class="text-xs/relaxed text-(--el-text-color-secondary) mt-1">
             {{ t("dns.rulesTip") }}
           </div>
-
         </div>
       </el-form-item>
     </el-card>
@@ -684,10 +679,10 @@ defineExpose({ getRef });
                       class="font-semibold text-(--el-text-color-primary) font-mono"
                       >{{ item.cName || "Node" }}</span
                     >
-        </div>
+                  </div>
                   <div v-else class="text-xs text-gray-400 py-0.5">
                     {{ item.cName }}
-        </div>
+                  </div>
                 </el-option>
               </el-option-group>
             </el-select>

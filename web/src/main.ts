@@ -67,5 +67,12 @@ getPlatformConfig(app).then(async config => {
     .use(useVxeTable)
     .use(PureDescriptions)
     .use(useEcharts);
-  app.config.errorHandler = (err) => { document.body.innerHTML += "<pre style=\"color:red;z-index:9999;position:absolute;top:0;background:white;padding:20px\">" + err.stack + "</pre>"; console.error(err); }; app.mount("#app");
+  app.config.errorHandler = err => {
+    document.body.innerHTML +=
+      '<pre style="color:red;z-index:9999;position:absolute;top:0;background:white;padding:20px">' +
+      err.stack +
+      "</pre>";
+    console.error(err);
+  };
+  app.mount("#app");
 });

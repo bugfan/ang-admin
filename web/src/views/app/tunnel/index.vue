@@ -12,7 +12,6 @@ import { createTunnel, updateTunnel } from "@/api/tunnel";
 import Delete from "~icons/ep/delete";
 import EditPen from "~icons/ep/edit-pen";
 import AddFill from "~icons/ri/add-circle-line";
-import BackIcon from "~icons/ep/back";
 import CheckIcon from "~icons/ep/check";
 import CloseIcon from "~icons/ep/close";
 
@@ -37,32 +36,15 @@ const {
   dataList,
   selectedNum,
   pagination,
-  refreshingRowId,
-  refreshSingleTunnel,
   onSearch,
   resetForm,
   onbatchDel,
-  openClientDialog,
-  handleDeleteClient,
   handleDelete,
   handleSizeChange,
   onSelectionCancel,
   handleCurrentChange,
   handleSelectionChange
 } = useTunnel(t, tableRef);
-
-function getClientNodes(row: any): any[] {
-  if (!row) return [];
-  if (Array.isArray(row.client_nodes)) return row.client_nodes;
-  if (Array.isArray(row.ClientNodes)) return row.ClientNodes;
-  if (row.clients_json || row.ClientsJSON) {
-    try {
-      const parsed = JSON.parse(row.clients_json || row.ClientsJSON);
-      if (Array.isArray(parsed)) return parsed;
-    } catch (e) {}
-  }
-  return [];
-}
 
 function getDefaultFormInline() {
   return {
@@ -246,7 +228,7 @@ async function handleSaveSubmit() {
 
           <pure-table
             ref="tableRef"
-            row-key="id"
+            row-key="Id"
             align-whole="center"
             table-layout="auto"
             :loading="loading"
@@ -265,331 +247,6 @@ async function handleSaveSubmit() {
             @page-size-change="handleSizeChange"
             @page-current-change="handleCurrentChange"
           >
-            <!-- 1. 动态挂载客户端节点 (Client Nodes) Popover 浮层列 -->
-            <template #clientNodes="{ row }">
-              <el-popover placement="top" :width="380" trigger="hover">
-                <template #reference>
-                  <div class="inline-flex items-center gap-1.5 cursor-pointer">
-                    <el-tag
-                      v-if="getClientNodes(row).length > 0"
-                      type="success"
-                      effect="light"
-                      size="small"
-                      class="font-mono font-bold"
-                    >
-                      <IconifyIconOffline icon="ri:router-line" class="mr-1" />
-                      {{ getClientNodes(row).length }} Node(s)
-                    </el-tag>
-                    <el-tag
-                      v-else
-                      type="info"
-                      size="small"
-                      effect="plain"
-                      class="text-gray-400"
-                    >
-                      {{ t("tunnel.noClients") }}
-                    </el-tag>
-                  </div>
-                </template>
-
-                <!-- Popover 浮层内容 -->
-                <div class="p-1 text-xs">
-                  <div class="font-bold border-b pb-1 mb-2 flex-bc">
-                    <span class="inline-flex items-center gap-1">
-                      <IconifyIconOffline icon="ri:router-line" />
-                      {{ t("tunnel.clientNodes") }}
-                    </span>
-                    <span class="text-gray-400 font-mono"
-                      >Tunnel #{{ row.Id || row.id }}</span
-                    >
-                  </div>
-
-                  <div
-                    v-if="getClientNodes(row).length === 0"
-                    class="text-gray-400 text-center py-2"
-                  >
-                    {{ t("tunnel.noClientsConfig") }}
-                  </div>
-
-                  <div v-else class="space-y-1.5 max-h-60 overflow-auto">
-                    <div
-                      v-for="(c, idx) in getClientNodes(row)"
-                      :key="idx"
-                      class="p-2 bg-(--el-fill-color-light) rounded font-mono border border-(--el-border-color-lighter) text-xs space-y-1"
-                    >
-                      <div class="flex-bc">
-                        <span
-                          class="font-bold text-blue-600 dark:text-blue-400 cursor-pointer hover:underline"
-                          @click="
-                            openClientDialog(
-                              c.is_saved || c.id
-                                ? t('tunnelClient.editClient')
-                                : t('tunnelClient.addClient'),
-                              row,
-                              c
-                            )
-                          "
-                        >
-                          {{ c.name || c.id || "Node" }}
-                        </span>
-                        <div class="flex items-center gap-1.5">
-                          <el-tag
-                            size="small"
-                            :type="c.is_online ? 'success' : 'info'"
-                            effect="light"
-                          >
-                            {{
-                              c.is_online
-                                ? t("tunnelClient.online")
-                                : t("tunnelClient.offline")
-                            }}
-                          </el-tag>
-                          <el-button
-                            type="primary"
-                            link
-                            size="small"
-                            class="p-0! text-xs"
-                            @click="
-                              openClientDialog(
-                                c.is_saved || c.id
-                                  ? t('tunnelClient.editClient')
-                                  : t('tunnelClient.addClient'),
-                                row,
-                                c
-                              )
-                            "
-                          >
-                            {{
-                              c.is_saved || c.id
-                                ? t("tunnel.edit")
-                                : t("tunnelClient.saveAsNode")
-                            }}
-                          </el-button>
-                        </div>
-                      </div>
-                      <div class="text-[11px] text-gray-500 truncate">
-                        Token: {{ c.token || "-" }}
-                      </div>
-                      <div
-                        v-if="c.remote_addr"
-                        class="text-[11px] text-gray-400"
-                      >
-                        {{ t("tunnelClient.remoteAddr") }}: {{ c.remote_addr }}
-                      </div>
-                    </div>
-                  </div>
-                </div>
-              </el-popover>
-            </template>
-
-            <!-- 2. 折叠展开明细行 -->
-            <template #expand="{ row }">
-              <div
-                class="p-3 sm:p-4 bg-(--el-fill-color-light) rounded-xl m-1 sm:my-2 sm:mx-4 border border-(--el-border-color-lighter) space-y-3 text-xs"
-              >
-                <div
-                  class="font-bold text-(--el-text-color-primary) flex-bc flex-wrap gap-2"
-                >
-                  <div class="flex items-center space-x-2">
-                    <IconifyIconOffline icon="ri:router-line" />
-                    <span>{{ t("tunnel.clientNodesDetail") }}</span>
-                    <el-tag
-                      size="small"
-                      type="info"
-                      effect="plain"
-                      class="font-mono"
-                    >
-                      Total: {{ getClientNodes(row).length }}
-                    </el-tag>
-                  </div>
-                  <div class="flex items-center gap-2">
-                    <el-button
-                      type="primary"
-                      size="small"
-                      :icon="useRenderIcon(AddFill)"
-                      @click="
-                        openClientDialog(t('tunnelClient.addClient'), row)
-                      "
-                    >
-                      {{ t("tunnelClient.addClient") }}
-                    </el-button>
-                    <el-button
-                      size="small"
-                      :icon="useRenderIcon('ri:refresh-line')"
-                      :loading="refreshingRowId === (row.Id || row.id)"
-                      @click="refreshSingleTunnel(row)"
-                    >
-                      {{ t("tunnelClient.refreshNodes") }}
-                    </el-button>
-                  </div>
-                </div>
-
-                <div v-if="getClientNodes(row).length > 0">
-                  <el-table
-                    :data="getClientNodes(row)"
-                    border
-                    size="small"
-                    class="w-full"
-                    :header-cell-style="{
-                      background: 'var(--el-fill-color)',
-                      color: 'var(--el-text-color-primary)'
-                    }"
-                  >
-                    <el-table-column label="#" width="50" align="center">
-                      <template #default="{ $index }">
-                        <span class="font-mono text-gray-400">{{
-                          $index + 1
-                        }}</span>
-                      </template>
-                    </el-table-column>
-                    <el-table-column
-                      prop="name"
-                      :label="t('tunnelClient.name')"
-                      min-width="140"
-                    >
-                      <template #default="{ row: c }">
-                        <span
-                          class="font-mono font-semibold text-blue-600 dark:text-blue-400 cursor-pointer hover:underline"
-                          @click="
-                            openClientDialog(
-                              c.is_saved || c.id
-                                ? t('tunnelClient.editClient')
-                                : t('tunnelClient.addClient'),
-                              row,
-                              c
-                            )
-                          "
-                        >
-                          {{ c.name || c.id || "Client Node" }}
-                        </span>
-                      </template>
-                    </el-table-column>
-                    <el-table-column
-                      prop="token"
-                      :label="t('tunnelClient.token')"
-                      min-width="180"
-                    >
-                      <template #default="{ row: c }">
-                        <span
-                          class="font-mono text-gray-600 dark:text-gray-300"
-                        >
-                          {{ c.token || "-" }}
-                        </span>
-                      </template>
-                    </el-table-column>
-                    <el-table-column
-                      prop="remote_addr"
-                      :label="t('tunnelClient.remoteAddr')"
-                      min-width="150"
-                    >
-                      <template #default="{ row: c }">
-                        <span class="font-mono text-gray-500">
-                          {{ c.remote_addr || "-" }}
-                        </span>
-                      </template>
-                    </el-table-column>
-                    <el-table-column
-                      prop="remark"
-                      :label="t('tunnel.remark')"
-                      min-width="120"
-                    >
-                      <template #default="{ row: c }">
-                        <span class="text-gray-500">
-                          {{ c.remark || "-" }}
-                        </span>
-                      </template>
-                    </el-table-column>
-                    <el-table-column
-                      prop="is_online"
-                      :label="t('tunnelClient.status')"
-                      width="140"
-                      align="center"
-                    >
-                      <template #default="{ row: c }">
-                        <el-tag
-                          size="small"
-                          :type="c.is_online ? 'success' : 'info'"
-                          effect="light"
-                        >
-                          {{
-                            c.is_online
-                              ? t("tunnelClient.online")
-                              : t("tunnelClient.offline")
-                          }}
-                        </el-tag>
-                      </template>
-                    </el-table-column>
-                    <el-table-column
-                      :label="t('tunnel.operation')"
-                      width="140"
-                      align="center"
-                      fixed="right"
-                    >
-                      <template #default="{ row: c }">
-                        <div class="flex-c space-x-2">
-                          <el-button
-                            v-if="c.is_saved || c.id"
-                            link
-                            type="primary"
-                            size="small"
-                            :icon="useRenderIcon(EditPen)"
-                            @click="
-                              openClientDialog(
-                                t('tunnelClient.editClient'),
-                                row,
-                                c
-                              )
-                            "
-                          >
-                            {{ t("tunnel.edit") }}
-                          </el-button>
-                          <el-button
-                            v-else
-                            link
-                            type="success"
-                            size="small"
-                            :icon="useRenderIcon(AddFill)"
-                            @click="
-                              openClientDialog(
-                                t('tunnelClient.addClient'),
-                                row,
-                                c
-                              )
-                            "
-                          >
-                            {{ t("tunnelClient.saveAsNode") }}
-                          </el-button>
-
-                          <el-popconfirm
-                            v-if="c.is_saved || c.id"
-                            :title="t('tunnelClient.confirmDeleteNode')"
-                            @confirm="handleDeleteClient(c)"
-                          >
-                            <template #reference>
-                              <el-button
-                                link
-                                type="danger"
-                                size="small"
-                                :icon="useRenderIcon(Delete)"
-                              >
-                                {{ t("tunnel.delete") }}
-                              </el-button>
-                            </template>
-                          </el-popconfirm>
-                        </div>
-                      </template>
-                    </el-table-column>
-                  </el-table>
-                </div>
-                <div
-                  v-else
-                  class="text-gray-400 text-xs py-2 text-center border border-dashed rounded border-gray-300"
-                >
-                  {{ t("tunnel.noClientsConfig") }}
-                </div>
-              </div>
-            </template>
-
             <!-- 操作列 -->
             <template #operation="{ row }">
               <div class="flex-c space-x-1">
@@ -626,21 +283,20 @@ async function handleSaveSubmit() {
       </PureTableBar>
     </div>
 
-    <!-- Create / Edit Full Page View Mode -->
+    <!-- Create / Edit Full Page Mode -->
     <div
       v-else-if="showView === 'new' || showView === 'edit'"
-      class="p-3 sm:p-5 bg-bg_color rounded-xl border border-(--el-border-color-lighter) shadow-2xs"
+      class="p-3 sm:p-5 bg-bg_color rounded-xl border border-(--el-border-color-lighter) shadow-2xs space-y-4"
     >
-      <!-- Full Page Header Bar -->
       <PageHeader
         :title="formInline.title"
-        :description="t('tunnel.pageDesc')"
-        :backTitle="t('tunnel.backToList')"
+        :description="t('tunnel.formSubtitle', '配置 Tunnel 服务端监听节点')"
+        :backTitle="t('tunnel.backToList', '返回列表')"
         @back="handleCancelPage"
       >
         <template #actions>
           <el-button :icon="useRenderIcon(CloseIcon)" @click="handleCancelPage">
-            {{ t("tunnel.cancel") }}
+            {{ t("tunnel.cancel", "取消") }}
           </el-button>
           <el-button
             type="primary"
@@ -648,20 +304,18 @@ async function handleSaveSubmit() {
             :icon="useRenderIcon(CheckIcon)"
             @click="handleSaveSubmit"
           >
-            {{ t("tunnel.save") }}
+            {{ t("tunnel.save", "保存") }}
           </el-button>
         </template>
       </PageHeader>
 
-      <!-- Form Component Embedded Directly -->
-      <editForm ref="createEditFormRef" :formInline="formInline" />
+      <editForm ref="createEditFormRef" :form-inline="formInline" />
 
-      <!-- Bottom Action Bar -->
       <div
-        class="flex items-center justify-end space-x-3 pt-4 mt-4 border-t border-(--el-border-color-lighter)"
+        class="flex justify-end items-center space-x-3 pt-6 mt-6 border-t border-(--el-border-color-lighter)"
       >
         <el-button :icon="useRenderIcon(CloseIcon)" @click="handleCancelPage">
-          {{ t("tunnel.cancel") }}
+          {{ t("tunnel.cancel", "取消") }}
         </el-button>
         <el-button
           type="primary"
@@ -669,7 +323,7 @@ async function handleSaveSubmit() {
           :icon="useRenderIcon(CheckIcon)"
           @click="handleSaveSubmit"
         >
-          {{ t("tunnel.save") }}
+          {{ t("tunnel.save", "保存") }}
         </el-button>
       </div>
     </div>

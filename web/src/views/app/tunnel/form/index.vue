@@ -71,13 +71,6 @@ const formRules = reactive({
       },
       trigger: "blur"
     }
-  ],
-  certificate: [
-    {
-      required: true,
-      message: () => t("tunnel.certRequired", "请选择关联证书"),
-      trigger: "change"
-    }
   ]
 });
 
@@ -136,8 +129,8 @@ defineExpose({ getRef });
 
 <template>
   <el-form
-    :label-position="deviceDetection() ? 'top' : 'right'"
     ref="ruleFormRef"
+    :label-position="deviceDetection() ? 'top' : 'right'"
     :model="newFormInline"
     :rules="formRules"
     label-width="auto"
@@ -174,71 +167,6 @@ defineExpose({ getRef });
       <re-col :value="12" :xs="24" :sm="12">
         <el-form-item :label="t('tunnel.port')" prop="port">
           <el-input v-model="newFormInline.port" placeholder="443" clearable />
-        </el-form-item>
-      </re-col>
-
-      <re-col :value="24" :xs="24" :sm="24">
-        <el-form-item :label="t('tunnel.certificate')" prop="certificate">
-          <div class="w-full">
-            <div
-              v-if="newFormInline.sni"
-              class="mb-2 flex items-center text-xs text-gray-600 dark:text-gray-300"
-            >
-              <span class="mr-2 font-medium">{{
-                t("tunnel.associatedSni")
-              }}</span>
-              <el-tag
-                size="small"
-                type="success"
-                effect="plain"
-                class="font-mono font-bold"
-              >
-                {{ newFormInline.sni }}
-              </el-tag>
-            </div>
-
-            <div
-              class="flex flex-wrap sm:flex-nowrap items-center w-full gap-2"
-            >
-              <el-select
-                v-model="newFormInline.certificate"
-                filterable
-                clearable
-                remote
-                :remote-method="fetchCertificates"
-                :loading="certLoading"
-                class="w-full sm:flex-1"
-                :placeholder="t('tunnel.selectCertPlaceholder')"
-                @change="handleCertChange"
-              >
-                <el-option
-                  v-for="item in certOptions"
-                  :key="item.value"
-                  :label="item.value"
-                  :value="item.value"
-                >
-                  <div class="flex-bc w-full pr-2">
-                    <span class="font-medium">{{ item.value }}</span>
-                    <span
-                      v-if="item.cn"
-                      class="text-xs text-gray-400 font-mono ml-4"
-                      >{{ item.cn }}</span
-                    >
-                  </div>
-                </el-option>
-              </el-select>
-
-              <el-button
-                v-if="certOptions.length === 0 && !certLoading"
-                type="primary"
-                link
-                class="whitespace-nowrap font-medium"
-                @click="goToCertPage"
-              >
-                {{ t("tunnel.goCertPage") }} &gt;
-              </el-button>
-            </div>
-          </div>
         </el-form-item>
       </re-col>
 

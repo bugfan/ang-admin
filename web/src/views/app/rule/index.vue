@@ -99,7 +99,9 @@ async function handleSaveSubmit() {
   FormRef.validate(async (valid: boolean) => {
     if (valid) {
       if (!formInline.value.items || formInline.value.items === "[]") {
-        message(t("rule.itemsRequired", "请至少添加一条规则配置"), { type: "error" });
+        message(t("rule.itemsRequired", "请至少添加一条规则配置"), {
+          type: "error"
+        });
         return;
       }
       saving.value = true;
