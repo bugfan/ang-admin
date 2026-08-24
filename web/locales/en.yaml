@@ -301,6 +301,7 @@ tunnel:
   reset: "Reset"
   addTunnel: "Add"
   editTunnel: "Edit Tunnel"
+  deleteTunnel: "Delete Tunnel"
   success: "Success"
   batchDelete: "Batch Delete"
   cancelSelection: "Cancel Selection"
@@ -309,6 +310,7 @@ tunnel:
   edit: "Edit"
   delete: "Delete"
   confirmDelete: "Are you sure you want to delete this Tunnel configuration?"
+  searchNamePlaceholder: "Enter name"
   searchTypePlaceholder: "Select type"
   searchSniPlaceholder: "Enter SNI"
   searchKeyPlaceholder: "Enter key"
@@ -340,6 +342,7 @@ tunnel:
   certDeletedTip: "The referenced cert has been deleted. Please edit and reselect."
   invalidAssoc: "Invalid"
   pageDesc: "Configure Tunnel server listening port, protocol (TLS/QUIC), and SNI certificate matching"
+  formSubtitle: "Configure Tunnel server listening node"
   backToList: "Back to Tunnel List"
   cancel: "Cancel"
   save: "Save"
@@ -412,6 +415,8 @@ cert:
   genSansPlaceholder: "e.g. *.foo.com, foo.com"
   certIdPlaceholder: "e.g. id-1, id-2"
   remarkPlaceholder: "Optional"
+  backToList: "Back to Certificate List"
+  noContent: "No content"
 tableBar:
   pureList: List
   pureLarge: Large
@@ -454,7 +459,9 @@ tunnelClient:
   selectNodeRequired: "Please select an active online node"
   typeRequired: "Please select type (tls/quic)"
   tunnelIdRequired: "Please enter Tunnel ID"
+  tunnelRequired: "Please select a server"
   tokenRequired: "Please enter Token"
+  tokenPlaceholder: "Please enter or generate token"
   refreshNodes: "Refresh live nodes list"
   refreshNodesSuccess: "Live nodes refreshed successfully!"
   unsavedNode: "Unconfigured Node"
@@ -530,6 +537,7 @@ dns:
   aRecord: "A Record (IPv4):"
   aaaaRecord: "AAAA Record (IPv6):"
   noUpstreamServers: "No upstream servers. Click 'Add' above."
+  backToList: "Back to DNS List"
 rule:
   name: "Name"
   nameRequired: "Please enter rule group name"
@@ -545,6 +553,8 @@ rule:
   delete: "Delete"
   confirmDelete: "Are you sure you want to delete this rule configuration?"
   deleteSuccess: "Rule group deleted successfully"
+  submitFailed: "Submit failed"
+  deleteFailed: "Delete failed"
   batchDeleteSuccess: "Batch delete rule groups succeeded"
   selected: "Selected"
   cancelSelection: "Cancel Selection"
@@ -774,6 +784,8 @@ http:
   headerDesc: "Configure Frontend properties, HTTPS encryption, Rule packs and Backend path mappings"
   cancel: "Cancel"
   save: "Save"
+  edit: "Edit"
+  backToList: "Back to App List"
 
 cluster:
   title: "Cluster Management"
@@ -828,3 +840,5 @@ cluster:
   cancel: "Cancel"
   submit: "Submit"
   success: "Success"
+  pageDesc: "Configure and manage cluster nodes"
+  backToList: "Back to Node List"

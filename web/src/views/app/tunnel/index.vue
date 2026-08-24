@@ -138,10 +138,10 @@ async function handleSaveSubmit() {
         :model="form"
         class="search-form bg-bg_color w-full px-3 sm:px-6 pt-3 pb-1 overflow-auto mb-3 rounded-xl border border-(--el-border-color-lighter) shadow-2xs"
       >
-        <el-form-item :label="t('tunnel.port')" prop="port">
+        <el-form-item :label="t('tunnel.name')" prop="name">
           <el-input
-            v-model="form.port"
-            :placeholder="t('tunnel.searchPortPlaceholder')"
+            v-model="form.name"
+            :placeholder="t('tunnel.searchNamePlaceholder')"
             clearable
             class="w-full sm:w-45!"
             @keyup.enter="onSearch"
@@ -157,8 +157,9 @@ async function handleSaveSubmit() {
             class="w-full sm:w-45!"
             @change="onSearch"
           >
-            <el-option label="TLS-TUNNEL" value="TLS-TUNNEL" />
-            <el-option label="QUIC-TUNNEL" value="QUIC-TUNNEL" />
+            <el-option :label="t('tunnel.allTypes')" value="" />
+            <el-option label="TLS" value="TLS" />
+            <el-option label="QUIC" value="QUIC" />
           </el-select>
         </el-form-item>
 
@@ -290,13 +291,13 @@ async function handleSaveSubmit() {
     >
       <PageHeader
         :title="formInline.title"
-        :description="t('tunnel.formSubtitle', '配置 Tunnel 服务端监听节点')"
-        :backTitle="t('tunnel.backToList', '返回列表')"
+        :description="t('tunnel.formSubtitle')"
+        :backTitle="t('tunnel.backToList')"
         @back="handleCancelPage"
       >
         <template #actions>
           <el-button :icon="useRenderIcon(CloseIcon)" @click="handleCancelPage">
-            {{ t("tunnel.cancel", "取消") }}
+            {{ t("tunnel.cancel") }}
           </el-button>
           <el-button
             type="primary"
@@ -304,7 +305,7 @@ async function handleSaveSubmit() {
             :icon="useRenderIcon(CheckIcon)"
             @click="handleSaveSubmit"
           >
-            {{ t("tunnel.save", "保存") }}
+            {{ t("tunnel.save") }}
           </el-button>
         </template>
       </PageHeader>
@@ -315,7 +316,7 @@ async function handleSaveSubmit() {
         class="flex justify-end items-center space-x-3 pt-6 mt-6 border-t border-(--el-border-color-lighter)"
       >
         <el-button :icon="useRenderIcon(CloseIcon)" @click="handleCancelPage">
-          {{ t("tunnel.cancel", "取消") }}
+          {{ t("tunnel.cancel") }}
         </el-button>
         <el-button
           type="primary"
@@ -323,7 +324,7 @@ async function handleSaveSubmit() {
           :icon="useRenderIcon(CheckIcon)"
           @click="handleSaveSubmit"
         >
-          {{ t("tunnel.save", "保存") }}
+          {{ t("tunnel.save") }}
         </el-button>
       </div>
     </div>

@@ -54,9 +54,20 @@ func (t *tunnelHandler) List(c *gin.Context) {
 	session := models.GetEngine().NewSession()
 	defer session.Close()
 
-	if tunnelType := c.Query("type"); tunnelType != "" {
-		session.Where("type = ?", tunnelType)
+	if name := c.Query("name"); name != "" {
+		session.Where("name LIKE ?", "%"+name+"%")
 	}
+
+		if tunnelType := strings.TrimSpace(c.Query("type")); tunnelType != "" {
+			upperType := strings.ToUpper(tunnelType)
+			if upperType == "TLS" || upperType == "TLS-TUNNEL" {
+				session.Where("type LIKE ? OR type LIKE ?", "%TLS%", "%tls%")
+			} else if upperType == "QUIC" || upperType == "QUIC-TUNNEL" {
+				session.Where("type LIKE ? OR type LIKE ?", "%QUIC%", "%quic%")
+			} else {
+				session.Where("type = ?", tunnelType)
+			}
+		}
 	if sni := c.Query("sni"); sni != "" {
 		session.Where("sni LIKE ?", "%"+sni+"%")
 	}

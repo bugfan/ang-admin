@@ -14,6 +14,7 @@ import { type Ref, h, ref, computed, toRaw, reactive, onMounted } from "vue";
 
 export function useTunnel(t: any, tableRef: Ref) {
   const form = reactive({
+    name: "",
     type: "",
     sni: "",
     port: ""
@@ -69,11 +70,12 @@ export function useTunnel(t: any, tableRef: Ref) {
       prop: "Type",
       minWidth: 130,
       cellRenderer: scope => {
-        const tunnelType = scope.row.Type || scope.row.type || "";
+        const rawType = scope.row.Type || scope.row.type || "";
+        const displayType = rawType.toUpperCase().includes("QUIC") ? "QUIC" : "TLS";
         const tagType = "primary";
         return (
           <el-tag type={tagType} effect="plain" class="font-bold">
-            {tunnelType}
+            {displayType}
           </el-tag>
         );
       }

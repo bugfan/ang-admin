@@ -302,6 +302,7 @@ tunnel:
   reset: "重置"
   addTunnel: "添加"
   editTunnel: "编辑 Tunnel"
+  deleteTunnel: "删除 Tunnel"
   success: "成功"
   batchDelete: "批量删除"
   cancelSelection: "取消选择"
@@ -310,6 +311,7 @@ tunnel:
   edit: "编辑"
   delete: "删除"
   confirmDelete: "是否确认删除该Tunnel配置?"
+  searchNamePlaceholder: "请输入名称"
   searchTypePlaceholder: "请选择类型"
   searchSniPlaceholder: "请输入SNI"
   searchKeyPlaceholder: "请输入标识"
@@ -341,6 +343,7 @@ tunnel:
   certDeletedTip: "引用的证书已被删除，请编辑重选"
   invalidAssoc: "关联失效"
   pageDesc: "配置内网穿透 Tunnel 隧道监听端口、传输协议 (TLS/QUIC) 及 SNI 证书匹配"
+  formSubtitle: "配置 Tunnel 服务端监听节点"
   backToList: "返回隧道列表"
   cancel: "取消"
   save: "保存"
@@ -413,6 +416,8 @@ cert:
   genSansPlaceholder: "例如: *.foo.com, foo.com"
   certIdPlaceholder: "例如: id-1, id-2"
   remarkPlaceholder: "选填"
+  backToList: "返回证书列表"
+  noContent: "暂无内容"
 tableBar:
   pureList: 列表
   pureLarge: 宽松
@@ -455,7 +460,9 @@ tunnelClient:
   selectNodeRequired: "请选择并关联有效的在线节点"
   typeRequired: "请选择类型 (tls/quic)"
   tunnelIdRequired: "请输入 Tunnel ID"
+  tunnelRequired: "请选择服务器"
   tokenRequired: "请输入 Token"
+  tokenPlaceholder: "请输入或生成 Token 凭证"
   refreshNodes: "刷新在线节点列表"
   refreshNodesSuccess: "已成功刷新实时在线节点！"
   unsavedNode: "待配置节点"
@@ -531,6 +538,7 @@ dns:
   aRecord: "A 记录 (IPv4):"
   aaaaRecord: "AAAA 记录 (IPv6):"
   noUpstreamServers: "暂无上游服务器，请点击右上角“添加”"
+  backToList: "返回 DNS 列表"
 rule:
   name: "名称"
   nameRequired: "请输入规则组名称"
@@ -546,6 +554,8 @@ rule:
   delete: "删除"
   confirmDelete: "是否确认删除该规则配置?"
   deleteSuccess: "删除规则组成功"
+  submitFailed: "提交失败"
+  deleteFailed: "删除失败"
   batchDeleteSuccess: "批量删除规则组成功"
   selected: "已选"
   cancelSelection: "取消选择"
@@ -775,6 +785,8 @@ http:
   headerDesc: "配置应用站点的 Frontend 接入属性、HTTPS 加密、中间件策略包及 Backend 路径映射"
   cancel: "取消"
   save: "保存"
+  edit: "编辑"
+  backToList: "返回应用列表"
 
 cluster:
   title: "集群管理"
@@ -829,3 +841,5 @@ cluster:
   cancel: "取消"
   submit: "确认"
   success: "成功"
+  pageDesc: "配置和管理集群节点信息"
+  backToList: "返回节点列表"

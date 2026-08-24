@@ -69,8 +69,8 @@ const {
           @change="onSearch"
         >
           <el-option :label="t('tunnel.allTypes')" value="" />
-          <el-option label="TLS" value="TLS-TUNNEL" />
-          <el-option label="QUIC" value="QUIC-TUNNEL" />
+          <el-option label="TLS" value="TLS" />
+          <el-option label="QUIC" value="QUIC" />
         </el-select>
       </el-form-item>
 

@@ -87,9 +87,16 @@ func (t *tunnelClientHandler) List(c *gin.Context) {
 	if name := c.Query("name"); name != "" {
 		session.Where("name LIKE ?", "%"+name+"%")
 	}
-	if clientType := c.Query("type"); clientType != "" {
-		session.Where("type = ?", clientType)
-	}
+		if clientType := strings.TrimSpace(c.Query("type")); clientType != "" {
+			upperType := strings.ToUpper(clientType)
+			if upperType == "TLS" || upperType == "TLS-TUNNEL" {
+				session.Where("type LIKE ? OR type LIKE ?", "%TLS%", "%tls%")
+			} else if upperType == "QUIC" || upperType == "QUIC-TUNNEL" {
+				session.Where("type LIKE ? OR type LIKE ?", "%QUIC%", "%quic%")
+			} else {
+				session.Where("type = ?", clientType)
+			}
+		}
 	if tunnelId := c.Query("tunnel_id"); tunnelId != "" {
 		session.Where("tunnel_id = ?", tunnelId)
 	}

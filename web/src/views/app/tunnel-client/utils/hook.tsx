@@ -81,15 +81,11 @@ export function useTunnelClient(t: any, tableRef: Ref) {
       prop: "Type",
       minWidth: 100,
       cellRenderer: scope => {
-        const clientType = (
-          scope.row.Type ||
-          scope.row.type ||
-          ""
-        ).toLowerCase();
-        const tagType = "primary";
+        const rawType = scope.row.Type || scope.row.type || "";
+        const displayType = rawType.toUpperCase().includes("QUIC") ? "QUIC" : "TLS";
         return (
-          <el-tag type={tagType} effect="plain" class="font-bold">
-            {clientType.toUpperCase()}
+          <el-tag type="primary" effect="plain" class="font-bold">
+            {displayType}
           </el-tag>
         );
       }

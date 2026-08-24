@@ -1,11 +1,8 @@
 <script setup lang="ts">
 import { deviceDetection } from "@pureadmin/utils";
-import { ref, reactive, onMounted } from "vue";
-import { useRouter } from "vue-router";
+import { ref, reactive } from "vue";
 import ReCol from "@/components/ReCol";
 import { useI18n } from "vue-i18n";
-import { getCertList } from "@/api/certificate";
-import { closeAllDialog } from "@/components/ReDialog";
 
 const props = withDefaults(defineProps<{ formInline: any }>(), {
   formInline: () => ({
@@ -20,19 +17,13 @@ const props = withDefaults(defineProps<{ formInline: any }>(), {
   })
 });
 
-const router = useRouter();
 const ruleFormRef = ref();
 const newFormInline = ref(props.formInline);
 const { t } = useI18n();
 
-const certOptions = ref<Array<{ label: string; value: string; cn: string }>>(
-  []
-);
-const certLoading = ref(false);
-
 const typeOptions = [
-  { label: "TLS-TUNNEL", value: "TLS-TUNNEL" },
-  { label: "QUIC-TUNNEL", value: "QUIC-TUNNEL" }
+  { label: "TLS", value: "TLS-TUNNEL" },
+  { label: "QUIC", value: "QUIC-TUNNEL" }
 ];
 
 const formRules = reactive({
@@ -72,52 +63,6 @@ const formRules = reactive({
       trigger: "blur"
     }
   ]
-});
-
-async function fetchCertificates(query = "") {
-  certLoading.value = true;
-  const { code, data } = await getCertList({ cert_id: query });
-  certLoading.value = false;
-  if (code === 0 && data?.list) {
-    certOptions.value = data.list.map((item: any) => ({
-      label: item.CertId || item.cert_id,
-      value: item.CertId || item.cert_id,
-      cn: item.SubjectCN || item.subject_cn || ""
-    }));
-
-    const curCert = newFormInline.value.certificate;
-    if (curCert && !certOptions.value.some(c => c.value === curCert)) {
-      certOptions.value.unshift({
-        label: curCert,
-        value: curCert,
-        cn: ""
-      });
-    }
-
-    if (newFormInline.value.certificate) {
-      handleCertChange(newFormInline.value.certificate);
-    }
-  }
-}
-
-function handleCertChange(val: string) {
-  if (!val) {
-    newFormInline.value.sni = "";
-    return;
-  }
-  const matched = certOptions.value.find(item => item.value === val);
-  if (matched && matched.cn) {
-    newFormInline.value.sni = matched.cn;
-  }
-}
-
-function goToCertPage() {
-  closeAllDialog();
-  router.push("/app/cert");
-}
-
-onMounted(() => {
-  fetchCertificates();
 });
 
 function getRef() {
