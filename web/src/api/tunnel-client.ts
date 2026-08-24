@@ -23,7 +23,7 @@ export const createTunnelClient = async (data?: object) => {
   try {
     const res = await http.request<any>("post", "/api/tunnel-client", { data });
     return { code: 0, message: "success", data: res };
-  } catch {
+  } catch (err: any) {
     return {
       code: 1,
       message: err?.response?.data?.message || err?.message || "create failed"
@@ -39,7 +39,7 @@ export const updateTunnelClient = async (data: any) => {
       data
     });
     return { code: 0, message: "success", data: res };
-  } catch {
+  } catch (err: any) {
     return {
       code: 1,
       message: err?.response?.data?.message || err?.message || "update failed"
@@ -59,7 +59,7 @@ export const deleteTunnelClient = async (param: any) => {
       await http.request<any>("delete", `/api/tunnel-client/${id}`);
     }
     return { code: 0, message: "success" };
-  } catch {
+  } catch (err: any) {
     return {
       code: 1,
       message: err?.response?.data?.message || err?.message || "delete failed"

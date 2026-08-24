@@ -32,7 +32,7 @@ func InitDB(dsn string) {
 	}
 
 	// Automatically sync database schemas if necessary
-	err = engine.Sync2(new(AdminUser), new(Tunnel), new(Certificate), new(TunnelClient), new(DnsProxy), new(Rule), new(HttpProxy), new(ClusterNode))
+	err = engine.Sync2(new(AdminUser), new(Tunnel), new(Certificate), new(TunnelClient), new(DnsProxy), new(Rule), new(HttpProxy), new(ClusterNode), new(AcmeConfig))
 
 	if err != nil {
 		log.Fatalf("Failed to sync database: %v", err)
@@ -53,6 +53,9 @@ func InitDB(dsn string) {
 	_, _ = engine.Exec("UPDATE rule SET created_at = ? WHERE created_at IS NULL OR created_at = '' OR created_at LIKE '0001-01-01%'", nowStr)
 	_, _ = engine.Exec("UPDATE dns_proxy SET created_at = ? WHERE created_at IS NULL OR created_at = '' OR created_at LIKE '0001-01-01%'", nowStr)
 	_, _ = engine.Exec("UPDATE tunnel SET created_at = ? WHERE created_at IS NULL OR created_at = '' OR created_at LIKE '0001-01-01%'", nowStr)
+	_, _ = engine.Exec("UPDATE certificate SET source = 'MANUAL' WHERE source IS NULL OR source = ''")
+	_, _ = engine.Exec("UPDATE certificate SET source = 'SELF_SIGNED' WHERE type LIKE 'SELF%'")
+	_, _ = engine.Exec("UPDATE certificate SET source = 'ACME' WHERE cert_id LIKE 'acme-%'")
 
 	// Initialize default admin user
 	admin := &AdminUser{Username: "admin"}

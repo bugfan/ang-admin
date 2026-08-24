@@ -24,6 +24,7 @@ type Certificate struct {
 	NotAfter     time.Time `xorm:"'not_after' datetime" json:"not_after"`         // 证书过期结束时间
 	Issuer       string    `xorm:"'issuer' varchar(255)" json:"issuer"`        // 颁发者
 	SerialNumber string    `xorm:"'serial_number' varchar(128)" json:"serial_number"` // 序列号
+	Source       string    `xorm:"'source' varchar(32) default 'MANUAL'" json:"source"` // 证书来源: "MANUAL", "ACME", "SELF_SIGNED"
 	CreatedAt    time.Time `xorm:"created" json:"created_at"`
 	UpdatedAt    time.Time `xorm:"updated" json:"updated_at"`
 }

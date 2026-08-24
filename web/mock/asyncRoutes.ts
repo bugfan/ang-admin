@@ -31,9 +31,10 @@ const appRouter = {
 
 const certRouter = {
   path: "/cert",
+  name: "AppCertManagement",
   meta: {
     icon: "ri:lock-line",
-    title: "menus.pureCert",
+    title: "menus.pureCertManagement",
     rank: 2
   },
   children: [
@@ -42,8 +43,18 @@ const certRouter = {
       name: "AppCert",
       component: "app/cert/index",
       meta: {
-        icon: "ri:lock-line",
+        icon: "ri:file-list-line",
         title: "menus.pureCert",
+        roles: ["admin", "common"]
+      }
+    },
+    {
+      path: "/cert/acme",
+      name: "AppCertAcme",
+      component: "app/cert/acme/index",
+      meta: {
+        icon: "ri:magic-line",
+        title: "menus.pureCertAcme",
         roles: ["admin", "common"]
       }
     }

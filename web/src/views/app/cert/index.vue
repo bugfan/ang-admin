@@ -162,6 +162,20 @@ async function handleSaveSubmit() {
           </el-select>
         </el-form-item>
 
+        <el-form-item :label="t('cert.source', '来源')" prop="source">
+          <el-select
+            v-model="form.source"
+            placeholder="全部来源"
+            clearable
+            class="w-full sm:w-45!"
+            @change="onSearch"
+          >
+            <el-option :label="t('cert.sourceAcme', '免费证书 (ACME)')" value="ACME" />
+            <el-option :label="t('cert.sourceManual', '手动上传')" value="MANUAL" />
+            <el-option :label="t('cert.sourceSelfSigned', '本地测试证书')" value="SELF_SIGNED" />
+          </el-select>
+        </el-form-item>
+
         <el-form-item>
           <el-button
             type="primary"
@@ -350,7 +364,7 @@ async function handleSaveSubmit() {
       <!-- Full Page Header Bar -->
       <PageHeader
         :title="formInline.title"
-        description="配置 TLS/HTTPS 站点所需的 SSL/TLS 证书及私钥内容，支持一键自动生成自签名证书"
+        description="配置 TLS/HTTPS 站点所需的 SSL/TLS 证书及私钥内容，支持一键生成本地测试证书"
         :backTitle="t('cert.backToList', '返回证书列表')"
         @back="handleCancelPage"
       >

@@ -288,9 +288,10 @@ func AsyncRoutesHandler(c *gin.Context) {
 			},
 			{
 				"path": "/cert",
+				"name": "AppCertManagement",
 				"meta": gin.H{
 					"icon":  "ri:lock-line",
-					"title": "menus.pureCert",
+					"title": "menus.pureCertManagement",
 					"rank":  2,
 				},
 				"children": []gin.H{
@@ -299,8 +300,18 @@ func AsyncRoutesHandler(c *gin.Context) {
 						"name":      "AppCert",
 						"component": "app/cert/index",
 						"meta": gin.H{
-							"icon":  "ri:lock-line",
+							"icon":  "ri:file-list-line",
 							"title": "menus.pureCert",
+							"roles": []string{"admin", "common"},
+						},
+					},
+					{
+						"path":      "/cert/acme",
+						"name":      "AppCertAcme",
+						"component": "app/cert/acme/index",
+						"meta": gin.H{
+							"icon":  "ri:magic-line",
+							"title": "menus.pureCertAcme",
 							"roles": []string{"admin", "common"},
 						},
 					},

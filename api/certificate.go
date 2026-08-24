@@ -28,6 +28,7 @@ type certHandler struct {
 	NotAfter     time.Time `json:"not_after"`
 	Issuer       string    `json:"issuer"`
 	SerialNumber string    `json:"serial_number"`
+	Source       string    `json:"source"`
 	CreatedAt    time.Time `json:"created_at"`
 	UpdatedAt    time.Time `json:"updated_at"`
 }
@@ -103,6 +104,9 @@ func (c *certHandler) List(ctx *gin.Context) {
 	if sans := ctx.Query("sans"); sans != "" {
 		session.Where("sans LIKE ?", "%"+sans+"%")
 	}
+	if source := ctx.Query("source"); source != "" {
+		session.Where("source = ?", source)
+	}
 
 	err := session.Desc("id").Find(&certs)
 	if err != nil {
@@ -125,6 +129,7 @@ func (c *certHandler) List(ctx *gin.Context) {
 			NotAfter:     item.NotAfter,
 			Issuer:       item.Issuer,
 			SerialNumber: item.SerialNumber,
+			Source:       item.Source,
 			CreatedAt:    item.CreatedAt,
 			UpdatedAt:    item.UpdatedAt,
 		})

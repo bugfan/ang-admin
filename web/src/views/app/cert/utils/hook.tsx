@@ -16,7 +16,8 @@ export function useCert(t: any, tableRef: Ref) {
   const form = reactive({
     cert_id: "",
     type: "",
-    subject_cn: ""
+    subject_cn: "",
+    source: ""
   });
   const formRef = ref();
   const dataList = ref([]);
@@ -59,6 +60,31 @@ export function useCert(t: any, tableRef: Ref) {
           <span class="font-semibold text-sm/snug text-(--el-text-color-primary) wrap-break-word inline-block  py-1">
             {certId}
           </span>
+        );
+      }
+    },
+    {
+      label: t("cert.source", "来源"),
+      prop: "Source",
+      minWidth: 110,
+      cellRenderer: scope => {
+        const src = scope.row.Source || scope.row.source || "MANUAL";
+        let tagType: "primary" | "success" | "warning" | "info" = "info";
+        let labelText = t("cert.sourceManual", "手动上传");
+        if (src === "ACME") {
+          tagType = "primary";
+          labelText = t("cert.sourceAcme", "免费证书 (ACME)");
+        } else if (src === "SELF_SIGNED") {
+          tagType = "warning";
+          labelText = t("cert.sourceSelfSigned", "本地测试证书");
+        } else {
+          tagType = "success";
+          labelText = t("cert.sourceManual", "手动上传");
+        }
+        return (
+          <el-tag type={tagType} effect="light" class="font-medium">
+            {labelText}
+          </el-tag>
         );
       }
     },

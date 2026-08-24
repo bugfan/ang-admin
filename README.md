@@ -20,3 +20,9 @@ ang-admin是ang全协议代理网关的管理端，包含管理后台接口和�
 
 ## ai agent注意事项
 改完代码测试运行之后一定要自己停到程序，不要影响我启动测试代码
+
+## todo
+按增量下发配置
+tunnel client链接时候暂时没有限制，谁都能链接，这个应该在tunnel server添加/编辑时候搞一个配置项，控制是否允许未注册的tunnel client token能链接上来
+tunnel菜单里的server/client改成tunnel和node是否更好
+server.json tunnel部分，也许不需要制定sni了，因为都是一份自签发证书，内置了

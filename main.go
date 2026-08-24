@@ -13,7 +13,10 @@ func main() {
 	// 2. Sync configuration entities to cluster
 	service.SyncAllToCluster()
 
-	// 3. Start HTTP Server
+	// 3. Start ACME Auto-Renew Scheduled Cron
+	service.StartAcmeAutoRenewCron()
+
+	// 4. Start HTTP Server
 	api.StartServer(":8080")
 }
 
