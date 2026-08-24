@@ -267,15 +267,35 @@ func AsyncRoutesHandler(c *gin.Context) {
 		"message": "success",
 		"data": []gin.H{
 			{
-				"path": "/app",
+				"path":     "/app",
+				"redirect": "/cert/index",
 				"meta": gin.H{
 					"icon":  "ri:apps-line",
 					"title": "menus.pureApp",
-					"rank":  5,
+					"rank":  1,
 				},
 				"children": []gin.H{
 					{
-						"path":      "/app/cert",
+						"path":     "/app/index",
+						"name":     "AppMain",
+						"redirect": "/cert/index",
+						"meta": gin.H{
+							"title": "menus.pureApp",
+							"roles": []string{"admin", "common"},
+						},
+					},
+				},
+			},
+			{
+				"path": "/cert",
+				"meta": gin.H{
+					"icon":  "ri:lock-line",
+					"title": "menus.pureCert",
+					"rank":  2,
+				},
+				"children": []gin.H{
+					{
+						"path":      "/cert/index",
 						"name":      "AppCert",
 						"component": "app/cert/index",
 						"meta": gin.H{
@@ -284,37 +304,48 @@ func AsyncRoutesHandler(c *gin.Context) {
 							"roles": []string{"admin", "common"},
 						},
 					},
-						{
-							"path": "/app/tunnel-parent",
-							"name": "AppTunnelParent",
-							"meta": gin.H{
-								"icon":  "ri:route-line",
-								"title": "menus.pureTunnel",
-								"roles": []string{"admin", "common"},
-							},
-							"children": []gin.H{
-								{
-									"path":      "/app/tunnel",
-									"name":      "AppTunnel",
-									"component": "app/tunnel/index",
-									"meta": gin.H{
-										"title": "menus.pureTunnelServer",
-										"roles": []string{"admin", "common"},
-									},
-								},
-								{
-									"path":      "/app/tunnel-client",
-									"name":      "AppTunnelClient",
-									"component": "app/tunnel-client/index",
-									"meta": gin.H{
-										"title": "menus.pureTunnelClient",
-										"roles": []string{"admin", "common"},
-									},
-								},
-							},
-						},
+				},
+			},
+			{
+				"path": "/tunnel",
+				"name": "AppTunnelParent",
+				"meta": gin.H{
+					"icon":  "ri:route-line",
+					"title": "menus.pureTunnel",
+					"rank":  3,
+					"roles": []string{"admin", "common"},
+				},
+				"children": []gin.H{
 					{
-						"path":      "/app/rule",
+						"path":      "/tunnel/server",
+						"name":      "AppTunnel",
+						"component": "app/tunnel/index",
+						"meta": gin.H{
+							"title": "menus.pureTunnelServer",
+							"roles": []string{"admin", "common"},
+						},
+					},
+					{
+						"path":      "/tunnel/client",
+						"name":      "AppTunnelClient",
+						"component": "app/tunnel-client/index",
+						"meta": gin.H{
+							"title": "menus.pureTunnelClient",
+							"roles": []string{"admin", "common"},
+						},
+					},
+				},
+			},
+			{
+				"path": "/rule",
+				"meta": gin.H{
+					"icon":  "ri:filter-3-line",
+					"title": "menus.pureRule",
+					"rank":  4,
+				},
+				"children": []gin.H{
+					{
+						"path":      "/rule/index",
 						"name":      "AppRule",
 						"component": "app/rule/index",
 						"meta": gin.H{
@@ -323,8 +354,18 @@ func AsyncRoutesHandler(c *gin.Context) {
 							"roles": []string{"admin", "common"},
 						},
 					},
+				},
+			},
+			{
+				"path": "/dns",
+				"meta": gin.H{
+					"icon":  "ri:global-line",
+					"title": "menus.pureDns",
+					"rank":  5,
+				},
+				"children": []gin.H{
 					{
-						"path":      "/app/dns",
+						"path":      "/dns/index",
 						"name":      "AppDns",
 						"component": "app/dns/index",
 						"meta": gin.H{
@@ -333,8 +374,18 @@ func AsyncRoutesHandler(c *gin.Context) {
 							"roles": []string{"admin", "common"},
 						},
 					},
+				},
+			},
+			{
+				"path": "/http",
+				"meta": gin.H{
+					"icon":  "ri:links-line",
+					"title": "menus.pureHttpProxy",
+					"rank":  6,
+				},
+				"children": []gin.H{
 					{
-						"path":      "/app/http",
+						"path":      "/http/index",
 						"name":      "AppHttpProxy",
 						"component": "app/http/index",
 						"meta": gin.H{
@@ -343,8 +394,18 @@ func AsyncRoutesHandler(c *gin.Context) {
 							"roles": []string{"admin", "common"},
 						},
 					},
+				},
+			},
+			{
+				"path": "/cluster",
+				"meta": gin.H{
+					"icon":  "ri:server-line",
+					"title": "menus.pureCluster",
+					"rank":  7,
+				},
+				"children": []gin.H{
 					{
-						"path":      "/app/cluster",
+						"path":      "/cluster/index",
 						"name":      "AppCluster",
 						"component": "app/cluster/index",
 						"meta": gin.H{
@@ -355,8 +416,6 @@ func AsyncRoutesHandler(c *gin.Context) {
 					},
 				},
 			},
-
-
 			{
 				"path": "/admin",
 				"meta": gin.H{

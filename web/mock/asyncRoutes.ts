@@ -10,14 +10,35 @@ import { system, monitor, permission, frame, tabs } from "@/router/enums";
 
 const appRouter = {
   path: "/app",
+  redirect: "/cert/index",
   meta: {
     icon: "ri:apps-line",
     title: "menus.pureApp",
-    rank: 5
+    rank: 1
   },
   children: [
     {
-      path: "/app/cert",
+      path: "/app/index",
+      name: "AppMain",
+      redirect: "/cert/index",
+      meta: {
+        title: "menus.pureApp",
+        roles: ["admin", "common"]
+      }
+    }
+  ]
+};
+
+const certRouter = {
+  path: "/cert",
+  meta: {
+    icon: "ri:lock-line",
+    title: "menus.pureCert",
+    rank: 2
+  },
+  children: [
+    {
+      path: "/cert/index",
       name: "AppCert",
       component: "app/cert/index",
       meta: {
@@ -25,38 +46,51 @@ const appRouter = {
         title: "menus.pureCert",
         roles: ["admin", "common"]
       }
-    },
+    }
+  ]
+};
+
+const tunnelRouter = {
+  path: "/tunnel",
+  name: "AppTunnelParent",
+  meta: {
+    icon: "ri:route-line",
+    title: "menus.pureTunnel",
+    rank: 3,
+    roles: ["admin", "common"]
+  },
+  children: [
     {
-      path: "/app/tunnel-parent",
-      name: "AppTunnelParent",
+      path: "/tunnel/server",
+      name: "AppTunnel",
+      component: "app/tunnel/index",
       meta: {
-        icon: "ri:route-line",
-        title: "menus.pureTunnel",
+        title: "menus.pureTunnelServer",
         roles: ["admin", "common"]
-      },
-      children: [
-        {
-          path: "/app/tunnel",
-          name: "AppTunnel",
-          component: "app/tunnel/index",
-          meta: {
-            title: "menus.pureTunnelServer",
-            roles: ["admin", "common"]
-          }
-        },
-        {
-          path: "/app/tunnel-client",
-          name: "AppTunnelClient",
-          component: "app/tunnel-client/index",
-          meta: {
-            title: "menus.pureTunnelClient",
-            roles: ["admin", "common"]
-          }
-        }
-      ]
+      }
     },
     {
-      path: "/app/rule",
+      path: "/tunnel/client",
+      name: "AppTunnelClient",
+      component: "app/tunnel-client/index",
+      meta: {
+        title: "menus.pureTunnelClient",
+        roles: ["admin", "common"]
+      }
+    }
+  ]
+};
+
+const ruleRouter = {
+  path: "/rule",
+  meta: {
+    icon: "ri:filter-3-line",
+    title: "menus.pureRule",
+    rank: 4
+  },
+  children: [
+    {
+      path: "/rule/index",
       name: "AppRule",
       component: "app/rule/index",
       meta: {
@@ -64,9 +98,20 @@ const appRouter = {
         title: "menus.pureRule",
         roles: ["admin", "common"]
       }
-    },
+    }
+  ]
+};
+
+const dnsRouter = {
+  path: "/dns",
+  meta: {
+    icon: "ri:global-line",
+    title: "menus.pureDns",
+    rank: 5
+  },
+  children: [
     {
-      path: "/app/dns",
+      path: "/dns/index",
       name: "AppDns",
       component: "app/dns/index",
       meta: {
@@ -74,14 +119,46 @@ const appRouter = {
         title: "menus.pureDns",
         roles: ["admin", "common"]
       }
-    },
+    }
+  ]
+};
+
+const httpRouter = {
+  path: "/http",
+  meta: {
+    icon: "ri:links-line",
+    title: "menus.pureHttpProxy",
+    rank: 6
+  },
+  children: [
     {
-      path: "/app/http",
+      path: "/http/index",
       name: "AppHttpProxy",
       component: "app/http/index",
       meta: {
         icon: "ri:links-line",
         title: "menus.pureHttpProxy",
+        roles: ["admin", "common"]
+      }
+    }
+  ]
+};
+
+const clusterRouter = {
+  path: "/cluster",
+  meta: {
+    icon: "ri:server-line",
+    title: "menus.pureCluster",
+    rank: 7
+  },
+  children: [
+    {
+      path: "/cluster/index",
+      name: "AppCluster",
+      component: "app/cluster/index",
+      meta: {
+        icon: "ri:server-line",
+        title: "menus.pureCluster",
         roles: ["admin", "common"]
       }
     }
@@ -117,7 +194,16 @@ export default defineFakeRoute([
       return {
         code: 0,
         message: "操作成功",
-        data: [appRouter, accountManagementRouter]
+        data: [
+          appRouter,
+          certRouter,
+          tunnelRouter,
+          ruleRouter,
+          dnsRouter,
+          httpRouter,
+          clusterRouter,
+          accountManagementRouter
+        ]
       };
     }
   }
