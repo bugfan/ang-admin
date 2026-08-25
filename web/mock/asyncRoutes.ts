@@ -77,6 +77,7 @@ const tunnelRouter = {
       name: "AppTunnel",
       component: "app/tunnel/index",
       meta: {
+        icon: "ri:server-line",
         title: "menus.pureTunnelServer",
         roles: ["admin", "common"]
       }
@@ -86,6 +87,7 @@ const tunnelRouter = {
       name: "AppTunnelClient",
       component: "app/tunnel-client/index",
       meta: {
+        icon: "ri:terminal-box-line",
         title: "menus.pureTunnelClient",
         roles: ["admin", "common"]
       }

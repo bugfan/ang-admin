@@ -333,6 +333,7 @@ func AsyncRoutesHandler(c *gin.Context) {
 						"name":      "AppTunnel",
 						"component": "app/tunnel/index",
 						"meta": gin.H{
+							"icon":  "ri:server-line",
 							"title": "menus.pureTunnelServer",
 							"roles": []string{"admin", "common"},
 						},
@@ -342,6 +343,7 @@ func AsyncRoutesHandler(c *gin.Context) {
 						"name":      "AppTunnelClient",
 						"component": "app/tunnel-client/index",
 						"meta": gin.H{
+							"icon":  "ri:terminal-box-line",
 							"title": "menus.pureTunnelClient",
 							"roles": []string{"admin", "common"},
 						},

@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { deviceDetection } from "@pureadmin/utils";
-import { ref, reactive, onMounted } from "vue";
+import { ref, reactive, computed, onMounted } from "vue";
 import ReCol from "@/components/ReCol";
 import { useI18n } from "vue-i18n";
 import { getCertList } from "@/api/certificate";
@@ -10,6 +10,7 @@ import { useRenderIcon } from "@/components/ReIcon/src/hooks";
 import AddFill from "~icons/ri/add-line";
 import Delete from "~icons/ep/delete";
 import Rank from "~icons/ep/rank";
+import WarningIcon from "~icons/ep/warning";
 import Sortable from "sortablejs";
 
 export interface LocationItem {
@@ -283,10 +284,112 @@ function initFormState() {
   syncLocationJSON();
 }
 
+const certListRaw = ref<any[]>([]);
+
+function matchDomain(hostname: string, certPattern: string): boolean {
+  if (!hostname || !certPattern) return false;
+  const host = hostname.trim().toLowerCase();
+  const pattern = certPattern.trim().toLowerCase();
+
+  if (host === pattern) return true;
+
+  // Wildcard match (RFC 6125): *.example.com matches sub.example.com
+  if (pattern.startsWith("*.")) {
+    const baseDomain = pattern.slice(2);
+    if (host === baseDomain) return false; // *.example.com does not match example.com itself
+    if (host.endsWith("." + baseDomain)) {
+      const prefix = host.slice(0, host.length - baseDomain.length - 1);
+      // Wildcard matches exactly one level of subdomain (prefix contains no dot)
+      if (prefix && !prefix.includes(".")) {
+        return true;
+      }
+    }
+  }
+
+  return false;
+}
+
+const certMismatchWarning = computed(() => {
+  if (
+    !newFormInline.value.tls ||
+    !newFormInline.value.certificate ||
+    !newFormInline.value.hostname
+  ) {
+    return null;
+  }
+
+  const selectedCertId = newFormInline.value.certificate;
+  const cert = certListRaw.value.find(
+    (c: any) =>
+      (c.CertId || c.cert_id) === selectedCertId ||
+      String(c.Id || c.id) === selectedCertId ||
+      `id-${c.Id || c.id}` === selectedCertId
+  );
+
+  if (!cert) return null;
+
+  const coveredDomains: string[] = [];
+  const cn = cert.SubjectCN || cert.subject_cn;
+  if (cn) coveredDomains.push(cn);
+
+  const rawSans = cert.SANs || cert.sans;
+  if (Array.isArray(rawSans)) {
+    coveredDomains.push(...rawSans);
+  } else if (typeof rawSans === "string" && rawSans.trim()) {
+    try {
+      if (rawSans.startsWith("[")) {
+        const parsed = JSON.parse(rawSans);
+        if (Array.isArray(parsed)) coveredDomains.push(...parsed);
+      } else {
+        const parts = rawSans
+          .split(/[\n,;]+/)
+          .map(s => s.trim())
+          .filter(Boolean);
+        coveredDomains.push(...parts);
+      }
+    } catch {
+      const parts = rawSans
+        .split(/[\n,;]+/)
+        .map(s => s.trim())
+        .filter(Boolean);
+      coveredDomains.push(...parts);
+    }
+  }
+
+  // 去重
+  const uniqueDomains = Array.from(
+    new Set(coveredDomains.map(d => d.trim()))
+  ).filter(Boolean);
+  if (uniqueDomains.length === 0) return null;
+
+  // 支持用户输入多个逗号/空格分隔的主机名
+  const currentHostnames = newFormInline.value.hostname
+    .split(/[\s,;]+/)
+    .map((h: string) => h.trim())
+    .filter(Boolean);
+
+  if (currentHostnames.length === 0) return null;
+
+  const unmatchedHosts = currentHostnames.filter(
+    (host: string) =>
+      !uniqueDomains.some(pattern => matchDomain(host, pattern))
+  );
+
+  if (unmatchedHosts.length > 0) {
+    return {
+      hostname: unmatchedHosts.join(", "),
+      covered: uniqueDomains.join(", ")
+    };
+  }
+
+  return null;
+});
+
 async function fetchCertificates() {
   try {
     const res = await getCertList();
     if (res?.code === 0 && res?.data?.list) {
+      certListRaw.value = res.data.list;
       certOptions.value = res.data.list.map((c: any) => {
         const idVal = c.CertId || c.cert_id || `id-${c.Id || c.id}`;
         const cnVal = c.SubjectCN || c.subject_cn || c.Name || c.name || idVal;
@@ -694,7 +797,14 @@ defineExpose({ getRef, syncLocationJSON });
                 "
                 clearable
               />
-              <div class="text-xs text-(--el-text-color-secondary) mt-1.5">
+              <div
+                v-if="certMismatchWarning"
+                class="text-xs text-amber-600 dark:text-amber-400 mt-1.5 flex items-center gap-1 font-medium"
+              >
+                <WarningIcon class="shrink-0 text-sm" />
+                <span>{{ t("http.hostnameCertMismatchTip") }}</span>
+              </div>
+              <div v-else class="text-xs text-(--el-text-color-secondary) mt-1.5">
                 {{ t("http.hostnameTip") }}
               </div>
             </el-form-item>
@@ -784,6 +894,18 @@ defineExpose({ getRef, syncLocationJSON });
                         :value="c.value"
                       />
                     </el-select>
+
+                    <!-- 证书域名不匹配黄色提示条 -->
+                    <div
+                      v-if="certMismatchWarning"
+                      class="mt-2.5 p-2.5 bg-amber-50 dark:bg-amber-950/40 border border-amber-300 dark:border-amber-700/60 rounded-lg text-xs text-amber-700 dark:text-amber-300 flex items-start gap-2 leading-relaxed"
+                    >
+                      <WarningIcon class="shrink-0 text-amber-500 text-sm mt-0.5" />
+                      <div>
+                        <span class="font-bold">{{ t("http.certMismatchTitle") }}：</span>
+                        <span>{{ t("http.certMismatchDesc", { hostname: certMismatchWarning.hostname, covered: certMismatchWarning.covered }) }}</span>
+                      </div>
+                    </div>
                   </el-form-item>
                 </div>
               </div>
