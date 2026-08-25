@@ -14,7 +14,7 @@ import (
 type Certificate struct {
 	Id           int64     `xorm:"pk autoincr" json:"id"`
 	CertId       string    `xorm:"'cert_id' varchar(64) unique notnull" json:"cert_id"` // e.g. "id-1", "id-2"
-	Type         string    `xorm:"'type' varchar(32) notnull" json:"type"`           // "STD" (标密), "GM" (国密), "SELF-STD" (自签标密)
+	Type         string    `xorm:"'type' varchar(32) notnull" json:"type"`           // "STD" (标密), "GM" (国密)
 	KeyContent   string    `xorm:"'key_content' text notnull" json:"key_content"`     // Private Key (PEM format)
 	CertContent  string    `xorm:"'cert_content' text notnull" json:"cert_content"`    // Certificate (PEM format)
 	Remark       string    `xorm:"'remark' varchar(255)" json:"remark"`
@@ -25,6 +25,10 @@ type Certificate struct {
 	Issuer       string    `xorm:"'issuer' varchar(255)" json:"issuer"`        // 颁发者
 	SerialNumber string    `xorm:"'serial_number' varchar(128)" json:"serial_number"` // 序列号
 	Source       string    `xorm:"'source' varchar(32) default 'MANUAL'" json:"source"` // 证书来源: "MANUAL", "ACME", "SELF_SIGNED"
+	AcmeAccountId int64    `xorm:"'acme_account_id' int default 0" json:"acme_account_id"`
+	AutoRenew     bool     `xorm:"'auto_renew' bool default 0" json:"auto_renew"`
+	RenewDays     int      `xorm:"'renew_days' int default 30" json:"renew_days"`
+	Domains       string   `xorm:"'domains' text" json:"domains"`
 	CreatedAt    time.Time `xorm:"created" json:"created_at"`
 	UpdatedAt    time.Time `xorm:"updated" json:"updated_at"`
 }

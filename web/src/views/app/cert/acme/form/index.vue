@@ -6,7 +6,7 @@ import ReCol from "@/components/ReCol";
 
 const props = withDefaults(defineProps<{ formInline: any }>(), {
   formInline: () => ({
-    title: "添加",
+    title: "",
     id: undefined,
     name: "",
     email: "",
@@ -14,13 +14,8 @@ const props = withDefaults(defineProps<{ formInline: any }>(), {
     customServerUrl: "",
     keyType: "EC256",
     challengeType: "DNS-01",
-    dnsProvider: "tencentcloud",
-    dnsEnvMap: {} as Record<string, string>,
-    domains: "",
-    certId: "",
-    disableCname: true,
-    autoRenew: true,
-    renewDays: 30
+    provider: "tencentcloud",
+    dnsEnvMap: {} as Record<string, string>
   })
 });
 
@@ -45,7 +40,7 @@ const keyTypes = [
 ];
 
 // DNS 云厂商及对应 API 环境变量模板
-const dnsProviders = [
+const acmeAccounts = [
   {
     name: "tencentcloud",
     label: "腾讯云 (TencentCloud - SecretId / SecretKey)",
@@ -117,16 +112,16 @@ const dnsProviders = [
   }
 ];
 
-const currentDnsProviderObj = computed(() => {
-  const found = dnsProviders.find(p => p.name === newFormInline.value.dnsProvider);
-  return found || dnsProviders[0];
+const currentAcmeAccountObj = computed(() => {
+  const found = acmeAccounts.find(p => p.name === newFormInline.value.provider);
+  return found || acmeAccounts[0];
 });
 
-const onDnsProviderChange = () => {
+const onProviderChange = () => {
   if (!newFormInline.value.dnsEnvMap) {
     newFormInline.value.dnsEnvMap = {};
   }
-  const envKeys = currentDnsProviderObj.value.envKeys;
+  const envKeys = currentAcmeAccountObj.value.envKeys;
   for (const item of envKeys) {
     if (newFormInline.value.dnsEnvMap[item.key] === undefined) {
       newFormInline.value.dnsEnvMap[item.key] = "";
@@ -135,12 +130,7 @@ const onDnsProviderChange = () => {
 };
 
 const formRules = reactive({
-  name: [{ required: true, message: () => t("acme.configName") + " 不能为空", trigger: "blur" }],
-  email: [
-    { required: true, message: () => t("acme.email") + " 不能为空", trigger: "blur" },
-    { type: "email", message: "请输入有效的邮箱格式", trigger: ["blur", "change"] }
-  ],
-  domains: [{ required: true, message: () => t("acme.domains") + " 不能为空", trigger: "blur" }]
+  name: [{ required: true, message: () => t("acmeAccount.name") + " " + t("acmeAccount.required"), trigger: "blur" }]
 });
 
 function getRef() {
@@ -157,22 +147,22 @@ defineExpose({ getRef });
     :model="newFormInline"
     :rules="formRules"
     label-width="auto"
-    class="acme-form p-1 sm:px-2"
+    class="acme-account-form p-1 sm:px-2"
   >
     <el-row :gutter="20">
-      <!-- 基础与 CA 设置 -->
+      <!-- 基础配置 -->
       <re-col :value="24" :xs="24" :sm="24">
         <div class="font-bold text-sm text-(--el-text-color-primary) border-b border-(--el-border-color-lighter) pb-2 mb-4 flex items-center gap-1.5">
           <IconifyIconOffline icon="ri:settings-4-line" class="text-blue-500" />
-          <span>基础配置与 ACME 服务商</span>
+          <span>{{ t("acmeAccount.basicConfig") }}</span>
         </div>
       </re-col>
 
       <re-col :value="12" :xs="24" :sm="12">
-        <el-form-item :label="t('acme.configName')" prop="name">
+        <el-form-item :label="t('acmeAccount.name')" prop="name">
           <el-input
             v-model="newFormInline.name"
-            placeholder="例如: 腾讯云 - 主站泛域名证书 (*.domain.com)"
+            :placeholder="t('acmeAccount.namePlaceholder')"
             clearable
           />
         </el-form-item>
@@ -221,51 +211,41 @@ defineExpose({ getRef });
         </el-form-item>
       </re-col>
 
-      <!-- 验证方式与 DNS 云厂商 -->
-      <re-col :value="24" :xs="24" :sm="24">
-        <div class="font-bold text-sm text-(--el-text-color-primary) border-b border-(--el-border-color-lighter) pb-2 mt-4 mb-4 flex items-center gap-1.5">
-          <IconifyIconOffline icon="ri:shield-check-line" class="text-green-500" />
-          <span>验证方式与 DNS API 凭证</span>
-        </div>
-      </re-col>
 
-      <re-col :value="12" :xs="24" :sm="12">
-        <el-form-item :label="t('acme.challengeType')">
-          <el-radio-group v-model="newFormInline.challengeType">
-            <el-radio label="DNS-01">DNS-01 (自动 API 验证 - 支持泛域名)</el-radio>
-            <el-radio label="HTTP-01">HTTP-01 (80 端口 HTTP 校验)</el-radio>
-          </el-radio-group>
-        </el-form-item>
-      </re-col>
+        <re-col :value="12" :xs="24" :sm="12">
+          <el-form-item :label="t('acmeAccount.provider')">
+            <el-select
+              v-model="newFormInline.provider"
+              class="w-full"
+              @change="onProviderChange"
+            >
+              <el-option
+                v-for="p in acmeAccounts"
+                :key="p.name"
+                :label="p.label"
+                :value="p.name"
+              />
+            </el-select>
+          </el-form-item>
+        </re-col>
 
-      <re-col v-if="newFormInline.challengeType === 'DNS-01'" :value="12" :xs="24" :sm="12">
-        <el-form-item :label="t('acme.dnsProvider')">
-          <el-select
-            v-model="newFormInline.dnsProvider"
-            class="w-full"
-            @change="onDnsProviderChange"
-          >
-            <el-option
-              v-for="p in dnsProviders"
-              :key="p.name"
-              :label="p.label"
-              :value="p.name"
-            />
-          </el-select>
-        </el-form-item>
-      </re-col>
+        <!-- API 凭证 -->
+        <re-col :value="24" :xs="24" :sm="24">
+          <div class="font-bold text-sm text-(--el-text-color-primary) border-b border-(--el-border-color-lighter) pb-2 mt-4 mb-4 flex items-center gap-1.5">
+            <IconifyIconOffline icon="ri:shield-check-line" class="text-green-500" />
+            <span>{{ t("acmeAccount.credentials") }}</span>
+          </div>
+        </re-col>
 
-      <!-- DNS 云厂商凭证帮助提示与动态输入框 -->
-      <re-col v-if="newFormInline.challengeType === 'DNS-01'" :value="24" :xs="24" :sm="24">
-        <div class="bg-(--el-fill-color-light) p-3 rounded-xl mb-3 text-xs text-(--el-text-color-secondary) border border-(--el-border-color-lighter) flex items-center gap-2">
-          <IconifyIconOffline icon="ri:information-line" class="text-blue-500 shrink-0 text-base" />
-          <span>{{ currentDnsProviderObj.help }}</span>
-        </div>
-      </re-col>
+        <re-col :value="24" :xs="24" :sm="24">
+          <div class="bg-(--el-fill-color-light) p-3 rounded-xl mb-3 text-xs text-(--el-text-color-secondary) border border-(--el-border-color-lighter) flex items-center gap-2">
+            <IconifyIconOffline icon="ri:information-line" class="text-blue-500 shrink-0 text-base" />
+            <span>{{ currentAcmeAccountObj.help }}</span>
+          </div>
+        </re-col>
 
-      <template v-if="newFormInline.challengeType === 'DNS-01'">
         <re-col
-          v-for="env in currentDnsProviderObj.envKeys"
+          v-for="env in currentAcmeAccountObj.envKeys"
           :key="env.key"
           :value="12"
           :xs="24"
@@ -281,72 +261,12 @@ defineExpose({ getRef });
             />
           </el-form-item>
         </re-col>
-      </template>
-
-      <!-- 目标域名与自动续签策略 -->
-      <re-col :value="24" :xs="24" :sm="24">
-        <div class="font-bold text-sm text-(--el-text-color-primary) border-b border-(--el-border-color-lighter) pb-2 mt-4 mb-4 flex items-center gap-1.5">
-          <IconifyIconOffline icon="ri:global-line" class="text-indigo-500" />
-          <span>目标域名与自动续签策略</span>
-        </div>
-      </re-col>
-
-      <re-col :value="24" :xs="24" :sm="24">
-        <el-form-item :label="t('acme.domains')" prop="domains">
-          <el-input
-            v-model="newFormInline.domains"
-            type="textarea"
-            :rows="3"
-            :placeholder="t('acme.domainsPlaceholder')"
-            clearable
-            class="font-mono text-xs"
-          />
-        </el-form-item>
-      </re-col>
-
-      <re-col :value="12" :xs="24" :sm="12">
-        <el-form-item :label="t('acme.certId')">
-          <el-input
-            v-model="newFormInline.certId"
-            :placeholder="t('acme.certIdPlaceholder')"
-            clearable
-          />
-        </el-form-item>
-      </re-col>
-
-      <re-col :value="12" :xs="24" :sm="12">
-        <el-form-item :label="t('acme.disableCname')">
-          <el-switch
-            v-model="newFormInline.disableCname"
-            active-text="禁用 CNAME 跳转 (直接在当前账号域名下添加 TXT 记录，防止跨域报错)"
-          />
-        </el-form-item>
-      </re-col>
-
-      <re-col :value="24" :xs="24" :sm="24">
-        <el-form-item :label="t('acme.autoRenew')">
-          <div class="flex flex-wrap items-center gap-4">
-            <el-switch v-model="newFormInline.autoRenew" active-text="启用自动续签" />
-            <div v-if="newFormInline.autoRenew" class="flex items-center gap-1.5 text-xs text-(--el-text-color-regular)">
-              <span>证书到期前</span>
-              <el-input-number
-                v-model="newFormInline.renewDays"
-                :min="1"
-                :max="60"
-                size="small"
-                class="w-24!"
-              />
-              <span>天触发自动重新签发与热加载覆盖更新</span>
-            </div>
-          </div>
-        </el-form-item>
-      </re-col>
     </el-row>
   </el-form>
 </template>
 
 <style scoped>
-.acme-form :deep(.el-form-item__label) {
+.acme-account-form :deep(.el-form-item__label) {
   font-weight: 500;
   color: var(--el-text-color-regular);
   white-space: nowrap;

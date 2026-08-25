@@ -72,6 +72,7 @@ menus:
   pureApp: "应用"
   pureCertManagement: "证书管理"
   pureCertAcme: "免费证书"
+  pureAcme: "ACME 签发配置"
   pureCert: "证书"
   pureTunnel: "TUNNEL"
   pureTunnelServer: "服务器"
@@ -425,6 +426,27 @@ cert:
   backToList: "返回证书列表"
   noContent: "暂无内容"
 
+acmeAccount:
+  title: "ACME 签发"
+  name: "名称"
+  namePlaceholder: "例如: 我的腾讯云账号 - 主力域名解析"
+  provider: "DNS 提供商"
+  credentials: "API 密钥凭证"
+  disableCname: "直接管理本域记录"
+  disableCnameTip: "禁用 CNAME 跳转 (直接在当前账号域名下添加 TXT 记录)"
+  basicConfig: "基础配置"
+  advancedOptions: "高级选项"
+  addProvider: "添加"
+  editProvider: "编辑"
+  required: "不能为空"
+  searchNamePlaceholder: "请输入名称"
+  searchProviderPlaceholder: "全部厂商"
+  deleteConfirm: "是否确认删除该 ACME 签发配置?"
+  backToList: "返回列表"
+  pageHeaderDesc: "统一管理 ACME 签发 API 凭证账号，可复用于多条免费证书签发任务"
+  enabled: "已启用"
+  disabled: "未启用"
+
 acme:
   title: "免费证书"
   configList: "免费证书列表"
@@ -439,7 +461,7 @@ acme:
   serverCustom: "自定义 Directory URL"
   keyType: "密钥算法 (Key)"
   challengeType: "验证方式"
-  dnsProvider: "DNS 云厂商"
+  dnsProvider: "ACME 签发"
   dnsProviderSelect: "请选择 DNS 提供商"
   dnsEnvConfig: "DNS API 密钥凭证"
   domains: "签发域名"
@@ -471,6 +493,12 @@ acme:
   backToList: "返回列表"
   pageHeaderDesc: "配置基于 Let's Encrypt / ACME 协议的自动化 TLS 证书签发与定时自动续签任务"
   deleteConfirm: "是否确认删除该配置?"
+  dnsCredSource: "DNS 凭证来源"
+  useExistingProvider: "选择已配置的 ACME 签发账号"
+  manualCredentials: "手动填写 API 凭证"
+  selectDnsProvider: "ACME 签发账号"
+  selectDnsProviderPlaceholder: "请选择已配置的 ACME 签发账号"
+  saveAndIssue: "保存并立即签发"
 tableBar:
   pureList: 列表
   pureLarge: 宽松

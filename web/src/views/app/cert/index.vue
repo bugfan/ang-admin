@@ -53,9 +53,14 @@ function getDefaultFormInline() {
     id: undefined,
     cert_id: "",
     type: "STD",
+    source: "MANUAL",
     key_content: "",
     cert_content: "",
-    remark: ""
+    remark: "",
+    dns_provider_id: undefined,
+    domains: "",
+    auto_renew: true,
+    renew_days: 30
   };
 }
 
@@ -65,9 +70,14 @@ function getFormInlineFromRow(row: any) {
     id: row?.Id ?? row?.id ?? undefined,
     cert_id: row?.CertId ?? row?.cert_id ?? "",
     type: row?.Type ?? row?.type ?? "STD",
+    source: row?.Source ?? row?.source ?? "MANUAL",
     key_content: row?.KeyContent ?? row?.key_content ?? "",
     cert_content: row?.CertContent ?? row?.cert_content ?? "",
-    remark: row?.Remark ?? row?.remark ?? ""
+    remark: row?.Remark ?? row?.remark ?? "",
+    dns_provider_id: row?.DnsProviderId ?? row?.dns_provider_id ?? undefined,
+    domains: row?.Domains ?? row?.domains ?? "",
+    auto_renew: row?.AutoRenew ?? row?.auto_renew ?? true,
+    renew_days: row?.RenewDays ?? row?.renew_days ?? 30
   };
 }
 
@@ -85,6 +95,16 @@ function handleCancelPage() {
   showView.value = "list";
 }
 
+async function handleIssue(row: any) {
+  const { issueCert } = await import("@/api/certificate");
+  const res = await issueCert(row.id || row.Id);
+  if (res.code === 0) {
+    message("已提交后台签发任务，请稍后刷新列表查看结果", { type: "success" });
+  } else {
+    message(res.message || "签发失败", { type: "error" });
+  }
+}
+
 async function handleSaveSubmit() {
   if (!createEditFormRef.value) return;
   const FormRef = createEditFormRef.value.getRef();
@@ -96,14 +116,22 @@ async function handleSaveSubmit() {
       try {
         const curData = formInline.value;
         if (showView.value === "new") {
-          const { code, message: msg } = await createCert(curData);
+          const { code, message: msg, data } = await createCert(curData);
           if (code !== 0) {
             message(msg, { type: "error" });
             return;
           }
-          message(`${t("cert.addCert")} ${t("cert.success", "成功")}`, {
-            type: "success"
-          });
+          if (curData.source === "ACME") {
+            const newId = data?.id || data?.Id;
+            if (newId) {
+              await import("@/api/certificate").then(m => m.issueCert(newId));
+              message(`配置保存成功，已发起后台 ACME 签发任务`, { type: "success" });
+            }
+          } else {
+            message(`${t("cert.addCert")} ${t("cert.success", "成功")}`, {
+              type: "success"
+            });
+          }
         } else {
           const { code, message: msg } = await updateCert(curData);
           if (code !== 0) {
@@ -158,7 +186,6 @@ async function handleSaveSubmit() {
           >
             <el-option label="STD" value="STD" />
             <el-option label="GM" value="GM" />
-            <el-option label="SELF-STD" value="SELF-STD" />
           </el-select>
         </el-form-item>
 
@@ -171,8 +198,7 @@ async function handleSaveSubmit() {
             @change="onSearch"
           >
             <el-option :label="t('cert.sourceAcme', '免费证书 (ACME)')" value="ACME" />
-            <el-option :label="t('cert.sourceManual', '手动上传')" value="MANUAL" />
-            <el-option :label="t('cert.sourceSelfSigned', '本地测试证书')" value="SELF_SIGNED" />
+            <el-option :label="t('cert.sourceManual', '手动配置')" value="MANUAL" />
           </el-select>
         </el-form-item>
 
@@ -323,6 +349,23 @@ async function handleSaveSubmit() {
             <!-- 操作列 -->
             <template #operation="{ row }">
               <div class="flex-c space-x-1">
+                <el-popconfirm
+                  v-if="row.source === 'ACME'"
+                  title="确认要立即执行一次 ACME 签发任务吗？"
+                  @confirm="handleIssue(row)"
+                >
+                  <template #reference>
+                    <el-button
+                      class="reset-margin"
+                      link
+                      type="success"
+                      :size="size"
+                      :icon="useRenderIcon('ri:magic-line')"
+                    >
+                      重新签发
+                    </el-button>
+                  </template>
+                </el-popconfirm>
                 <el-button
                   class="reset-margin"
                   link

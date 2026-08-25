@@ -15,9 +15,8 @@ import (
 	"github.com/bugfan/ang-admin/models"
 	"github.com/go-acme/lego/v4/certcrypto"
 	"github.com/go-acme/lego/v4/certificate"
-	"github.com/go-acme/lego/v4/lego"
 	"github.com/go-acme/lego/v4/challenge/dns01"
-	"github.com/go-acme/lego/v4/challenge/http01"
+	"github.com/go-acme/lego/v4/lego"
 	"github.com/go-acme/lego/v4/providers/dns"
 	"github.com/go-acme/lego/v4/registration"
 )
@@ -229,14 +228,8 @@ func IssueAcmeCertificate(req *IssueCertificateRequest) (*IssueCertificateRespon
 		if err != nil {
 			return nil, fmt.Errorf("设置 DNS-01 验证器失败: %w", err)
 		}
-	} else if challengeType == "HTTP-01" {
-		provider := http01.NewProviderServer("", "80")
-		err = client.Challenge.SetHTTP01Provider(provider)
-		if err != nil {
-			return nil, fmt.Errorf("设置 HTTP-01 验证器失败: %w", err)
-		}
 	} else {
-		return nil, fmt.Errorf("不支持的验证方式: %s", req.ChallengeType)
+		return nil, fmt.Errorf("不支持的验证方式: %s, 目前仅支持 DNS-01", challengeType)
 	}
 
 	// 5. 申请签发证书
@@ -293,17 +286,6 @@ func IssueAcmeCertificate(req *IssueCertificateRequest) (*IssueCertificateRespon
 		SyncCertificateToCluster()
 	}
 
-	// 8. 若关联了配置 ID，更新该配置的签发状态
-	if req.AcmeConfigId > 0 {
-		var cfg models.AcmeConfig
-		has, _ := models.GetEngine().ID(req.AcmeConfigId).Get(&cfg)
-		if has {
-			cfg.LastIssuedAt = time.Now()
-			cfg.LastStatus = "SUCCESS"
-			cfg.LastError = ""
-			_, _ = models.GetEngine().ID(cfg.Id).Cols("last_issued_at", "last_status", "last_error").Update(&cfg)
-		}
-	}
 
 	return &IssueCertificateResponse{
 		CertId:      certId,
@@ -317,46 +299,71 @@ func IssueAcmeCertificate(req *IssueCertificateRequest) (*IssueCertificateRespon
 	}, nil
 }
 
-// 根据已保存的配置项 ID 执行一键签发
-func IssueCertificateByConfigId(configId int64) (*IssueCertificateResponse, error) {
-	var cfg models.AcmeConfig
-	has, err := models.GetEngine().ID(configId).Get(&cfg)
+// 根据已保存的 Certificate ID 执行一键签发
+func IssueAcmeCertificateForId(certId int64) (*IssueCertificateResponse, error) {
+	var cert models.Certificate
+	has, err := models.GetEngine().ID(certId).Get(&cert)
 	if err != nil || !has {
-		return nil, fmt.Errorf("未找到对应的 ACME 配置 (ID: %d)", configId)
+		return nil, fmt.Errorf("未找到对应的证书 (ID: %d)", certId)
+	}
+
+	if cert.Source != "ACME" {
+		return nil, fmt.Errorf("该证书不是 ACME 自动签发的证书")
+	}
+
+	var email, directoryUrl, keyType, challengeType, provider, dnsEnv string
+	var disableCname bool
+
+	// If an ACME Issuance Config (DnsProvider) is linked, load its settings
+	if cert.AcmeAccountId > 0 {
+		var dp models.AcmeAccount
+		hasDP, errDP := models.GetEngine().ID(cert.AcmeAccountId).Get(&dp)
+		if errDP == nil && hasDP {
+			provider = dp.Provider
+			dnsEnv = dp.DnsEnv
+			email = dp.Email
+			directoryUrl = dp.DirectoryUrl
+			keyType = dp.KeyType
+			challengeType = dp.ChallengeType
+		} else {
+			return nil, fmt.Errorf("关联的 DNS 凭证不存在")
+		}
+	} else {
+		return nil, fmt.Errorf("未关联 DNS 凭证，无法签发 ACME 证书")
 	}
 
 	var envMap map[string]string
-	if cfg.DnsEnv != "" {
-		_ = json.Unmarshal([]byte(cfg.DnsEnv), &envMap)
+	if dnsEnv != "" {
+		_ = json.Unmarshal([]byte(dnsEnv), &envMap)
 	}
 	if envMap == nil {
 		envMap = make(map[string]string)
 	}
 
-	domains := strings.FieldsFunc(cfg.Domains, func(r rune) bool {
+	domains := strings.FieldsFunc(cert.Domains, func(r rune) bool {
 		return r == ',' || r == '\n' || r == ';' || r == ' '
 	})
 
+	if len(domains) == 0 {
+		return nil, fmt.Errorf("未指定签发域名")
+	}
+
 	req := &IssueCertificateRequest{
-		CertId:        cfg.CertId,
-		Email:         cfg.Email,
-		DirectoryUrl:  cfg.DirectoryUrl,
-		KeyType:       cfg.KeyType,
-		ChallengeType: cfg.ChallengeType,
-		DnsProvider:   cfg.DnsProvider,
+		CertId:        cert.CertId,
+		Email:         email,
+		DirectoryUrl:  directoryUrl,
+		KeyType:       keyType,
+		ChallengeType: challengeType,
+		DnsProvider:   provider,
 		DnsEnvMap:     envMap,
 		Domains:       domains,
-		DisableCname:  cfg.DisableCname,
+		DisableCname:  disableCname,
 		SaveCert:      true,
-		AcmeConfigId:  cfg.Id,
+		AcmeConfigId:  0, // We no longer have AcmeConfigId
 	}
 
 	resp, err := IssueAcmeCertificate(req)
 	if err != nil {
-		cfg.LastIssuedAt = time.Now()
-		cfg.LastStatus = "FAILED"
-		cfg.LastError = err.Error()
-		_, _ = models.GetEngine().ID(cfg.Id).Cols("last_issued_at", "last_status", "last_error").Update(&cfg)
 		return nil, err
 	}
 
@@ -365,59 +372,47 @@ func IssueCertificateByConfigId(configId int64) (*IssueCertificateResponse, erro
 
 // 定时巡检与自动续签逻辑
 func CheckAndRenewAcmeCertificates() {
-	var configs []models.AcmeConfig
-	err := models.GetEngine().Where("auto_renew = ?", true).Find(&configs)
+	var certs []models.Certificate
+	err := models.GetEngine().Where("auto_renew = ? AND source = ?", true, "ACME").Find(&certs)
 	if err != nil {
-		log.Printf("[ACME Auto-Renew] 查询自动续签配置列表失败: %v\n", err)
+		log.Printf("[ACME Auto-Renew] 查询自动续签证书列表失败: %v\n", err)
 		return
 	}
 
-	if len(configs) == 0 {
+	if len(certs) == 0 {
 		return
 	}
 
-	log.Printf("[ACME Auto-Renew] 发现 %d 个启用了自动续签的配置项，正在检查证书到期状态...\n", len(configs))
-	for _, cfg := range configs {
-		renewDays := cfg.RenewDays
+	log.Printf("[ACME Auto-Renew] 发现 %d 个启用了自动续签的 ACME 证书，正在检查到期状态...\n", len(certs))
+	for _, cert := range certs {
+		renewDays := cert.RenewDays
 		if renewDays <= 0 {
 			renewDays = 30
 		}
 
-		certId := strings.TrimSpace(cfg.CertId)
-		if certId == "" {
-			domains := strings.FieldsFunc(cfg.Domains, func(r rune) bool {
-				return r == ',' || r == '\n' || r == ';' || r == ' '
-			})
-			if len(domains) > 0 {
-				certId = fmt.Sprintf("acme-%s", strings.ReplaceAll(domains[0], "*.", "wildcard-"))
-			}
-		}
-
-		var cert models.Certificate
-		has, err := models.GetEngine().Where("cert_id = ?", certId).Get(&cert)
 		shouldRenew := false
-		if err != nil || !has {
-			log.Printf("[ACME Auto-Renew] 配置【%s】关联的证书【%s】尚未生成，触发首次自动签发\n", cfg.Name, certId)
+		if cert.KeyContent == "" || cert.CertContent == "" {
+			log.Printf("[ACME Auto-Renew] 证书【%s】尚未生成内容，触发首次自动签发\n", cert.CertId)
 			shouldRenew = true
 		} else {
 			remainingTime := time.Until(cert.NotAfter)
 			threshold := time.Duration(renewDays) * 24 * time.Hour
 			if remainingTime <= threshold {
-				log.Printf("[ACME Auto-Renew] 配置【%s】关联证书【%s】将于 %v 后到期 (设定阈值: %d 天)，触发自动续签覆盖更新\n", cfg.Name, certId, remainingTime.Round(time.Hour), renewDays)
+				log.Printf("[ACME Auto-Renew] 证书【%s】将于 %v 后到期 (设定阈值: %d 天)，触发自动续签覆盖更新\n", cert.CertId, remainingTime.Round(time.Hour), renewDays)
 				shouldRenew = true
 			}
 		}
 
 		if shouldRenew {
-			go func(c models.AcmeConfig) {
-				log.Printf("[ACME Auto-Renew] 正在执行自动续签: %s (ID: %d)\n", c.Name, c.Id)
-				resp, err := IssueCertificateByConfigId(c.Id)
+			go func(c models.Certificate) {
+				log.Printf("[ACME Auto-Renew] 正在执行自动续签: %s (ID: %d)\n", c.CertId, c.Id)
+				resp, err := IssueAcmeCertificateForId(c.Id)
 				if err != nil {
-					log.Printf("[ACME Auto-Renew] 自动续签失败: %s, 错误: %v\n", c.Name, err)
+					log.Printf("[ACME Auto-Renew] 自动续签失败: %s, 错误: %v\n", c.CertId, err)
 				} else {
-					log.Printf("[ACME Auto-Renew] 自动续签成功: %s, 证书: %s, 新有效期至: %s\n", c.Name, resp.CertId, resp.NotAfter.Format("2006-01-02 15:04:05"))
+					log.Printf("[ACME Auto-Renew] 自动续签成功: %s, 证书: %s, 新有效期至: %s\n", c.CertId, resp.CertId, resp.NotAfter.Format("2006-01-02 15:04:05"))
 				}
-			}(cfg)
+			}(cert)
 		}
 	}
 }

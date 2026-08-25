@@ -46,6 +46,29 @@ export const createCert = async (data?: object) => {
   }
 };
 
+/** 批量删除证书 (RESTful 暂不支持批量，只能逐个调用或后端支持) */
+export const batchDeleteCert = async (data?: Array<any>) => {
+  if (!data || data.length === 0) return { code: 0, message: "success" };
+  try {
+    for (const item of data) {
+      await http.request("delete", `/api/certificate/${item.id}`);
+    }
+    return { code: 0, message: "success" };
+  } catch (err: any) {
+    return { code: 1, message: getErrorMessage(err, "batch delete failed") };
+  }
+};
+
+/** 一键签发证书 (POST /api/certificate/:id/issue) */
+export const issueCert = async (id: string | number) => {
+  try {
+    const res = await http.request<any>("post", `/api/certificate/${id}/issue`);
+    return res;
+  } catch (err: any) {
+    return { code: 1, message: getErrorMessage(err, "issue failed") };
+  }
+};
+
 /** 修改证书 (RESTful PUT /api/certificate/:id) */
 export const updateCert = async (data: any) => {
   try {

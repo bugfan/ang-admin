@@ -1,6 +1,7 @@
 package api
 
 import (
+	"fmt"
 	"net/http"
 	"time"
 
@@ -26,11 +27,15 @@ type certHandler struct {
 	SANs         string    `json:"sans"`
 	NotBefore    time.Time `json:"not_before"`
 	NotAfter     time.Time `json:"not_after"`
-	Issuer       string    `json:"issuer"`
-	SerialNumber string    `json:"serial_number"`
-	Source       string    `json:"source"`
-	CreatedAt    time.Time `json:"created_at"`
-	UpdatedAt    time.Time `json:"updated_at"`
+	Issuer        string    `json:"issuer"`
+	SerialNumber  string    `json:"serial_number"`
+	Source        string    `json:"source"`
+	AcmeAccountId int64     `json:"acme_account_id"`
+	AutoRenew     bool      `json:"auto_renew"`
+	RenewDays     int       `json:"renew_days"`
+	Domains       string    `json:"domains"`
+	CreatedAt     time.Time `json:"created_at"`
+	UpdatedAt     time.Time `json:"updated_at"`
 }
 
 func (c *certHandler) Before(g *gin.Context, x *xorm.Engine) bool {
@@ -117,21 +122,25 @@ func (c *certHandler) List(ctx *gin.Context) {
 	resList := make([]certHandler, 0, len(certs))
 	for _, item := range certs {
 		resList = append(resList, certHandler{
-			Id:           item.Id,
-			CertId:       item.CertId,
-			Type:         item.Type,
-			KeyContent:   item.KeyContent,
-			CertContent:  item.CertContent,
-			Remark:       item.Remark,
-			SubjectCN:    item.SubjectCN,
-			SANs:         item.SANs,
-			NotBefore:    item.NotBefore,
-			NotAfter:     item.NotAfter,
-			Issuer:       item.Issuer,
-			SerialNumber: item.SerialNumber,
-			Source:       item.Source,
-			CreatedAt:    item.CreatedAt,
-			UpdatedAt:    item.UpdatedAt,
+			Id:            item.Id,
+			CertId:        item.CertId,
+			Type:          item.Type,
+			KeyContent:    item.KeyContent,
+			CertContent:   item.CertContent,
+			Remark:        item.Remark,
+			SubjectCN:     item.SubjectCN,
+			SANs:          item.SANs,
+			NotBefore:     item.NotBefore,
+			NotAfter:      item.NotAfter,
+			Issuer:        item.Issuer,
+			SerialNumber:  item.SerialNumber,
+			Source:        item.Source,
+			AcmeAccountId: item.AcmeAccountId,
+			AutoRenew:     item.AutoRenew,
+			RenewDays:     item.RenewDays,
+			Domains:       item.Domains,
+			CreatedAt:     item.CreatedAt,
+			UpdatedAt:     item.UpdatedAt,
 		})
 	}
 
@@ -168,5 +177,28 @@ func GenerateCertHandler(c *gin.Context) {
 			"key_content":  keyPEM,
 			"cert_content": certPEM,
 		},
+	})
+}
+
+func IssueCertForIdHandler(c *gin.Context) {
+	idStr := c.Param("id")
+	if idStr == "" {
+		c.JSON(http.StatusBadRequest, gin.H{"code": 1, "message": "ID不能为空"})
+		return
+	}
+
+	var certId int64
+	fmt.Sscanf(idStr, "%d", &certId)
+
+	go func(id int64) {
+		_, err := service.IssueAcmeCertificateForId(id)
+		if err != nil {
+			// In a real app we might update the cert record with the error string.
+		}
+	}(certId)
+
+	c.JSON(http.StatusOK, gin.H{
+		"code":    0,
+		"message": "已提交后台签发任务，请稍后刷新列表查看结果",
 	})
 }

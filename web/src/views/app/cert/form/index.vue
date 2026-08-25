@@ -1,11 +1,14 @@
 <script setup lang="ts">
 import { deviceDetection } from "@pureadmin/utils";
-import { ref, reactive } from "vue";
+import { ref, reactive, onMounted } from "vue";
 import ReCol from "@/components/ReCol";
 import { useI18n } from "vue-i18n";
 import { useRenderIcon } from "@/components/ReIcon/src/hooks";
 import { generateSelfSignedCert } from "@/api/certificate";
+import { getAcmeAccounts } from "@/api/acme-account";
 import { message } from "@/utils/message";
+import { useRouter } from "vue-router";
+import { closeAllDialog } from "@/components/ReDialog";
 
 const props = withDefaults(defineProps<{ formInline: any }>(), {
   formInline: () => ({
@@ -13,15 +16,26 @@ const props = withDefaults(defineProps<{ formInline: any }>(), {
     id: undefined,
     cert_id: "",
     type: "STD",
+    source: "MANUAL",
     key_content: "",
     cert_content: "",
-    remark: ""
+    remark: "",
+    acme_account_id: undefined,
+    domains: "",
+    auto_renew: true,
+    renew_days: 30
   })
 });
 
 const ruleFormRef = ref();
 const newFormInline = ref(props.formInline);
 const { t } = useI18n();
+const router = useRouter();
+
+function goToAcmeAccount() {
+  closeAllDialog();
+  router.push("/cert/acme");
+}
 
 const showGenPanel = ref(false);
 const genLoading = ref(false);
@@ -33,9 +47,16 @@ const genConfig = reactive({
 
 const typeOptions = [
   { label: t("cert.std"), value: "STD" },
-  { label: t("cert.gm"), value: "GM" },
-  { label: t("cert.selfStd"), value: "SELF-STD" }
+  { label: t("cert.gm"), value: "GM" }
 ];
+
+const acmeAccountList = ref<any[]>([]);
+onMounted(async () => {
+  const res = await getAcmeAccounts();
+  if (res.code === 0 && res.data) {
+    acmeAccountList.value = res.data;
+  }
+});
 
 const formRules = reactive({
   cert_id: [
@@ -45,10 +66,72 @@ const formRules = reactive({
     { required: true, message: () => t("cert.typeRequired"), trigger: "change" }
   ],
   key_content: [
-    { required: true, message: () => t("cert.keyRequired"), trigger: "blur" }
+    {
+      required: false,
+      validator: (rule: any, value: string, callback: any) => {
+        if (newFormInline.value.source === "MANUAL" && !value) {
+          callback(new Error(t("cert.keyRequired")));
+        } else {
+          callback();
+        }
+      },
+      trigger: "blur"
+    }
   ],
   cert_content: [
-    { required: true, message: () => t("cert.certRequired"), trigger: "blur" }
+    {
+      required: false,
+      validator: (rule: any, value: string, callback: any) => {
+        if (newFormInline.value.source === "MANUAL" && !value) {
+          callback(new Error(t("cert.certRequired")));
+        } else {
+          callback();
+        }
+      },
+      trigger: "blur"
+    }
+  ],
+  acme_account_id: [
+    {
+      required: false,
+      validator: (rule: any, value: any, callback: any) => {
+        if (newFormInline.value.source === "ACME" && !value) {
+          callback(new Error(t("acme.acmeAccountRequired", "请选择一个 ACME 签发配置")));
+        } else {
+          callback();
+        }
+      },
+      trigger: "change"
+    }
+  ],
+  domains: [
+    {
+      required: false,
+      validator: (rule: any, value: string, callback: any) => {
+        if (newFormInline.value.source === "ACME") {
+          if (!value || !value.trim()) {
+            callback(new Error(t("acme.domainsRequired", "请输入待签发域名")));
+            return;
+          }
+          const domains = value.split(',').map(d => d.trim()).filter(Boolean);
+          if (domains.length === 0) {
+            callback(new Error(t("acme.domainsRequired", "请输入待签发域名")));
+            return;
+          }
+          const domainRegex = /^(\*\.)?([a-zA-Z0-9-]+\.)+[a-zA-Z]{2,}$/;
+          for (const d of domains) {
+            if (!domainRegex.test(d)) {
+              callback(new Error(`域名格式不正确: ${d}`));
+              return;
+            }
+          }
+          callback();
+        } else {
+          callback();
+        }
+      },
+      trigger: "blur"
+    }
   ]
 });
 
@@ -78,7 +161,7 @@ async function handleGenerate() {
   if (res.code === 0 && res.data) {
     newFormInline.value.key_content = res.data.key_content;
     newFormInline.value.cert_content = res.data.cert_content;
-    newFormInline.value.type = "SELF-STD";
+    newFormInline.value.type = "STD";
     if (!newFormInline.value.cert_id) {
       newFormInline.value.cert_id =
         "id-" + Math.floor(100 + Math.random() * 900);
@@ -87,6 +170,12 @@ async function handleGenerate() {
     message(t("cert.genSuccess"), { type: "success" });
   } else {
     message(res.message || "生成失败", { type: "error" });
+  }
+}
+
+function handleSourceChange(val: string) {
+  if (val === "ACME") {
+    newFormInline.value.type = "STD";
   }
 }
 
@@ -103,11 +192,20 @@ defineExpose({ getRef });
     :label-position="deviceDetection() ? 'top' : 'right'"
     :model="newFormInline"
     :rules="formRules"
-    label-width="auto"
+    label-width="130px"
     class="cert-form p-1 sm:px-2"
   >
     <el-row :gutter="16">
       <re-col :value="24" :xs="24" :sm="24">
+        <el-form-item :label="t('cert.source', '获取方式')">
+          <el-radio-group v-model="newFormInline.source" @change="handleSourceChange">
+            <el-radio label="MANUAL">{{ t("cert.sourceManual", "手动配置 / 自动生成本地证书") }}</el-radio>
+            <el-radio label="ACME">{{ t("cert.sourceAcme", "免费证书 (Let's Encrypt 等)") }}</el-radio>
+          </el-radio-group>
+        </el-form-item>
+      </re-col>
+
+      <re-col :value="24" :xs="24" :sm="24" v-if="newFormInline.source === 'MANUAL'">
         <div
           class="mb-3 flex flex-col sm:flex-row sm:items-center justify-between gap-2"
         >
@@ -207,7 +305,7 @@ defineExpose({ getRef });
         </el-form-item>
       </re-col>
 
-      <re-col :value="12" :xs="24" :sm="12">
+      <re-col v-if="newFormInline.source === 'MANUAL'" :value="12" :xs="24" :sm="12">
         <el-form-item :label="t('cert.type')" prop="type">
           <el-select
             v-model="newFormInline.type"
@@ -224,31 +322,97 @@ defineExpose({ getRef });
         </el-form-item>
       </re-col>
 
-      <re-col :value="24" :xs="24" :sm="24">
-        <el-form-item :label="t('cert.certContent')" prop="cert_content">
-          <el-input
-            v-model="newFormInline.cert_content"
-            type="textarea"
-            :rows="5"
-            placeholder="-----BEGIN CERTIFICATE----- ... -----END CERTIFICATE-----"
-            clearable
-            class="font-mono text-xs"
-          />
-        </el-form-item>
-      </re-col>
+      <template v-if="newFormInline.source === 'MANUAL'">
+        <re-col :value="24" :xs="24" :sm="24">
+          <el-form-item :label="t('cert.certContent')" prop="cert_content">
+            <el-input
+              v-model="newFormInline.cert_content"
+              type="textarea"
+              :rows="5"
+              placeholder="-----BEGIN CERTIFICATE----- ... -----END CERTIFICATE-----"
+              clearable
+              class="font-mono text-xs"
+            />
+          </el-form-item>
+        </re-col>
 
-      <re-col :value="24" :xs="24" :sm="24">
-        <el-form-item :label="t('cert.keyContent')" prop="key_content">
-          <el-input
-            v-model="newFormInline.key_content"
-            type="textarea"
-            :rows="5"
-            placeholder="-----BEGIN PRIVATE KEY----- ... -----END PRIVATE KEY-----"
-            clearable
-            class="font-mono text-xs"
-          />
-        </el-form-item>
-      </re-col>
+        <re-col :value="24" :xs="24" :sm="24">
+          <el-form-item :label="t('cert.keyContent')" prop="key_content">
+            <el-input
+              v-model="newFormInline.key_content"
+              type="textarea"
+              :rows="5"
+              placeholder="-----BEGIN PRIVATE KEY----- ... -----END PRIVATE KEY-----"
+              clearable
+              class="font-mono text-xs"
+            />
+          </el-form-item>
+        </re-col>
+      </template>
+
+      <template v-else-if="newFormInline.source === 'ACME'">
+        <re-col :value="12" :xs="24" :sm="12">
+          <el-form-item prop="acme_account_id" :required="true">
+            <template #label>
+              <div class="flex items-center">
+                <span>{{ t('acme.selectAcmeAccount', 'ACME 签发配置') }}</span>
+                <el-link
+                  type="primary"
+                  :underline="false"
+                  class="ml-2 !text-xs font-normal"
+                  @click="goToAcmeAccount"
+                >
+                  没有账号？去添加
+                </el-link>
+              </div>
+            </template>
+            <el-select
+              v-model="newFormInline.acme_account_id"
+              class="w-full"
+              placeholder="选择签发配置"
+            >
+              <el-option
+                v-for="dp in acmeAccountList"
+                :key="dp.id"
+                :label="`${dp.name} (${dp.provider?.toUpperCase()})`"
+                :value="dp.id"
+              />
+            </el-select>
+          </el-form-item>
+        </re-col>
+
+        <re-col :value="24" :xs="24" :sm="24">
+          <el-form-item :label="t('acme.domains', '签发域名')" prop="domains" :required="true">
+            <el-input
+              v-model="newFormInline.domains"
+              type="textarea"
+              :rows="3"
+              placeholder="例如: example.com,*.example.com"
+              clearable
+              class="font-mono text-xs"
+            />
+          </el-form-item>
+        </re-col>
+
+        <re-col :value="24" :xs="24" :sm="24">
+          <el-form-item :label="t('acme.autoRenew', '自动续签')">
+            <div class="flex flex-wrap items-center gap-4">
+              <el-switch v-model="newFormInline.auto_renew" active-text="启用自动续签" />
+              <div v-if="newFormInline.auto_renew" class="flex items-center gap-1.5 text-xs text-(--el-text-color-regular)">
+                <span>证书到期前</span>
+                <el-input-number
+                  v-model="newFormInline.renew_days"
+                  :min="1"
+                  :max="60"
+                  size="small"
+                  class="w-24!"
+                />
+                <span>天触发自动签发与重载</span>
+              </div>
+            </div>
+          </el-form-item>
+        </re-col>
+      </template>
 
       <re-col :value="24" :xs="24" :sm="24">
         <el-form-item :label="t('cert.remark')" prop="remark">

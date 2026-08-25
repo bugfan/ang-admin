@@ -614,7 +614,7 @@ function handleTlsChange(val: boolean) {
     newFormInline.value.hsts = false;
   }
   if (httpFormRef.value) {
-    httpFormRef.value.validateField("certificate");
+    httpFormRef.value.validateField("certificate", () => {});
   }
 }
 
@@ -775,7 +775,7 @@ defineExpose({ getRef, syncLocationJSON });
                       clearable
                       :placeholder="t('http.selectCertPlaceholder')"
                       class="w-full"
-                      @change="() => httpFormRef?.validateField('certificate')"
+                      @change="() => httpFormRef?.validateField('certificate', () => {})"
                     >
                       <el-option
                         v-for="c in certOptions"

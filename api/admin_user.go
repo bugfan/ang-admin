@@ -305,13 +305,14 @@ func AsyncRoutesHandler(c *gin.Context) {
 							"roles": []string{"admin", "common"},
 						},
 					},
+
 					{
 						"path":      "/cert/acme",
-						"name":      "AppCertAcme",
+						"name":      "AppAcme",
 						"component": "app/cert/acme/index",
 						"meta": gin.H{
-							"icon":  "ri:magic-line",
-							"title": "menus.pureCertAcme",
+							"icon":  "ri:cloud-line",
+							"title": "menus.pureAcme",
 							"roles": []string{"admin", "common"},
 						},
 					},

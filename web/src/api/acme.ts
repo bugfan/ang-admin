@@ -27,9 +27,10 @@ export const issueAcmeCert = async (data: IssueAcmeCertParams) => {
   }
 };
 
-/** 获取配置模板列表 */
+/** 获取自动签发配置列表 */
 export const getAcmeConfigs = async (params?: object) => {
   const res = await http.request<any>("get", "/api/acme-config", { params });
+  if (!res) return { code: 0, data: [] };
   if (Array.isArray(res)) {
     return { code: 0, data: res };
   }

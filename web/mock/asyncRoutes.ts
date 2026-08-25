@@ -48,13 +48,14 @@ const certRouter = {
         roles: ["admin", "common"]
       }
     },
+
     {
       path: "/cert/acme",
-      name: "AppCertAcme",
+      name: "AppAcme",
       component: "app/cert/acme/index",
       meta: {
-        icon: "ri:magic-line",
-        title: "menus.pureCertAcme",
+        icon: "ri:cloud-line",
+        title: "menus.pureAcme",
         roles: ["admin", "common"]
       }
     }

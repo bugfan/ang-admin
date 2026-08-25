@@ -70,16 +70,13 @@ export function useCert(t: any, tableRef: Ref) {
       cellRenderer: scope => {
         const src = scope.row.Source || scope.row.source || "MANUAL";
         let tagType: "primary" | "success" | "warning" | "info" = "info";
-        let labelText = t("cert.sourceManual", "手动上传");
+        let labelText = t("cert.sourceManual", "手动配置");
         if (src === "ACME") {
           tagType = "primary";
           labelText = t("cert.sourceAcme", "免费证书 (ACME)");
-        } else if (src === "SELF_SIGNED") {
-          tagType = "warning";
-          labelText = t("cert.sourceSelfSigned", "本地测试证书");
         } else {
           tagType = "success";
-          labelText = t("cert.sourceManual", "手动上传");
+          labelText = t("cert.sourceManual", "手动配置");
         }
         return (
           <el-tag type={tagType} effect="light" class="font-medium">
@@ -103,9 +100,6 @@ export function useCert(t: any, tableRef: Ref) {
         } else if (certType === "GM") {
           tagType = "warning";
           labelText = t("cert.gm");
-        } else if (certType === "SELF-STD") {
-          tagType = "info";
-          labelText = t("cert.selfStd");
         }
         return (
           <el-tag type={tagType} effect="plain">

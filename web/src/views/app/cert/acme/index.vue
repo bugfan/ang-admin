@@ -1,33 +1,25 @@
 <script setup lang="ts">
 import { ref } from "vue";
 import { useI18n } from "vue-i18n";
-import { useRouter } from "vue-router";
-import { useAcme } from "./utils/hook";
-import acmeEditForm from "./form/index.vue";
+import { useAcmeAccount } from "./utils/hook";
+import acmeAccountEditForm from "./form/index.vue";
 import PageHeader from "@/components/PageHeader/index.vue";
 import { PureTableBar } from "@/components/RePureTableBar";
 import { useRenderIcon } from "@/components/ReIcon/src/hooks";
 import { message } from "@/utils/message";
-import dayjs from "dayjs";
-import {
-  saveAcmeConfig,
-  issueAcmeCertByConfigId
-} from "@/api/acme";
+import { saveAcmeAccount } from "@/api/acme-account";
 
 import Delete from "~icons/ep/delete";
 import EditPen from "~icons/ep/edit-pen";
 import AddFill from "~icons/ri/add-circle-line";
-import BackIcon from "~icons/ep/back";
 import CheckIcon from "~icons/ep/check";
 import CloseIcon from "~icons/ep/close";
-import MagicIcon from "~icons/ri/magic-line";
 
 defineOptions({
-  name: "AppCertAcme"
+  name: "AppAcmeAccount"
 });
 
 const { t } = useI18n();
-const router = useRouter();
 const searchFormRef = ref();
 const tableRef = ref();
 const createEditFormRef = ref();
@@ -36,13 +28,6 @@ const createEditFormRef = ref();
 const showView = ref<"list" | "new" | "edit">("list");
 const formInline = ref<any>({});
 const saving = ref(false);
-
-// 签发弹窗状态
-const issuing = ref(false);
-const showResultDialog = ref(false);
-const issueResult = ref<any>(null);
-const issueError = ref("");
-const currentIssuingName = ref("");
 
 const {
   form,
@@ -59,16 +44,15 @@ const {
   onSelectionCancel,
   handleCurrentChange,
   handleSelectionChange
-} = useAcme(
+} = useAcmeAccount(
   t,
   tableRef,
-  row => handleIssueRow(row),
   row => handleEditPage(row)
 );
 
 function getDefaultFormInline() {
   return {
-    title: t("acme.addConfig"),
+    title: t("acmeAccount.addProvider"),
     id: undefined,
     name: "",
     email: "",
@@ -76,13 +60,8 @@ function getDefaultFormInline() {
     customServerUrl: "",
     keyType: "EC256",
     challengeType: "DNS-01",
-    dnsProvider: "tencentcloud",
-    dnsEnvMap: {},
-    domains: "",
-    certId: "",
-    disableCname: true,
-    autoRenew: true,
-    renewDays: 30
+    provider: "tencentcloud",
+    dnsEnvMap: {}
   };
 }
 
@@ -106,9 +85,8 @@ function getFormInlineFromRow(row: any) {
   } catch {
     envMap = {};
   }
-
   return {
-    title: `${t("acme.editConfig")} (${row.name})`,
+    title: `${t("acmeAccount.editProvider")} (${row.name})`,
     id: row.id,
     name: row.name,
     email: row.email,
@@ -116,13 +94,8 @@ function getFormInlineFromRow(row: any) {
     customServerUrl,
     keyType: row.key_type || "EC256",
     challengeType: row.challenge_type || "DNS-01",
-    dnsProvider: row.dns_provider || "tencentcloud",
-    dnsEnvMap: envMap,
-    domains: row.domains || "",
-    certId: row.cert_id || "",
-    disableCname: row.disable_cname !== false,
-    autoRenew: row.auto_renew !== false,
-    renewDays: row.renew_days || 30
+    provider: row.provider || "tencentcloud",
+    dnsEnvMap: envMap
   };
 }
 
@@ -140,7 +113,7 @@ function handleCancelPage() {
   showView.value = "list";
 }
 
-async function handleSaveSubmit(andIssue = false) {
+async function handleSaveSubmit() {
   if (!createEditFormRef.value) return;
   const FormRef = createEditFormRef.value.getRef();
   if (!FormRef) return;
@@ -158,30 +131,18 @@ async function handleSaveSubmit(andIssue = false) {
           directory_url: directoryUrl,
           key_type: curData.keyType,
           challenge_type: curData.challengeType,
-          dns_provider: curData.dnsProvider,
-          dns_env: JSON.stringify(curData.dnsEnvMap || {}),
-          domains: curData.domains,
-          cert_id: curData.certId,
-          disable_cname: curData.disableCname,
-          auto_renew: curData.autoRenew,
-          renew_days: curData.renewDays
+          provider: curData.provider,
+          dns_env: JSON.stringify(curData.dnsEnvMap || {})
         };
 
-        const res = await saveAcmeConfig(payload);
+        const res = await saveAcmeAccount(payload);
         if (res.code === 0) {
           message(
-            `${curData.id ? t("acme.editConfig") : t("acme.addConfig")} ${t("cert.success", "成功")}`,
+            `${curData.id ? t("acmeAccount.editProvider") : t("acmeAccount.addProvider")} ${t("cert.success", "成功")}`,
             { type: "success" }
           );
           showView.value = "list";
           onSearch();
-
-          if (andIssue) {
-            const targetId = curData.id || (res.data && res.data.id);
-            if (targetId) {
-              handleIssueRow({ id: targetId, name: curData.name });
-            }
-          }
         } else {
           message(res.message || "保存失败", { type: "error" });
         }
@@ -192,36 +153,6 @@ async function handleSaveSubmit(andIssue = false) {
       }
     }
   });
-}
-
-// 触发基于配置的立即签发
-async function handleIssueRow(row: any) {
-  currentIssuingName.value = row.name || `ID #${row.id}`;
-  issuing.value = true;
-  issueResult.value = null;
-  issueError.value = "";
-  showResultDialog.value = true;
-
-  try {
-    const res = await issueAcmeCertByConfigId(row.id);
-    if (res.code === 0 && res.data) {
-      issueResult.value = res.data;
-      message(`【${currentIssuingName.value}】${t("acme.issueSuccess")}`, {
-        type: "success"
-      });
-      onSearch();
-    } else {
-      issueError.value = res.message || t("acme.issueFailed");
-      message(issueError.value, { type: "error" });
-      onSearch();
-    }
-  } catch (err: any) {
-    issueError.value = err.message || "请求超时或服务端处理异常";
-    message(issueError.value, { type: "error" });
-    onSearch();
-  } finally {
-    issuing.value = false;
-  }
 }
 </script>
 
@@ -236,10 +167,10 @@ async function handleIssueRow(row: any) {
         :model="form"
         class="search-form bg-bg_color w-full px-3 sm:px-6 pt-3 pb-1 overflow-auto mb-3 rounded-xl border border-(--el-border-color-lighter) shadow-2xs"
       >
-        <el-form-item :label="t('acme.configName')" prop="name">
+        <el-form-item :label="t('acmeAccount.name')" prop="name">
           <el-input
             v-model="form.name"
-            :placeholder="t('acme.searchNamePlaceholder')"
+            :placeholder="t('acmeAccount.searchNamePlaceholder')"
             clearable
             class="w-full sm:w-45!"
             @keyup.enter="onSearch"
@@ -247,21 +178,10 @@ async function handleIssueRow(row: any) {
           />
         </el-form-item>
 
-        <el-form-item :label="t('acme.domains')" prop="domains">
-          <el-input
-            v-model="form.domains"
-            :placeholder="t('acme.searchDomainsPlaceholder')"
-            clearable
-            class="w-full sm:w-45!"
-            @keyup.enter="onSearch"
-            @clear="onSearch"
-          />
-        </el-form-item>
-
-        <el-form-item :label="t('acme.dnsProvider')" prop="dns_provider">
+        <el-form-item :label="t('acmeAccount.provider')" prop="provider">
           <el-select
-            v-model="form.dns_provider"
-            :placeholder="t('acme.searchProviderPlaceholder')"
+            v-model="form.provider"
+            :placeholder="t('acmeAccount.searchProviderPlaceholder')"
             clearable
             class="w-full sm:w-45!"
             @change="onSearch"
@@ -297,7 +217,7 @@ async function handleIssueRow(row: any) {
 
       <!-- 表格及操作栏 -->
       <PureTableBar
-        :title="t('menus.pureCertAcme')"
+        :title="t('menus.pureAcme')"
         :columns="columns"
         @refresh="onSearch"
       >
@@ -307,7 +227,7 @@ async function handleIssueRow(row: any) {
             :icon="useRenderIcon(AddFill)"
             @click="handleAddPage"
           >
-            {{ t("acme.addConfig") }}
+            {{ t("acmeAccount.addProvider") }}
           </el-button>
         </template>
         <template v-slot="{ size, dynamicColumns }">
@@ -329,7 +249,7 @@ async function handleIssueRow(row: any) {
                 {{ t("cert.cancelSelection") }}
               </el-button>
               <el-popconfirm
-                :title="t('acme.deleteConfirm')"
+                :title="t('acmeAccount.deleteConfirm')"
                 @confirm="onbatchDel"
               >
                 <template #reference>
@@ -370,18 +290,6 @@ async function handleIssueRow(row: any) {
                   link
                   type="primary"
                   :size="size"
-                  :loading="issuing && currentIssuingName === row.name"
-                  :icon="useRenderIcon(MagicIcon)"
-                  @click="handleIssueRow(row)"
-                >
-                  {{ t("acme.issueNow") }}
-                </el-button>
-
-                <el-button
-                  class="reset-margin"
-                  link
-                  type="primary"
-                  :size="size"
                   :icon="useRenderIcon(EditPen)"
                   @click="handleEditPage(row)"
                 >
@@ -389,7 +297,7 @@ async function handleIssueRow(row: any) {
                 </el-button>
 
                 <el-popconfirm
-                  :title="t('acme.deleteConfirm')"
+                  :title="t('acmeAccount.deleteConfirm')"
                   @confirm="handleDelete(row)"
                 >
                   <template #reference>
@@ -419,123 +327,45 @@ async function handleIssueRow(row: any) {
       <!-- Full Page Header Bar -->
       <PageHeader
         :title="formInline.title"
-        :description="t('acme.pageHeaderDesc')"
-        :backTitle="t('acme.backToList')"
+        :description="t('acmeAccount.pageHeaderDesc')"
+        :backTitle="t('acmeAccount.backToList')"
         @back="handleCancelPage"
       >
         <template #actions>
           <el-button :icon="useRenderIcon(CloseIcon)" @click="handleCancelPage">
-            {{ t("common.cancel", "取消") }}
-          </el-button>
-          <el-button
-            :loading="saving"
-            :icon="useRenderIcon(CheckIcon)"
-            @click="handleSaveSubmit(false)"
-          >
-            {{ t("common.save", "保存") }}
+            取消
           </el-button>
           <el-button
             type="primary"
             :loading="saving"
-            :icon="useRenderIcon(MagicIcon)"
-            @click="handleSaveSubmit(true)"
+            :icon="useRenderIcon(CheckIcon)"
+            @click="handleSaveSubmit"
           >
-            保存并立即签发
+            保存
           </el-button>
         </template>
       </PageHeader>
 
       <!-- Embedded Form Component -->
-      <acmeEditForm ref="createEditFormRef" :formInline="formInline" />
+      <acmeAccountEditForm ref="createEditFormRef" :formInline="formInline" />
 
       <!-- Bottom Action Bar -->
       <div
         class="flex items-center justify-end space-x-3 pt-4 mt-4 border-t border-(--el-border-color-lighter)"
       >
         <el-button :icon="useRenderIcon(CloseIcon)" @click="handleCancelPage">
-          {{ t("common.cancel", "取消") }}
-        </el-button>
-        <el-button
-          :loading="saving"
-          :icon="useRenderIcon(CheckIcon)"
-          @click="handleSaveSubmit(false)"
-        >
-          {{ t("common.save", "保存") }}
+          取消
         </el-button>
         <el-button
           type="primary"
           :loading="saving"
-          :icon="useRenderIcon(MagicIcon)"
-          @click="handleSaveSubmit(true)"
+          :icon="useRenderIcon(CheckIcon)"
+          @click="handleSaveSubmit"
         >
-          保存并立即签发
+          保存
         </el-button>
       </div>
     </div>
-
-    <!-- 签发结果与实时进度弹窗 -->
-    <el-dialog
-      v-model="showResultDialog"
-      :title="`${t('acme.issuingTitle')} - ${currentIssuingName}`"
-      width="680px"
-      :close-on-click-modal="!issuing"
-      :close-on-press-escape="!issuing"
-    >
-      <div v-if="issuing" class="py-10 text-center space-y-4">
-        <IconifyIconOffline icon="ri:loader-4-line" class="animate-spin text-5xl text-(--el-color-primary) mx-auto" />
-        <div class="text-base font-bold text-(--el-text-color-primary)">
-          {{ t("acme.issuingDesc") }}
-        </div>
-        <div class="text-xs text-(--el-text-color-secondary) max-w-md mx-auto leading-relaxed">
-          正在在云厂商 DNS 自动设置 TXT 校验记录，并等待全国公共 DNS 节点同步生效。请耐心等待。
-        </div>
-        <div class="flex justify-center gap-2 pt-2">
-          <el-tag size="small" type="info">① CA 账户注册</el-tag>
-          <el-tag size="small" type="primary">② 注入 DNS TXT 记录</el-tag>
-          <el-tag size="small" type="warning">③ 等待传播校验</el-tag>
-          <el-tag size="small" type="success">④ 签发并全网入库</el-tag>
-        </div>
-      </div>
-
-      <div v-else-if="issueResult">
-        <el-result icon="success" :title="t('acme.issueSuccess')" sub-title="证书已生成并自动同步至证书库与集群所有节点">
-          <template #extra>
-            <div class="text-left bg-(--el-fill-color-light) p-4 rounded-xl text-xs space-y-2.5 mb-5 border border-(--el-border-color-lighter)">
-              <div class="flex"><span class="w-32 font-bold text-(--el-text-color-secondary)">{{ t("acme.certId") }}:</span> <span class="font-mono font-semibold text-blue-600">{{ issueResult.cert_id }}</span></div>
-              <div class="flex"><span class="w-32 font-bold text-(--el-text-color-secondary)">Common Name:</span> <span class="font-mono font-semibold">{{ issueResult.domain }}</span></div>
-              <div class="flex"><span class="w-32 font-bold text-(--el-text-color-secondary)">{{ t("cert.issuer") }}:</span> <span>{{ issueResult.issuer }}</span></div>
-              <div class="flex"><span class="w-32 font-bold text-(--el-text-color-secondary)">{{ t("cert.notBefore") }}:</span> <span>{{ dayjs(issueResult.not_before).format("YYYY-MM-DD HH:mm:ss") }}</span></div>
-              <div class="flex"><span class="w-32 font-bold text-(--el-text-color-secondary)">{{ t("cert.notAfter") }}:</span> <span class="text-green-600 font-semibold">{{ dayjs(issueResult.not_after).format("YYYY-MM-DD HH:mm:ss") }}</span></div>
-              <div class="flex"><span class="w-32 font-bold text-(--el-text-color-secondary)">{{ t("cert.sans") }}:</span> <span class="font-mono break-all">{{ issueResult.sans }}</span></div>
-            </div>
-
-            <div class="flex justify-center gap-3">
-              <el-button @click="showResultDialog = false">
-                {{ t("cert.close") }}
-              </el-button>
-              <el-button type="primary" @click="router.push('/cert/index')">
-                {{ t("acme.viewInCertList") }}
-              </el-button>
-            </div>
-          </template>
-        </el-result>
-      </div>
-
-      <div v-else-if="issueError">
-        <el-result icon="error" :title="t('acme.issueFailed')" :sub-title="issueError">
-          <template #extra>
-            <div class="flex justify-center gap-3">
-              <el-button @click="showResultDialog = false">
-                {{ t("cert.close") }}
-              </el-button>
-              <el-button type="primary" @click="handleIssueRow({ id: formInline.id || '', name: currentIssuingName })">
-                重试签发
-              </el-button>
-            </div>
-          </template>
-        </el-result>
-      </div>
-    </el-dialog>
   </div>
 </template>
 
