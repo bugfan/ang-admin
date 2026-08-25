@@ -79,16 +79,6 @@ export function useAcmeAccount(t: any, tableRef: Ref, emitEdit: (row: any) => vo
       }
     },
     {
-      label: t("acmeAccount.email"),
-      prop: "email",
-      minWidth: 160,
-      align: "center",
-      cellRenderer: scope => {
-        const email = scope.row.email || "-";
-        return <span class="text-xs text-(--el-text-color-regular)">{email}</span>;
-      }
-    },
-    {
       label: t("acmeAccount.server"),
       prop: "directory_url",
       minWidth: 150,
@@ -124,6 +114,16 @@ export function useAcmeAccount(t: any, tableRef: Ref, emitEdit: (row: any) => vo
             {kt}
           </el-tag>
         );
+      }
+    },
+    {
+      label: t("acmeAccount.email"),
+      prop: "email",
+      minWidth: 160,
+      align: "center",
+      cellRenderer: scope => {
+        const email = scope.row.email || "-";
+        return <span class="text-xs text-(--el-text-color-regular)">{email}</span>;
       }
     },
     {
