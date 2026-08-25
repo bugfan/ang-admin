@@ -53,7 +53,7 @@ function getDefaultFormInline() {
     title: t("http.addHttp"),
     id: undefined,
     name: "",
-    port: "443",
+    port: 80,
     hostname: "",
     http: true,
     tls: true,
@@ -93,7 +93,7 @@ function getFormInlineFromRow(row: any) {
     title: `${t("http.editHttp")} [ID: ${row?.Id || row?.id}]`,
     id: row?.Id ?? row?.id ?? undefined,
     name: row?.Name ?? row?.name ?? "",
-    port: row?.Port ?? row?.port ?? "443",
+    port: Number(row?.Port ?? row?.port) || 80,
     hostname: row?.Hostname ?? row?.hostname ?? "",
     http: row?.HTTP ?? row?.http ?? true,
     tls: row?.TLS ?? row?.tls ?? true,
@@ -160,7 +160,7 @@ async function handleSaveSubmit() {
     if (valid) {
       saving.value = true;
       try {
-        const curData = formInline.value;
+        const curData = { ...formInline.value, port: String(formInline.value.port || 80) };
         if (showView.value === "new") {
           const { code, message: msg } = await createHttpProxy(curData);
           if (code !== 0) {

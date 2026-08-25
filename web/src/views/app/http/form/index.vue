@@ -47,7 +47,7 @@ const props = withDefaults(defineProps<{ formInline: any }>(), {
     title: "",
     id: undefined,
     name: "",
-    port: "443",
+    port: 80,
     hostname: "",
     http: true,
     tls: true,
@@ -177,6 +177,7 @@ onMounted(() => {
 });
 
 function initFormState() {
+  newFormInline.value.port = Number(newFormInline.value.port) || 80;
   try {
     if (newFormInline.value.proxy_headers) {
       const parsed =
@@ -768,7 +769,7 @@ defineExpose({ getRef, syncLocationJSON });
           </div>
         </template>
         <el-row :gutter="16">
-          <re-col :value="12" :xs="24">
+          <re-col :value="24" :xs="24">
             <el-form-item :label="t('http.name')" prop="name">
               <el-input
                 v-model="newFormInline.name"
@@ -778,17 +779,7 @@ defineExpose({ getRef, syncLocationJSON });
             </el-form-item>
           </re-col>
 
-          <re-col :value="12" :xs="24">
-            <el-form-item :label="t('http.port')" prop="port">
-              <el-input
-                v-model="newFormInline.port"
-                placeholder="443 / 80"
-                clearable
-              />
-            </el-form-item>
-          </re-col>
-
-          <re-col :value="24" :xs="24">
+          <re-col :value="17" :xs="24" :sm="17">
             <el-form-item :label="t('http.hostname')" prop="hostname">
               <el-input
                 v-model="newFormInline.hostname"
@@ -807,6 +798,20 @@ defineExpose({ getRef, syncLocationJSON });
               <div v-else class="text-xs text-(--el-text-color-secondary) mt-1.5">
                 {{ t("http.hostnameTip") }}
               </div>
+            </el-form-item>
+          </re-col>
+
+          <re-col :value="7" :xs="24" :sm="7">
+            <el-form-item :label="t('http.port')" prop="port">
+              <el-input-number
+                v-model="newFormInline.port"
+                :min="1"
+                :max="65535"
+                :step="1"
+                class="w-full!"
+                controls-position="right"
+                placeholder="80"
+              />
             </el-form-item>
           </re-col>
 

@@ -44,6 +44,13 @@ export function useHttpProxy(t: any, tableRef: Ref) {
       reserveSelection: true
     },
     {
+      label: t("cert.id", "ID"),
+      prop: "id",
+      width: 70,
+      align: "center",
+      formatter: row => row.id || row.Id
+    },
+    {
       label: t("http.name", "名称"),
       prop: "Name",
       minWidth: 120,
