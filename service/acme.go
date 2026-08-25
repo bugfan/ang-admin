@@ -15,11 +15,43 @@ import (
 	"github.com/bugfan/ang-admin/models"
 	"github.com/go-acme/lego/v4/certcrypto"
 	"github.com/go-acme/lego/v4/certificate"
+	"github.com/go-acme/lego/v4/challenge"
 	"github.com/go-acme/lego/v4/challenge/dns01"
 	"github.com/go-acme/lego/v4/lego"
 	"github.com/go-acme/lego/v4/providers/dns"
 	"github.com/go-acme/lego/v4/registration"
 )
+
+type safeDnsProviderWrapper struct {
+	inner          challenge.Provider
+	recordsToClean []func() error
+}
+
+func (s *safeDnsProviderWrapper) Present(domain, token, keyAuth string) error {
+	return s.inner.Present(domain, token, keyAuth)
+}
+
+func (s *safeDnsProviderWrapper) CleanUp(domain, token, keyAuth string) error {
+	// 暂缓单条记录的立即清理，收集到全量证书签发完成后统一清理
+	// 防止主域名与泛域名 (如 local.i443.cn 与 *.local.i443.cn) 共享相同 _acme-challenge 域名时在第一阶段被误删！
+	s.recordsToClean = append(s.recordsToClean, func() error {
+		return s.inner.CleanUp(domain, token, keyAuth)
+	})
+	return nil
+}
+
+func (s *safeDnsProviderWrapper) FinalCleanUp() {
+	for _, cleanupFn := range s.recordsToClean {
+		_ = cleanupFn()
+	}
+}
+
+func (s *safeDnsProviderWrapper) Timeout() (time.Duration, time.Duration) {
+	if pt, ok := s.inner.(challenge.ProviderTimeout); ok {
+		return pt.Timeout()
+	}
+	return dns01.DefaultPropagationTimeout, dns01.DefaultPollingInterval
+}
 
 type AcmeUser struct {
 	Email        string
@@ -54,14 +86,15 @@ type IssueCertificateRequest struct {
 }
 
 type IssueCertificateResponse struct {
-	CertId      string    `json:"cert_id"`
-	Domain      string    `json:"domain"`
-	CertContent string    `json:"cert_content"`
-	KeyContent  string    `json:"key_content"`
-	Issuer      string    `json:"issuer"`
-	NotBefore   time.Time `json:"not_before"`
-	NotAfter    time.Time `json:"not_after"`
-	SANs        string    `json:"sans"`
+	CertId           string    `json:"cert_id"`
+	Domain           string    `json:"domain"`
+	CertContent      string    `json:"cert_content"`
+	KeyContent       string    `json:"key_content"`
+	IntermediateCert string    `json:"intermediate_cert"`
+	Issuer           string    `json:"issuer"`
+	NotBefore        time.Time `json:"not_before"`
+	NotAfter         time.Time `json:"not_after"`
+	SANs             string    `json:"sans"`
 }
 
 func normalizeDnsEnv(provider string, envMap map[string]string) (string, map[string]string) {
@@ -202,9 +235,13 @@ func IssueAcmeCertificate(req *IssueCertificateRequest) (*IssueCertificateRespon
 
 		providerName, normalizedEnv := normalizeDnsEnv(req.DnsProvider, req.DnsEnvMap)
 
-		// 默认禁用 CNAME 别名跳转 (防止跨账号找不到 Zone 报错)，或根据请求配置
-		if req.DisableCname || !strings.EqualFold(os.Getenv("LEGO_DISABLE_CNAME_SUPPORT"), "false") {
+		// 根据请求配置 CNAME 别名跳转 (开启 CNAME 验证时去除禁用环境变量)
+		if req.DisableCname {
 			os.Setenv("LEGO_DISABLE_CNAME_SUPPORT", "true")
+		} else {
+			// 如果启用了 CNAME，必须从环境变量里去掉这个屏蔽开关，或者设为 false
+			os.Setenv("LEGO_DISABLE_CNAME_SUPPORT", "false")
+			os.Unsetenv("LEGO_DISABLE_CNAME_SUPPORT")
 		}
 
 		// 注入 DNS 环境变量
@@ -219,12 +256,28 @@ func IssueAcmeCertificate(req *IssueCertificateRequest) (*IssueCertificateRespon
 			return nil, fmt.Errorf("获取 DNS 提供商 '%s' 校验逻辑失败 (请检查 API 密钥配置是否完整): %w", providerName, err)
 		}
 
+		safeWrapper := &safeDnsProviderWrapper{
+			inner: provider,
+		}
+		defer safeWrapper.FinalCleanUp()
+
 		dnsOpts := []dns01.ChallengeOption{
-			dns01.AddRecursiveNameservers([]string{"223.5.5.5:53", "119.29.29.29:53", "8.8.8.8:53", "1.1.1.1:53"}),
-			dns01.DisableAuthoritativeNssPropagationRequirement(),
+			dns01.AddRecursiveNameservers([]string{
+				"223.5.5.5:53",
+				"119.29.29.29:53",
+				"114.114.114.114:53",
+			}),
+			dns01.WrapPreCheck(func(domain, fqdn, value string, check dns01.PreCheckFunc) (bool, error) {
+				ok, err := check(fqdn, value)
+				if !ok || err != nil {
+					return ok, err
+				}
+				time.Sleep(5 * time.Second)
+				return true, nil
+			}),
 		}
 
-		err = client.Challenge.SetDNS01Provider(provider, dnsOpts...)
+		err = client.Challenge.SetDNS01Provider(safeWrapper, dnsOpts...)
 		if err != nil {
 			return nil, fmt.Errorf("设置 DNS-01 验证器失败: %w", err)
 		}
@@ -245,11 +298,13 @@ func IssueAcmeCertificate(req *IssueCertificateRequest) (*IssueCertificateRespon
 
 	certPEM := string(certificates.Certificate)
 	keyPEM := string(certificates.PrivateKey)
+	issuerPEM := string(certificates.IssuerCertificate)
 
 	// 6. 解析证书元数据
 	certModel := &models.Certificate{
-		CertContent: certPEM,
-		KeyContent:  keyPEM,
+		CertContent:      certPEM,
+		KeyContent:       keyPEM,
+		IntermediateCert: issuerPEM,
 	}
 	certModel.ParseCertInfo()
 
@@ -267,18 +322,20 @@ func IssueAcmeCertificate(req *IssueCertificateRequest) (*IssueCertificateRespon
 			existing.Type = "STD"
 			existing.KeyContent = keyPEM
 			existing.CertContent = certPEM
+			existing.IntermediateCert = issuerPEM
 			existing.Source = "ACME"
 			existing.Remark = fmt.Sprintf("ACME Auto Issued via %s (%s)", req.DnsProvider, time.Now().Format("2006-01-02 15:04:05"))
 			existing.ParseCertInfo()
 			_, _ = engine.ID(existing.Id).AllCols().Update(&existing)
 		} else {
 			newCert := &models.Certificate{
-				CertId:      certId,
-				Type:        "STD",
-				KeyContent:  keyPEM,
-				CertContent: certPEM,
-				Source:      "ACME",
-				Remark:      fmt.Sprintf("ACME Auto Issued via %s (%s)", req.DnsProvider, time.Now().Format("2006-01-02 15:04:05")),
+				CertId:           certId,
+				Type:             "STD",
+				KeyContent:       keyPEM,
+				CertContent:      certPEM,
+				IntermediateCert: issuerPEM,
+				Source:           "ACME",
+				Remark:           fmt.Sprintf("ACME Auto Issued via %s (%s)", req.DnsProvider, time.Now().Format("2006-01-02 15:04:05")),
 			}
 			newCert.ParseCertInfo()
 			_, _ = engine.Insert(newCert)
@@ -288,14 +345,15 @@ func IssueAcmeCertificate(req *IssueCertificateRequest) (*IssueCertificateRespon
 
 
 	return &IssueCertificateResponse{
-		CertId:      certId,
-		Domain:      certModel.SubjectCN,
-		CertContent: certPEM,
-		KeyContent:  keyPEM,
-		Issuer:      certModel.Issuer,
-		NotBefore:   certModel.NotBefore,
-		NotAfter:    certModel.NotAfter,
-		SANs:        certModel.SANs,
+		CertId:           certId,
+		Domain:           certModel.SubjectCN,
+		CertContent:      certPEM,
+		KeyContent:       keyPEM,
+		IntermediateCert: certModel.IntermediateCert,
+		Issuer:           certModel.Issuer,
+		NotBefore:        certModel.NotBefore,
+		NotAfter:         certModel.NotAfter,
+		SANs:             certModel.SANs,
 	}, nil
 }
 
@@ -348,6 +406,8 @@ func IssueAcmeCertificateForId(certId int64) (*IssueCertificateResponse, error) 
 		return nil, fmt.Errorf("未指定签发域名")
 	}
 
+	disableCname = !cert.AcmeUseCname
+
 	req := &IssueCertificateRequest{
 		CertId:        cert.CertId,
 		Email:         email,
@@ -362,12 +422,72 @@ func IssueAcmeCertificateForId(certId int64) (*IssueCertificateResponse, error) 
 		AcmeConfigId:  0, // We no longer have AcmeConfigId
 	}
 
+	// 开始签发前，先将状态设为 ISSUING
+	cert.AcmeIssueStatus = "ISSUING"
+	cert.AcmeIssueError = ""
+	_, _ = models.GetEngine().ID(cert.Id).Cols("acme_issue_status", "acme_issue_error").Update(&cert)
+	BroadcastCertStatus(&cert)
+
 	resp, err := IssueAcmeCertificate(req)
+	
+	// 更新签发状态
+	if err != nil {
+		cert.AcmeIssueStatus = "FAILED"
+		cert.AcmeIssueError = err.Error()
+	} else {
+		cert.AcmeIssueStatus = "SUCCESS"
+		cert.AcmeIssueError = ""
+	}
+	
+	// 只更新状态字段，防止覆盖已有内容
+	_, _ = models.GetEngine().ID(cert.Id).Cols("acme_issue_status", "acme_issue_error").Update(&cert)
+	BroadcastCertStatus(&cert)
+
 	if err != nil {
 		return nil, err
 	}
 
 	return resp, nil
+}
+
+// TriggerAsyncIssueCertificateForId 异步触发 ACME 证书签发任务，立即返回，防止前端 HTTP 挂起 Pending
+func TriggerAsyncIssueCertificateForId(certId int64) error {
+	var cert models.Certificate
+	has, err := models.GetEngine().ID(certId).Get(&cert)
+	if err != nil || !has {
+		return fmt.Errorf("未找到对应的证书 (ID: %d)", certId)
+	}
+
+	if cert.Source != "ACME" {
+		return fmt.Errorf("该证书不是 ACME 自动签发的证书")
+	}
+
+	if cert.AcmeIssueStatus == "ISSUING" {
+		return fmt.Errorf("该证书正在签发中，请勿重复提交")
+	}
+
+	if cert.AcmeAccountId <= 0 {
+		return fmt.Errorf("未关联 DNS 凭证，无法签发 ACME 证书")
+	}
+
+	// 1. 立即更新状态为 ISSUING 并广播 WS 事件，前端毫秒级收到反馈
+	cert.AcmeIssueStatus = "ISSUING"
+	cert.AcmeIssueError = ""
+	_, _ = models.GetEngine().ID(cert.Id).Cols("acme_issue_status", "acme_issue_error").Update(&cert)
+	BroadcastCertStatus(&cert)
+
+	// 2. 后台异步执行签发过程
+	go func(id int64) {
+		log.Printf("[ACME Async] 后台开始执行证书签发任务 (ID: %d)\n", id)
+		_, issueErr := IssueAcmeCertificateForId(id)
+		if issueErr != nil {
+			log.Printf("[ACME Async] 后台证书签发失败 (ID: %d): %v\n", id, issueErr)
+		} else {
+			log.Printf("[ACME Async] 后台证书签发成功 (ID: %d)\n", id)
+		}
+	}(certId)
+
+	return nil
 }
 
 // 定时巡检与自动续签逻辑
@@ -391,10 +511,7 @@ func CheckAndRenewAcmeCertificates() {
 		}
 
 		shouldRenew := false
-		if cert.KeyContent == "" || cert.CertContent == "" {
-			log.Printf("[ACME Auto-Renew] 证书【%s】尚未生成内容，触发首次自动签发\n", cert.CertId)
-			shouldRenew = true
-		} else {
+		if cert.KeyContent != "" && cert.CertContent != "" {
 			remainingTime := time.Until(cert.NotAfter)
 			threshold := time.Duration(renewDays) * 24 * time.Hour
 			if remainingTime <= threshold {

@@ -19,6 +19,7 @@ const props = withDefaults(defineProps<{ formInline: any }>(), {
     source: "MANUAL",
     key_content: "",
     cert_content: "",
+    intermediate_cert: "",
     remark: "",
     acme_account_id: undefined,
     domains: "",
@@ -96,7 +97,7 @@ const formRules = reactive({
       required: false,
       validator: (rule: any, value: any, callback: any) => {
         if (newFormInline.value.source === "ACME" && !value) {
-          callback(new Error(t("acme.acmeAccountRequired", "请选择一个 ACME 签发配置")));
+          callback(new Error(t("acme.acmeAccountRequired")));
         } else {
           callback();
         }
@@ -161,6 +162,7 @@ async function handleGenerate() {
   if (res.code === 0 && res.data) {
     newFormInline.value.key_content = res.data.key_content;
     newFormInline.value.cert_content = res.data.cert_content;
+    newFormInline.value.intermediate_cert = res.data.intermediate_cert || "";
     newFormInline.value.type = "STD";
     if (!newFormInline.value.cert_id) {
       newFormInline.value.cert_id =
@@ -197,10 +199,10 @@ defineExpose({ getRef });
   >
     <el-row :gutter="16">
       <re-col :value="24" :xs="24" :sm="24">
-        <el-form-item :label="t('cert.source', '获取方式')">
+        <el-form-item :label="t('cert.source')">
           <el-radio-group v-model="newFormInline.source" @change="handleSourceChange">
-            <el-radio label="MANUAL">{{ t("cert.sourceManual", "手动配置 / 自动生成本地证书") }}</el-radio>
-            <el-radio label="ACME">{{ t("cert.sourceAcme", "免费证书 (Let's Encrypt 等)") }}</el-radio>
+            <el-radio value="MANUAL">{{ t("cert.sourceManual") }}</el-radio>
+            <el-radio value="ACME">{{ t("cert.sourceAcme") }}</el-radio>
           </el-radio-group>
         </el-form-item>
       </re-col>
@@ -324,7 +326,7 @@ defineExpose({ getRef });
 
       <template v-if="newFormInline.source === 'MANUAL'">
         <re-col :value="24" :xs="24" :sm="24">
-          <el-form-item :label="t('cert.certContent')" prop="cert_content">
+          <el-form-item :label="t('cert.certContent')" prop="cert_content" :required="true">
             <el-input
               v-model="newFormInline.cert_content"
               type="textarea"
@@ -337,7 +339,7 @@ defineExpose({ getRef });
         </re-col>
 
         <re-col :value="24" :xs="24" :sm="24">
-          <el-form-item :label="t('cert.keyContent')" prop="key_content">
+          <el-form-item :label="t('cert.keyContent')" prop="key_content" :required="true">
             <el-input
               v-model="newFormInline.key_content"
               type="textarea"
@@ -348,36 +350,46 @@ defineExpose({ getRef });
             />
           </el-form-item>
         </re-col>
+
+        <re-col :value="24" :xs="24" :sm="24">
+          <el-form-item :label="t('cert.intermediateCert', '中间证书 / CA')" prop="intermediate_cert">
+            <el-input
+              v-model="newFormInline.intermediate_cert"
+              type="textarea"
+              :rows="4"
+              :placeholder="t('cert.intermediateCertPlaceholder')"
+              clearable
+              class="font-mono text-xs"
+            />
+          </el-form-item>
+        </re-col>
       </template>
 
       <template v-else-if="newFormInline.source === 'ACME'">
         <re-col :value="12" :xs="24" :sm="12">
-          <el-form-item prop="acme_account_id" :required="true">
-            <template #label>
-              <div class="flex items-center">
-                <span>{{ t('acme.selectAcmeAccount', 'ACME 签发配置') }}</span>
-                <el-link
-                  type="primary"
-                  :underline="false"
-                  class="ml-2 !text-xs font-normal"
-                  @click="goToAcmeAccount"
-                >
-                  没有账号？去添加
-                </el-link>
-              </div>
-            </template>
-            <el-select
-              v-model="newFormInline.acme_account_id"
-              class="w-full"
-              placeholder="选择签发配置"
-            >
-              <el-option
-                v-for="dp in acmeAccountList"
-                :key="dp.id"
-                :label="`${dp.name} (${dp.provider?.toUpperCase()})`"
-                :value="dp.id"
-              />
-            </el-select>
+          <el-form-item :label="t('acme.selectAcmeAccount')" prop="acme_account_id" :required="true">
+            <div class="flex items-center w-full gap-2">
+              <el-select
+                v-model="newFormInline.acme_account_id"
+                class="flex-1"
+                :placeholder="t('acme.selectAcmeAccountPlaceholder')"
+              >
+                <el-option
+                  v-for="dp in acmeAccountList"
+                  :key="dp.id"
+                  :label="`${dp.name} (${dp.provider?.toUpperCase()})`"
+                  :value="dp.id"
+                />
+              </el-select>
+              <el-link
+                type="primary"
+                :underline="false"
+                class="!text-xs font-normal whitespace-nowrap shrink-0"
+                @click="goToAcmeAccount"
+              >
+                {{ t('acme.noneClickToAdd') }}
+              </el-link>
+            </div>
           </el-form-item>
         </re-col>
 
@@ -391,6 +403,17 @@ defineExpose({ getRef });
               clearable
               class="font-mono text-xs"
             />
+          </el-form-item>
+        </re-col>
+
+        <re-col :value="24" :xs="24" :sm="24">
+          <el-form-item label="CNAME 验证">
+            <div class="flex items-center gap-2">
+              <el-switch v-model="newFormInline.acme_use_cname" />
+              <span class="text-xs text-(--el-text-color-secondary)">
+                如果签发域名的 _acme-challenge 记录被 CNAME 到了其他域名，请开启此选项
+              </span>
+            </div>
           </el-form-item>
         </re-col>
 

@@ -11,9 +11,10 @@ import { checkVersion } from "version-rocket";
 import { ElConfigProvider } from "element-plus";
 import { useRouter, useRoute } from "vue-router";
 import { useGlobal, useWatermark } from "@pureadmin/utils";
-import { defineComponent, computed, watch, nextTick } from "vue";
+import { defineComponent, computed, watch, nextTick, onMounted } from "vue";
 import { ReDialog, closeAllDialog } from "@/components/ReDialog";
 import { ReDrawer, closeAllDrawer } from "@/components/ReDrawer";
+import { wsManager } from "@/utils/websocket";
 import en from "element-plus/es/locale/lang/en";
 import zhCn from "element-plus/es/locale/lang/zh-cn";
 import plusEn from "plus-pro-components/es/locale/lang/en";
@@ -58,6 +59,10 @@ export default defineComponent({
         immediate: true
       }
     );
+
+    onMounted(() => {
+      wsManager.connect();
+    });
 
     return {
       currentLocale

@@ -22,6 +22,7 @@ type certHandler struct {
 	Type         string    `json:"type"`
 	KeyContent   string    `json:"key_content"`
 	CertContent  string    `json:"cert_content"`
+	IntermediateCert string `json:"intermediate_cert"`
 	Remark       string    `json:"remark"`
 	SubjectCN    string    `json:"subject_cn"`
 	SANs         string    `json:"sans"`
@@ -31,6 +32,9 @@ type certHandler struct {
 	SerialNumber  string    `json:"serial_number"`
 	Source        string    `json:"source"`
 	AcmeAccountId int64     `json:"acme_account_id"`
+	AcmeUseCname  bool      `json:"acme_use_cname"`
+	AcmeIssueStatus string  `json:"acme_issue_status"`
+	AcmeIssueError  string  `json:"acme_issue_error"`
 	AutoRenew     bool      `json:"auto_renew"`
 	RenewDays     int       `json:"renew_days"`
 	Domains       string    `json:"domains"`
@@ -42,7 +46,8 @@ func (c *certHandler) Before(g *gin.Context, x *xorm.Engine) bool {
 	// 1. Automatically parse certificate metadata before saving
 	if g.Request.Method == http.MethodPost || g.Request.Method == http.MethodPut || g.Request.Method == http.MethodPatch {
 		mCert := &models.Certificate{
-			CertContent: c.CertContent,
+			CertContent:      c.CertContent,
+			IntermediateCert: c.IntermediateCert,
 		}
 		mCert.ParseCertInfo()
 		c.SubjectCN = mCert.SubjectCN
@@ -51,6 +56,9 @@ func (c *certHandler) Before(g *gin.Context, x *xorm.Engine) bool {
 		c.NotAfter = mCert.NotAfter
 		c.Issuer = mCert.Issuer
 		c.SerialNumber = mCert.SerialNumber
+		if c.IntermediateCert == "" && mCert.IntermediateCert != "" {
+			c.IntermediateCert = mCert.IntermediateCert
+		}
 	}
 
 	// 2. Intercept deletion if certificate is referenced by active Tunnels
@@ -122,25 +130,29 @@ func (c *certHandler) List(ctx *gin.Context) {
 	resList := make([]certHandler, 0, len(certs))
 	for _, item := range certs {
 		resList = append(resList, certHandler{
-			Id:            item.Id,
-			CertId:        item.CertId,
-			Type:          item.Type,
-			KeyContent:    item.KeyContent,
-			CertContent:   item.CertContent,
-			Remark:        item.Remark,
-			SubjectCN:     item.SubjectCN,
-			SANs:          item.SANs,
-			NotBefore:     item.NotBefore,
-			NotAfter:      item.NotAfter,
-			Issuer:        item.Issuer,
-			SerialNumber:  item.SerialNumber,
-			Source:        item.Source,
-			AcmeAccountId: item.AcmeAccountId,
-			AutoRenew:     item.AutoRenew,
-			RenewDays:     item.RenewDays,
-			Domains:       item.Domains,
-			CreatedAt:     item.CreatedAt,
-			UpdatedAt:     item.UpdatedAt,
+			Id:               item.Id,
+			CertId:           item.CertId,
+			Type:             item.Type,
+			KeyContent:       item.KeyContent,
+			CertContent:      item.CertContent,
+			IntermediateCert: item.IntermediateCert,
+			Remark:           item.Remark,
+			SubjectCN:        item.SubjectCN,
+			SANs:             item.SANs,
+			NotBefore:        item.NotBefore,
+			NotAfter:         item.NotAfter,
+			Issuer:           item.Issuer,
+			SerialNumber:     item.SerialNumber,
+			Source:           item.Source,
+			AcmeAccountId:    item.AcmeAccountId,
+			AcmeUseCname:     item.AcmeUseCname,
+			AcmeIssueStatus:  item.AcmeIssueStatus,
+			AcmeIssueError:   item.AcmeIssueError,
+			AutoRenew:        item.AutoRenew,
+			RenewDays:        item.RenewDays,
+			Domains:          item.Domains,
+			CreatedAt:        item.CreatedAt,
+			UpdatedAt:        item.UpdatedAt,
 		})
 	}
 
@@ -164,7 +176,7 @@ func GenerateCertHandler(c *gin.Context) {
 		req.ValidDays = 365
 	}
 
-	keyPEM, certPEM, err := service.GenerateSelfSignedCert(req.CommonName, req.DNSNames, req.ValidDays)
+	keyPEM, certPEM, caPEM, err := service.GenerateSelfSignedCert(req.CommonName, req.DNSNames, req.ValidDays)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"code": 1, "message": "生成证书失败: " + err.Error()})
 		return
@@ -174,8 +186,9 @@ func GenerateCertHandler(c *gin.Context) {
 		"code":    0,
 		"message": "success",
 		"data": gin.H{
-			"key_content":  keyPEM,
-			"cert_content": certPEM,
+			"key_content":       keyPEM,
+			"cert_content":      certPEM,
+			"intermediate_cert": caPEM,
 		},
 	})
 }
@@ -190,15 +203,14 @@ func IssueCertForIdHandler(c *gin.Context) {
 	var certId int64
 	fmt.Sscanf(idStr, "%d", &certId)
 
-	go func(id int64) {
-		_, err := service.IssueAcmeCertificateForId(id)
-		if err != nil {
-			// In a real app we might update the cert record with the error string.
-		}
-	}(certId)
+	err := service.TriggerAsyncIssueCertificateForId(certId)
+	if err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"code": 1, "message": err.Error()})
+		return
+	}
 
 	c.JSON(http.StatusOK, gin.H{
 		"code":    0,
-		"message": "已提交后台签发任务，请稍后刷新列表查看结果",
+		"message": "签发任务已提交后台执行",
 	})
 }

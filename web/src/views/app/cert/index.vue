@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ref } from "vue";
+import { ref, onMounted, onUnmounted } from "vue";
 import { useI18n } from "vue-i18n";
 import { useCert } from "./utils/hook";
 import editForm from "./form/index.vue";
@@ -7,7 +7,9 @@ import PageHeader from "@/components/PageHeader/index.vue";
 import { PureTableBar } from "@/components/RePureTableBar";
 import { useRenderIcon } from "@/components/ReIcon/src/hooks";
 import { message } from "@/utils/message";
+import JSZip from "jszip";
 import { createCert, updateCert } from "@/api/certificate";
+import { wsManager } from "@/utils/websocket";
 
 import Delete from "~icons/ep/delete";
 import EditPen from "~icons/ep/edit-pen";
@@ -25,10 +27,44 @@ const searchFormRef = ref();
 const tableRef = ref();
 const createEditFormRef = ref();
 
+let unbindWs: (() => void) | null = null;
+
+onMounted(() => {
+  unbindWs = wsManager.on("CERT_STATUS_CHANGE", (certData: any) => {
+    if (!certData) return;
+    const targetId = certData.id || certData.Id;
+    const status = certData.acme_issue_status || certData.AcmeIssueStatus;
+    const domain = certData.subject_cn || certData.cert_id || certData.CertId;
+
+    if (targetId) {
+      if (status !== "ISSUING") {
+        issuingMap.value[targetId] = false;
+      }
+    }
+
+    if (status === "SUCCESS") {
+      message(`${domain ? `[${domain}] ` : ''}${t('cert.issueSuccess')}`, { type: "success" });
+    } else if (status === "FAILED") {
+      const errMsg = certData.acme_issue_error || certData.AcmeIssueError || '';
+      message(`${domain ? `[${domain}] ` : ''}${t('cert.issueFailed')}${errMsg ? `: ${errMsg}` : ''}`, { type: "error" });
+    }
+
+    onSearch();
+  });
+});
+
+onUnmounted(() => {
+  if (unbindWs) {
+    unbindWs();
+    unbindWs = null;
+  }
+});
+
 // View Mode: 'list' | 'new' | 'edit'
 const showView = ref<"list" | "new" | "edit">("list");
 const formInline = ref<any>({});
 const saving = ref(false);
+const issuingMap = ref<Record<number, boolean>>({});
 
 const {
   form,
@@ -56,8 +92,10 @@ function getDefaultFormInline() {
     source: "MANUAL",
     key_content: "",
     cert_content: "",
+    intermediate_cert: "",
     remark: "",
-    dns_provider_id: undefined,
+    acme_account_id: undefined,
+    acme_use_cname: false,
     domains: "",
     auto_renew: true,
     renew_days: 30
@@ -73,8 +111,10 @@ function getFormInlineFromRow(row: any) {
     source: row?.Source ?? row?.source ?? "MANUAL",
     key_content: row?.KeyContent ?? row?.key_content ?? "",
     cert_content: row?.CertContent ?? row?.cert_content ?? "",
+    intermediate_cert: row?.IntermediateCert ?? row?.intermediate_cert ?? "",
     remark: row?.Remark ?? row?.remark ?? "",
-    dns_provider_id: row?.DnsProviderId ?? row?.dns_provider_id ?? undefined,
+    acme_account_id: row?.AcmeAccountId ?? row?.acme_account_id ?? undefined,
+    acme_use_cname: row?.AcmeUseCname ?? row?.acme_use_cname ?? false,
     domains: row?.Domains ?? row?.domains ?? "",
     auto_renew: row?.AutoRenew ?? row?.auto_renew ?? true,
     renew_days: row?.RenewDays ?? row?.renew_days ?? 30
@@ -96,13 +136,62 @@ function handleCancelPage() {
 }
 
 async function handleIssue(row: any) {
-  const { issueCert } = await import("@/api/certificate");
-  const res = await issueCert(row.id || row.Id);
-  if (res.code === 0) {
-    message("已提交后台签发任务，请稍后刷新列表查看结果", { type: "success" });
-  } else {
-    message(res.message || "签发失败", { type: "error" });
+  const targetId = row.id || row.Id;
+  issuingMap.value[targetId] = true;
+  try {
+    const { issueCert } = await import("@/api/certificate");
+    const res = await issueCert(targetId);
+    if (res.code === 0) {
+      message(t('cert.issueTaskSubmitted', '签发任务已提交后台执行'), { type: "info" });
+      onSearch(); // 立即刷新列表状态为签发中
+    } else {
+      message(res.message || t('cert.issueFailed'), { type: "error" });
+      issuingMap.value[targetId] = false;
+      onSearch();
+    }
+  } catch (error: any) {
+    message(error?.message || t('cert.issueFailed'), { type: "error" });
+    issuingMap.value[targetId] = false;
+    onSearch();
   }
+}
+
+function handleDownload(row: any) {
+  const name = row.cert_id || row.CertId || "cert";
+  const keyContent = row.key_content || row.KeyContent;
+  const certContent = row.cert_content || row.CertContent;
+  const intermediateContent = row.intermediate_cert || row.IntermediateCert;
+  
+  if (!keyContent && !certContent) {
+    message("该证书尚未生成内容，无法下载", { type: "warning" });
+    return;
+  }
+
+  const zip = new JSZip();
+  if (certContent) {
+    zip.file(`${name}.pem`, certContent);
+  }
+  if (keyContent) {
+    zip.file(`${name}.key`, keyContent);
+  }
+  if (intermediateContent) {
+    zip.file(`${name}_ca.pem`, intermediateContent);
+    // 同时生成带中间证书的完整证书链 fullchain
+    const fullchain = `${certContent.trim()}\n\n${intermediateContent.trim()}\n`;
+    zip.file(`${name}_fullchain.pem`, fullchain);
+  }
+
+  zip.generateAsync({ type: "blob" }).then((blob) => {
+    const url = URL.createObjectURL(blob);
+    const element = document.createElement('a');
+    element.setAttribute('href', url);
+    element.setAttribute('download', `${name}_cert.zip`);
+    element.style.display = 'none';
+    document.body.appendChild(element);
+    element.click();
+    document.body.removeChild(element);
+    URL.revokeObjectURL(url);
+  });
 }
 
 async function handleSaveSubmit() {
@@ -121,17 +210,9 @@ async function handleSaveSubmit() {
             message(msg, { type: "error" });
             return;
           }
-          if (curData.source === "ACME") {
-            const newId = data?.id || data?.Id;
-            if (newId) {
-              await import("@/api/certificate").then(m => m.issueCert(newId));
-              message(`配置保存成功，已发起后台 ACME 签发任务`, { type: "success" });
-            }
-          } else {
-            message(`${t("cert.addCert")} ${t("cert.success", "成功")}`, {
-              type: "success"
-            });
-          }
+          message(`${t("cert.addCert")} ${t("cert.success", "成功")}`, {
+            type: "success"
+          });
         } else {
           const { code, message: msg } = await updateCert(curData);
           if (code !== 0) {
@@ -192,13 +273,13 @@ async function handleSaveSubmit() {
         <el-form-item :label="t('cert.source', '来源')" prop="source">
           <el-select
             v-model="form.source"
-            placeholder="全部来源"
+            :placeholder="t('cert.allSource')"
             clearable
             class="w-full sm:w-45!"
             @change="onSearch"
           >
-            <el-option :label="t('cert.sourceAcme', '免费证书 (ACME)')" value="ACME" />
-            <el-option :label="t('cert.sourceManual', '手动配置')" value="MANUAL" />
+            <el-option :label="t('cert.sourceAcme')" value="ACME" />
+            <el-option :label="t('cert.sourceManual')" value="MANUAL" />
           </el-select>
         </el-form-item>
 
@@ -287,12 +368,12 @@ async function handleSaveSubmit() {
             @page-size-change="handleSizeChange"
             @page-current-change="handleCurrentChange"
           >
-            <!-- 展开明细: 公钥/私钥文本结构与状态校验 -->
+            <!-- 展开明细: 公钥/中间证书/私钥文本结构与状态校验 -->
             <template #expand="{ row }">
               <div
                 class="p-3 sm:p-4 bg-(--el-fill-color-light) rounded-xl m-1 sm:my-2 sm:mx-4 border border-(--el-border-color-lighter) space-y-3 text-xs"
               >
-                <div class="grid grid-cols-1 md:grid-cols-2 gap-3 sm:gap-4">
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-3 sm:gap-4">
                   <!-- 证书公钥 (Public Cert) -->
                   <div>
                     <div
@@ -300,7 +381,7 @@ async function handleSaveSubmit() {
                     >
                       <span class="inline-flex items-center gap-1">
                         <IconifyIconOffline icon="ri:shield-keyhole-line" />
-                        {{ t("cert.certContent") }} (Public Key / Certificate)
+                        {{ t("cert.certContent") }} (Public Key)
                       </span>
                       <el-tag
                         size="small"
@@ -316,6 +397,32 @@ async function handleSaveSubmit() {
                         row.cert_content ||
                         row.CertContent ||
                         t("cert.noContent")
+                      }}</pre>
+                  </div>
+
+                  <!-- 中间证书 / CA 证书 (Intermediate / CA Cert) -->
+                  <div>
+                    <div
+                      class="font-bold text-(--el-text-color-primary) mb-1 flex-bc"
+                    >
+                      <span class="inline-flex items-center gap-1">
+                        <IconifyIconOffline icon="ri:shield-check-line" />
+                        {{ t("cert.intermediateCert", "中间证书 / CA") }}
+                      </span>
+                      <el-tag
+                        size="small"
+                        type="info"
+                        effect="plain"
+                        class="font-mono"
+                        >CA / CHAIN</el-tag
+                      >
+                    </div>
+                    <pre
+                      class="p-2.5 bg-gray-900 text-cyan-300 rounded-lg font-mono text-[11px] overflow-auto max-h-40 leading-relaxed border border-gray-800"
+                      >{{
+                        row.intermediate_cert ||
+                        row.IntermediateCert ||
+                        t("cert.noContent", "无独立中间证书")
                       }}</pre>
                   </div>
 
@@ -346,26 +453,75 @@ async function handleSaveSubmit() {
               </div>
             </template>
 
+            <!-- 签发状态列 -->
+            <template #issue_status="{ row }">
+              <div v-if="row.source === 'ACME' || row.Source === 'ACME'" class="flex items-center justify-center">
+                <span v-if="row.acme_issue_status === 'ISSUING' || row.AcmeIssueStatus === 'ISSUING'" class="text-blue-500 text-xs font-semibold">{{ $t('cert.issuing') }}...</span>
+                <el-tooltip
+                  v-else-if="row.acme_issue_status === 'FAILED' || row.AcmeIssueStatus === 'FAILED'"
+                  effect="dark"
+                  :content="row.acme_issue_error || row.AcmeIssueError || $t('cert.issueFailed')"
+                  placement="top"
+                >
+                  <span class="text-red-500 text-xs font-semibold cursor-help">{{ $t('cert.issueFailed') }}</span>
+                </el-tooltip>
+                <span
+                  v-else-if="row.acme_issue_status === 'SUCCESS' || row.AcmeIssueStatus === 'SUCCESS'"
+                  class="text-green-600 text-xs font-semibold"
+                >{{ $t('cert.issueSuccess') }}</span>
+                <span v-else class="text-gray-400 text-xs">{{ $t('cert.notIssued') }}</span>
+              </div>
+              <span v-else class="text-gray-400 text-xs">-</span>
+            </template>
+
+            <!-- 选项列 -->
+            <template #options="{ row }">
+              <div class="flex items-center justify-center gap-2">
+                <template v-if="row.source === 'ACME' || row.Source === 'ACME'">
+                  <el-button
+                    v-if="row.acme_issue_status === 'ISSUING' || row.AcmeIssueStatus === 'ISSUING'"
+                    class="reset-margin shrink-0"
+                    link
+                    type="success"
+                    :size="size"
+                    loading
+                  >
+                    {{ $t('cert.issuing') }}
+                  </el-button>
+                  <el-popconfirm
+                    v-else
+                    :title="$t('cert.issueConfirmTitle')"
+                    @confirm="handleIssue(row)"
+                  >
+                    <template #reference>
+                      <el-button
+                        class="reset-margin shrink-0"
+                        link
+                        type="success"
+                        :size="size"
+                        :loading="issuingMap[row.id || row.Id]"
+                      >
+                        {{ issuingMap[row.id || row.Id] ? $t('cert.issuing') : $t('cert.issueBtn') }}
+                      </el-button>
+                    </template>
+                  </el-popconfirm>
+                </template>
+
+                <el-button
+                  class="reset-margin shrink-0"
+                  link
+                  type="primary"
+                  :size="size"
+                  @click="handleDownload(row)"
+                >
+                  {{ $t('cert.downloadBtn') }}
+                </el-button>
+              </div>
+            </template>
+
             <!-- 操作列 -->
             <template #operation="{ row }">
               <div class="flex-c space-x-1">
-                <el-popconfirm
-                  v-if="row.source === 'ACME'"
-                  title="确认要立即执行一次 ACME 签发任务吗？"
-                  @confirm="handleIssue(row)"
-                >
-                  <template #reference>
-                    <el-button
-                      class="reset-margin"
-                      link
-                      type="success"
-                      :size="size"
-                      :icon="useRenderIcon('ri:magic-line')"
-                    >
-                      重新签发
-                    </el-button>
-                  </template>
-                </el-popconfirm>
                 <el-button
                   class="reset-margin"
                   link
@@ -407,13 +563,13 @@ async function handleSaveSubmit() {
       <!-- Full Page Header Bar -->
       <PageHeader
         :title="formInline.title"
-        description="配置 TLS/HTTPS 站点所需的 SSL/TLS 证书及私钥内容，支持一键生成本地测试证书"
-        :backTitle="t('cert.backToList', '返回证书列表')"
+        :description="t('cert.pageHeaderDesc')"
+        :backTitle="t('cert.backToList')"
         @back="handleCancelPage"
       >
         <template #actions>
           <el-button :icon="useRenderIcon(CloseIcon)" @click="handleCancelPage">
-            取消
+            {{ t("cert.cancel") }}
           </el-button>
           <el-button
             type="primary"
@@ -421,7 +577,7 @@ async function handleSaveSubmit() {
             :icon="useRenderIcon(CheckIcon)"
             @click="handleSaveSubmit"
           >
-            保存
+            {{ t("cert.save") }}
           </el-button>
         </template>
       </PageHeader>
@@ -434,7 +590,7 @@ async function handleSaveSubmit() {
         class="flex items-center justify-end space-x-3 pt-4 mt-4 border-t border-(--el-border-color-lighter)"
       >
         <el-button :icon="useRenderIcon(CloseIcon)" @click="handleCancelPage">
-          取消
+          {{ t("cert.cancel") }}
         </el-button>
         <el-button
           type="primary"
@@ -442,7 +598,7 @@ async function handleSaveSubmit() {
           :icon="useRenderIcon(CheckIcon)"
           @click="handleSaveSubmit"
         >
-          保存
+          {{ t("cert.save") }}
         </el-button>
       </div>
     </div>

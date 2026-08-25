@@ -11,8 +11,8 @@ import (
 	"time"
 )
 
-// GenerateSelfSignedCert creates a self-signed RSA 2048 certificate & private key PEM
-func GenerateSelfSignedCert(commonName string, dnsNames []string, validDays int) (string, string, error) {
+// GenerateSelfSignedCert creates a leaf RSA certificate signed by a generated Root CA, returning private key, cert and CA/intermediate cert
+func GenerateSelfSignedCert(commonName string, dnsNames []string, validDays int) (string, string, string, error) {
 	if commonName == "" {
 		commonName = "local.i443.cn"
 	}
@@ -20,24 +20,58 @@ func GenerateSelfSignedCert(commonName string, dnsNames []string, validDays int)
 		validDays = 365
 	}
 
-	privKey, err := rsa.GenerateKey(rand.Reader, 2048)
-	if err != nil {
-		return "", "", err
-	}
-
-	serialNumberLimit := new(big.Int).Lsh(big.NewInt(1), 128)
-	serialNumber, err := rand.Int(rand.Reader, serialNumberLimit)
-	if err != nil {
-		return "", "", err
-	}
-
-	notBefore := time.Now().Add(-10 * time.Minute) // account for slight clock skew
+	notBefore := time.Now().Add(-10 * time.Minute)
 	notAfter := notBefore.Add(time.Duration(validDays) * 24 * time.Hour)
+	serialNumberLimit := new(big.Int).Lsh(big.NewInt(1), 128)
 
-	template := x509.Certificate{
-		SerialNumber: serialNumber,
+	// 1. 生成 Root CA 证书与私钥 (作为中间/根证书供客户端信任)
+	caKey, err := rsa.GenerateKey(rand.Reader, 2048)
+	if err != nil {
+		return "", "", "", err
+	}
+
+	caSerial, err := rand.Int(rand.Reader, serialNumberLimit)
+	if err != nil {
+		return "", "", "", err
+	}
+
+	caTemplate := x509.Certificate{
+		SerialNumber: caSerial,
 		Subject: pkix.Name{
-			Organization: []string{"ANG Self-Signed"},
+			Organization: []string{"ANG Root Authority"},
+			CommonName:   "ANG Root CA",
+		},
+		NotBefore:             notBefore,
+		NotAfter:              notBefore.Add(time.Duration(validDays*2) * 24 * time.Hour), // CA 有效期更长
+		KeyUsage:              x509.KeyUsageCertSign | x509.KeyUsageCRLSign | x509.KeyUsageDigitalSignature,
+		BasicConstraintsValid: true,
+		IsCA:                  true,
+	}
+
+	caDerBytes, err := x509.CreateCertificate(rand.Reader, &caTemplate, &caTemplate, &caKey.PublicKey, caKey)
+	if err != nil {
+		return "", "", "", err
+	}
+
+	caCertBuf := new(bytes.Buffer)
+	_ = pem.Encode(caCertBuf, &pem.Block{Type: "CERTIFICATE", Bytes: caDerBytes})
+	caPEM := caCertBuf.String()
+
+	// 2. 生成服务器站点私钥 (Server Private Key)
+	serverKey, err := rsa.GenerateKey(rand.Reader, 2048)
+	if err != nil {
+		return "", "", "", err
+	}
+
+	serverSerial, err := rand.Int(rand.Reader, serialNumberLimit)
+	if err != nil {
+		return "", "", "", err
+	}
+
+	serverTemplate := x509.Certificate{
+		SerialNumber: serverSerial,
+		Subject: pkix.Name{
+			Organization: []string{"ANG Server Certificate"},
 			CommonName:   commonName,
 		},
 		NotBefore:             notBefore,
@@ -48,22 +82,18 @@ func GenerateSelfSignedCert(commonName string, dnsNames []string, validDays int)
 		DNSNames:              dnsNames,
 	}
 
-	derBytes, err := x509.CreateCertificate(rand.Reader, &template, &template, &privKey.PublicKey, privKey)
+	serverDerBytes, err := x509.CreateCertificate(rand.Reader, &serverTemplate, &caTemplate, &serverKey.PublicKey, caKey)
 	if err != nil {
-		return "", "", err
+		return "", "", "", err
 	}
 
-	certBuf := new(bytes.Buffer)
-	err = pem.Encode(certBuf, &pem.Block{Type: "CERTIFICATE", Bytes: derBytes})
-	if err != nil {
-		return "", "", err
-	}
+	serverCertBuf := new(bytes.Buffer)
+	_ = pem.Encode(serverCertBuf, &pem.Block{Type: "CERTIFICATE", Bytes: serverDerBytes})
+	serverCertPEM := serverCertBuf.String()
 
-	keyBuf := new(bytes.Buffer)
-	err = pem.Encode(keyBuf, &pem.Block{Type: "RSA PRIVATE KEY", Bytes: x509.MarshalPKCS1PrivateKey(privKey)})
-	if err != nil {
-		return "", "", err
-	}
+	serverKeyBuf := new(bytes.Buffer)
+	_ = pem.Encode(serverKeyBuf, &pem.Block{Type: "RSA PRIVATE KEY", Bytes: x509.MarshalPKCS1PrivateKey(serverKey)})
+	serverKeyPEM := serverKeyBuf.String()
 
-	return keyBuf.String(), certBuf.String(), nil
+	return serverKeyPEM, serverCertPEM, caPEM, nil
 }

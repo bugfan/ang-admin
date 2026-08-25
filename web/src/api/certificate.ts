@@ -62,7 +62,8 @@ export const batchDeleteCert = async (data?: Array<any>) => {
 /** 一键签发证书 (POST /api/certificate/:id/issue) */
 export const issueCert = async (id: string | number) => {
   try {
-    const res = await http.request<any>("post", `/api/certificate/${id}/issue`);
+    // 设置 5 分钟超时，因为 ACME DNS 验证最长可能需要数分钟
+    const res = await http.request<any>("post", `/api/certificate/${id}/issue`, { timeout: 300000 });
     return res;
   } catch (err: any) {
     return { code: 1, message: getErrorMessage(err, "issue failed") };

@@ -17,6 +17,7 @@ type Certificate struct {
 	Type         string    `xorm:"'type' varchar(32) notnull" json:"type"`           // "STD" (标密), "GM" (国密)
 	KeyContent   string    `xorm:"'key_content' text notnull" json:"key_content"`     // Private Key (PEM format)
 	CertContent  string    `xorm:"'cert_content' text notnull" json:"cert_content"`    // Certificate (PEM format)
+	IntermediateCert string `xorm:"'intermediate_cert' text" json:"intermediate_cert"` // 中间证书 / CA 证书 (PEM format)
 	Remark       string    `xorm:"'remark' varchar(255)" json:"remark"`
 	SubjectCN    string    `xorm:"'subject_cn' varchar(255)" json:"subject_cn"`    // 解析出的Common Name
 	SANs         string    `xorm:"'sans' text" json:"sans"`                  // 解析出的SAN列表，逗号分隔
@@ -26,6 +27,9 @@ type Certificate struct {
 	SerialNumber string    `xorm:"'serial_number' varchar(128)" json:"serial_number"` // 序列号
 	Source       string    `xorm:"'source' varchar(32) default 'MANUAL'" json:"source"` // 证书来源: "MANUAL", "ACME", "SELF_SIGNED"
 	AcmeAccountId int64    `xorm:"'acme_account_id' int default 0" json:"acme_account_id"`
+	AcmeUseCname  bool     `xorm:"'acme_use_cname' bool default 0" json:"acme_use_cname"` // 开启后遵循 CNAME 验证
+	AcmeIssueStatus string `xorm:"'acme_issue_status' varchar(32) default ''" json:"acme_issue_status"` // SUCCESS, FAILED
+	AcmeIssueError  string `xorm:"'acme_issue_error' text" json:"acme_issue_error"`
 	AutoRenew     bool     `xorm:"'auto_renew' bool default 0" json:"auto_renew"`
 	RenewDays     int      `xorm:"'renew_days' int default 30" json:"renew_days"`
 	Domains       string   `xorm:"'domains' text" json:"domains"`
@@ -202,6 +206,7 @@ func (c *Certificate) ParseCertInfo() {
 	var firstCN, issuer, sn string
 	var sanList []string
 	var notBefore, notAfter time.Time
+	var intermediateBlocks []byte
 	foundFirst := false
 
 	for len(rest) > 0 {
@@ -220,10 +225,17 @@ func (c *Certificate) ParseCertInfo() {
 					issuer = iss
 					sn = snum
 					foundFirst = true
+				} else {
+					// 第二个及后续证书块为中间证书/根证书
+					intermediateBlocks = append(intermediateBlocks, pem.EncodeToMemory(block)...)
 				}
 				sanList = append(sanList, sans...)
 			}
 		}
+	}
+
+	if c.IntermediateCert == "" && len(intermediateBlocks) > 0 {
+		c.IntermediateCert = string(intermediateBlocks)
 	}
 
 	if foundFirst {

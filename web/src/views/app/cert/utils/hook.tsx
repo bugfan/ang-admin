@@ -66,23 +66,17 @@ export function useCert(t: any, tableRef: Ref) {
     {
       label: t("cert.source", "来源"),
       prop: "Source",
-      minWidth: 110,
+      minWidth: 100,
+      align: "center",
       cellRenderer: scope => {
-        const src = scope.row.Source || scope.row.source || "MANUAL";
-        let tagType: "primary" | "success" | "warning" | "info" = "info";
-        let labelText = t("cert.sourceManual", "手动配置");
+        const src = scope.row.Source || scope.row.source;
+        let label = t("cert.sourceManual");
         if (src === "ACME") {
-          tagType = "primary";
-          labelText = t("cert.sourceAcme", "免费证书 (ACME)");
-        } else {
-          tagType = "success";
-          labelText = t("cert.sourceManual", "手动配置");
+          label = t("cert.sourceAcme");
+        } else if (src === "SELF_SIGNED") {
+          label = t("cert.sourceSelfSigned");
         }
-        return (
-          <el-tag type={tagType} effect="light" class="font-medium">
-            {labelText}
-          </el-tag>
-        );
+        return <span>{label}</span>;
       }
     },
     {
@@ -202,6 +196,18 @@ export function useCert(t: any, tableRef: Ref) {
       }
     },
     {
+      label: t("cert.status"),
+      minWidth: 100,
+      slot: "issue_status",
+      align: "center"
+    },
+    {
+      label: t("cert.options"),
+      minWidth: 160,
+      slot: "options",
+      align: "center"
+    },
+    {
       label: t("cert.createTime"),
       minWidth: 160,
       prop: "created_at",
@@ -215,7 +221,7 @@ export function useCert(t: any, tableRef: Ref) {
     {
       label: t("cert.operation"),
       fixed: deviceDetection() ? undefined : "right",
-      minWidth: 200,
+      minWidth: 160,
       slot: "operation"
     }
   ]);

@@ -5,6 +5,7 @@ import (
 	"net/http"
 
 	"github.com/bugfan/ang-admin/models"
+	"github.com/bugfan/ang-admin/service"
 	"github.com/bugfan/rest"
 	"github.com/gin-gonic/gin"
 )
@@ -24,9 +25,11 @@ func SetupRouter() *gin.Engine {
 		c.Next()
 	})
 
-	// 1. 无需鉴权的通用/公共非 REST 接口 (Public / Custom APIs)
 	r.GET("/ping", func(c *gin.Context) {
 		c.JSON(200, gin.H{"message": "pong"})
+	})
+	r.GET("/ws", func(c *gin.Context) {
+		service.ServeWS(service.GetWSHub(), c.Writer, c.Request)
 	})
 	r.POST("/login", LoginHandler)
 	r.GET("/captcha", CaptchaHandler)

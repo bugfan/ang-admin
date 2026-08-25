@@ -52,46 +52,76 @@ export function useAcmeAccount(t: any, tableRef: Ref, emitEdit: (row: any) => vo
     {
       label: t("acmeAccount.name"),
       prop: "name",
-      minWidth: 180,
+      minWidth: 160,
+      align: "center",
       cellRenderer: scope => {
         const name = scope.row.name || "-";
-        const provider = scope.row.provider || "";
-        const label = providerLabels[provider] || provider;
         return (
-          <div class="flex flex-col text-left py-1">
-            <span class="font-semibold text-sm/snug text-(--el-text-color-primary) wrap-break-word">
-              {name}
-            </span>
-            {label && (
-              <span class="text-xs text-(--el-text-color-secondary) mt-0.5">
-                {label}
-              </span>
-            )}
-          </div>
+          <span class="font-semibold text-sm/snug text-(--el-text-color-primary) wrap-break-word">
+            {name}
+          </span>
         );
       }
     },
     {
       label: t("acmeAccount.provider"),
       prop: "provider",
-      minWidth: 140,
+      minWidth: 130,
+      align: "center",
       cellRenderer: scope => {
-        const provider = scope.row.provider || "-";
+        const provider = scope.row.provider || "";
+        const label = providerLabels[provider] || provider.toUpperCase() || "-";
         return (
-          <el-tag size="small" type="primary" effect="plain" class="font-mono font-medium">
-            {provider.toUpperCase()}
+          <el-tag size="small" type="primary" effect="plain" class="font-medium">
+            {label}
           </el-tag>
         );
       }
     },
     {
-      label: t("acmeAccount.disableCname"),
-      prop: "disable_cname",
-      minWidth: 130,
+      label: t("acmeAccount.email"),
+      prop: "email",
+      minWidth: 160,
+      align: "center",
       cellRenderer: scope => {
+        const email = scope.row.email || "-";
+        return <span class="text-xs text-(--el-text-color-regular)">{email}</span>;
+      }
+    },
+    {
+      label: t("acmeAccount.server"),
+      prop: "directory_url",
+      minWidth: 150,
+      align: "center",
+      cellRenderer: scope => {
+        const url = scope.row.directory_url || "";
+        let serverName = url;
+        if (url.includes("letsencrypt.org/directory") && !url.includes("staging")) {
+          serverName = "Let's Encrypt";
+        } else if (url.includes("staging")) {
+          serverName = "Let's Encrypt (Staging)";
+        } else if (url.includes("zerossl.com")) {
+          serverName = "ZeroSSL";
+        } else if (!url) {
+          serverName = "Let's Encrypt";
+        }
         return (
-          <el-tag size="small" type={scope.row.disable_cname ? "success" : "info"} effect="plain">
-            {scope.row.disable_cname ? t("acmeAccount.enabled") : t("acmeAccount.disabled")}
+          <el-tag size="small" type="info" effect="plain" class="font-mono">
+            {serverName}
+          </el-tag>
+        );
+      }
+    },
+    {
+      label: t("acmeAccount.keyType"),
+      prop: "key_type",
+      minWidth: 110,
+      align: "center",
+      cellRenderer: scope => {
+        const kt = scope.row.key_type || "EC256";
+        return (
+          <el-tag size="small" type="success" effect="plain" class="font-mono font-semibold">
+            {kt}
           </el-tag>
         );
       }

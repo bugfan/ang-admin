@@ -333,7 +333,7 @@ async function handleSaveSubmit() {
       >
         <template #actions>
           <el-button :icon="useRenderIcon(CloseIcon)" @click="handleCancelPage">
-            取消
+            {{ t("cert.cancel") }}
           </el-button>
           <el-button
             type="primary"
@@ -341,7 +341,7 @@ async function handleSaveSubmit() {
             :icon="useRenderIcon(CheckIcon)"
             @click="handleSaveSubmit"
           >
-            保存
+            {{ t("cert.save") }}
           </el-button>
         </template>
       </PageHeader>
@@ -354,7 +354,7 @@ async function handleSaveSubmit() {
         class="flex items-center justify-end space-x-3 pt-4 mt-4 border-t border-(--el-border-color-lighter)"
       >
         <el-button :icon="useRenderIcon(CloseIcon)" @click="handleCancelPage">
-          取消
+          {{ t("cert.cancel") }}
         </el-button>
         <el-button
           type="primary"
@@ -362,7 +362,7 @@ async function handleSaveSubmit() {
           :icon="useRenderIcon(CheckIcon)"
           @click="handleSaveSubmit"
         >
-          保存
+          {{ t("cert.save") }}
         </el-button>
       </div>
     </div>
