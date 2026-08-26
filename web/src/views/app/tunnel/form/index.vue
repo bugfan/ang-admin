@@ -11,8 +11,6 @@ const props = withDefaults(defineProps<{ formInline: any }>(), {
     name: "",
     type: "TLS-TUNNEL",
     port: "",
-    sni: "",
-    certificate: "",
     remark: ""
   })
 });

@@ -174,11 +174,10 @@ async function fetchTunnels() {
       const tidStr = String(tItem.Id || tItem.id);
       const tName = tItem.Name || tItem.name || "";
       const tPort = tItem.Port || tItem.port || "";
-      const tSni = tItem.SNI || tItem.sni || "";
       const tType = "quic";
 
       const portLabel = `${t("tunnel.port", "端口")}: ${tPort}`;
-      const groupLabel = `${tName ? "[" + tName + "] " : ""}Tunnel #${tidStr} (${tType.toUpperCase()} | ${portLabel}${tSni ? " | SNI: " + tSni : ""})`;
+      const groupLabel = `${tName ? "[" + tName + "] " : ""}Tunnel #${tidStr} (${tType.toUpperCase()} | ${portLabel})`;
 
       const nodeOpts: DnsTunnelOption[] = [];
       const cNodes = tItem.client_nodes || tItem.ClientNodes || [];

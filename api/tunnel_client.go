@@ -208,7 +208,7 @@ func fetchActiveConnectionsFromAng() ([]ActiveConnItem, error) {
 			}
 		}
 
-		// 2. Fallback match by Port or SNI and Type
+		// 2. Fallback match by Port and Type
 		connPort := ""
 		if idx := strings.LastIndex(localAddr, ":"); idx != -1 {
 			connPort = localAddr[idx+1:]
@@ -223,9 +223,6 @@ func fetchActiveConnectionsFromAng() ([]ActiveConnItem, error) {
 			}
 
 			if connPort != "" && t.Port == connPort {
-				return fmt.Sprintf("%d", t.Id)
-			}
-			if sni != "" && t.SNI == sni {
 				return fmt.Sprintf("%d", t.Id)
 			}
 		}
@@ -274,9 +271,6 @@ func fetchActiveConnectionsFromAng() ([]ActiveConnItem, error) {
 			for _, conn := range group.Connections {
 				realTunnelID := resolveTunnelID("tls", group.ID, conn.LocalAddr, conn.SNI)
 				label := fmt.Sprintf("[%s] [TLS] Tunnel: %s | Token: %s | Remote: %s", node.Name, realTunnelID, conn.Token, conn.RemoteAddr)
-				if conn.SNI != "" {
-					label += fmt.Sprintf(" (%s)", conn.SNI)
-				}
 				allItems = append(allItems, ActiveConnItem{
 					Type:       "tls",
 					TunnelId:   realTunnelID,
@@ -294,9 +288,6 @@ func fetchActiveConnectionsFromAng() ([]ActiveConnItem, error) {
 			for _, conn := range group.Connections {
 				realTunnelID := resolveTunnelID("quic", group.ID, conn.LocalAddr, conn.SNI)
 				label := fmt.Sprintf("[%s] [QUIC] Tunnel: %s | Token: %s | Remote: %s", node.Name, realTunnelID, conn.Token, conn.RemoteAddr)
-				if conn.SNI != "" {
-					label += fmt.Sprintf(" (%s)", conn.SNI)
-				}
 				allItems = append(allItems, ActiveConnItem{
 					Type:       "quic",
 					TunnelId:   realTunnelID,

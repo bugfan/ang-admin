@@ -63,7 +63,6 @@ func buildTunnelMaps() (map[string]entity.TunnelConfig, map[string]entity.Tunnel
 		keyStr := strconv.FormatInt(item.Id, 10)
 		cfg := entity.TunnelConfig{
 			Port:        item.Port,
-			SNI:         item.SNI,
 			Certificate: item.Certificate,
 		}
 

@@ -16,7 +16,6 @@ export function useTunnel(t: any, tableRef: Ref) {
   const form = reactive({
     name: "",
     type: "",
-    sni: "",
     port: ""
   });
   const formRef = ref();

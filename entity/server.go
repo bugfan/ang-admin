@@ -3,7 +3,6 @@ package entity
 // TunnelConfig represents a single item in TLS-TUNNEL or QUIC-TUNNEL
 type TunnelConfig struct {
 	Port        string `json:"Port"`
-	SNI         string `json:"SNI"`
 	Certificate string `json:"Certificate,omitempty"`
 }
 

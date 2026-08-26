@@ -22,8 +22,7 @@ type tunnelHandler struct {
 	Name         string                `json:"name"`
 	Type         string                `json:"type"`
 	Port         string                `json:"port"`
-	SNI          string                `json:"sni"`
-	Certificate  string                `json:"certificate"`
+	Certificate  string                `json:"certificate,omitempty"`
 	Remark       string                `json:"remark"`
 	ClientNodes  []tunnelClientHandler `json:"client_nodes"`
 	OnlineCount  int                   `json:"online_count"`
@@ -34,12 +33,6 @@ type tunnelHandler struct {
 }
 
 func (t *tunnelHandler) Before(g *gin.Context, x *xorm.Engine) bool {
-	method := g.Request.Method
-	if method == http.MethodPost || method == http.MethodPut || method == http.MethodPatch {
-		if t.Type == "TLS-TUNNEL" && t.SNI == "" {
-			t.SNI = "ang"
-		}
-	}
 	return true
 }
 
@@ -184,7 +177,6 @@ func (t *tunnelHandler) List(c *gin.Context) {
 			Name:         item.Name,
 			Type:         item.Type,
 			Port:         item.Port,
-			SNI:          item.SNI,
 			Certificate:  item.Certificate,
 			Remark:       item.Remark,
 			ClientNodes:  matchedNodes,
