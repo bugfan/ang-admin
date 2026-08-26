@@ -588,7 +588,7 @@ tunnelClient:
   tokenRequired: "请输入 Token"
   tokenPlaceholder: "请输入或生成 Token 凭证"
   nameDuplicate: "节点名称 [{name}] 已存在，请输入唯一的节点名称"
-  tokenDuplicate: "Token [{token}] 已被节点 [{node}] 占用，Token 必须全局唯一"
+  tokenDuplicate: "Token [{token}] 已被节点 [{node}] 占用"
   generateToken: "随机生成"
   generateTokenSuccess: "Token 生成成功"
   refreshNodes: "刷新在线节点列表"

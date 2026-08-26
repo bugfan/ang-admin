@@ -105,7 +105,7 @@ func (t *tunnelClientHandler) Before(g *gin.Context, x *xorm.Engine) bool {
 				"code":      1,
 				"error_key": "tokenDuplicate",
 				"details":   gin.H{"token": token, "node": tokenExist.Name},
-				"message":   fmt.Sprintf("Token [%s] 已被节点 [%s] 占用，Token 必须全局唯一", token, tokenExist.Name),
+				"message":   fmt.Sprintf("Token [%s] 已被节点 [%s] 占用", token, tokenExist.Name),
 			})
 			return false
 		}

@@ -587,7 +587,7 @@ tunnelClient:
   tokenRequired: "Please enter Token"
   tokenPlaceholder: "Please enter or generate token"
   nameDuplicate: "Node name [{name}] already exists, please enter a unique name"
-  tokenDuplicate: "Token [{token}] is already used by node [{node}], Token must be globally unique"
+  tokenDuplicate: "Token [{token}] is already used by node [{node}]"
   generateToken: "Random"
   generateTokenSuccess: "Token generated successfully"
   refreshNodes: "Refresh live nodes list"
