@@ -53,6 +53,7 @@ function getDefaultFormInline() {
     name: "",
     type: "TLS-TUNNEL",
     port: "",
+    auth: false,
     remark: ""
   };
 }
@@ -64,6 +65,7 @@ function getFormInlineFromRow(row: any) {
     name: row?.Name ?? row?.name ?? "",
     type: row?.Type ?? row?.type ?? "TLS-TUNNEL",
     port: row?.Port ?? row?.port ?? "",
+    auth: row?.Auth ?? row?.auth ?? false,
     remark: row?.Remark ?? row?.remark ?? ""
   };
 }

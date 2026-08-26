@@ -4,6 +4,7 @@ package entity
 type TunnelConfig struct {
 	Port        string `json:"Port"`
 	Certificate string `json:"Certificate,omitempty"`
+	Auth        bool   `json:"Auth"`
 }
 
 // CertData represents the certificate data (Key & Cert)

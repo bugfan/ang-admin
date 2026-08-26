@@ -12,6 +12,7 @@ type Tunnel struct {
 	Port        string    `xorm:"varchar(32) notnull" json:"port"`
 	SNI         string    `xorm:"'sni' varchar(255)" json:"sni,omitempty"`
 	Certificate string    `xorm:"varchar(255)" json:"certificate,omitempty"`
+	Auth        bool      `xorm:"'auth' bool" json:"auth"`
 	Remark      string    `xorm:"varchar(255)" json:"remark"`
 	CreatedAt   time.Time `xorm:"created" json:"created_at"`
 	UpdatedAt   time.Time `xorm:"updated" json:"updated_at"`

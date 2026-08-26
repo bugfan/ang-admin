@@ -23,6 +23,7 @@ type tunnelHandler struct {
 	Type         string                `json:"type"`
 	Port         string                `json:"port"`
 	Certificate  string                `json:"certificate,omitempty"`
+	Auth         bool                  `json:"auth"`
 	Remark       string                `json:"remark"`
 	ClientNodes  []tunnelClientHandler `json:"client_nodes"`
 	OnlineCount  int                   `json:"online_count"`
@@ -178,6 +179,7 @@ func (t *tunnelHandler) List(c *gin.Context) {
 			Type:         item.Type,
 			Port:         item.Port,
 			Certificate:  item.Certificate,
+			Auth:         item.Auth,
 			Remark:       item.Remark,
 			ClientNodes:  matchedNodes,
 			OnlineCount:  onlineCount,

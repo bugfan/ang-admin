@@ -64,6 +64,7 @@ func buildTunnelMaps() (map[string]entity.TunnelConfig, map[string]entity.Tunnel
 		cfg := entity.TunnelConfig{
 			Port:        item.Port,
 			Certificate: item.Certificate,
+			Auth:        item.Auth,
 		}
 
 		tType := strings.ToUpper(strings.TrimSpace(item.Type))

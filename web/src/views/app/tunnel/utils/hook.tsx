@@ -93,6 +93,24 @@ export function useTunnel(t: any, tableRef: Ref) {
       }
     },
     {
+      label: t("tunnel.clientAuth", "客户端鉴权"),
+      prop: "Auth",
+      minWidth: 110,
+      align: "center",
+      cellRenderer: scope => {
+        const isAuth = scope.row.Auth ?? scope.row.auth ?? false;
+        return (
+          <el-tag
+            size="small"
+            type={isAuth ? "success" : "info"}
+            effect={isAuth ? "light" : "plain"}
+          >
+            {isAuth ? t("tunnel.authEnabled", "已开启") : t("tunnel.authDisabled", "未开启")}
+          </el-tag>
+        );
+      }
+    },
+    {
       label: t("tunnel.remark"),
       prop: "Remark",
       minWidth: 110,
@@ -207,9 +225,10 @@ export function useTunnel(t: any, tableRef: Ref) {
         formInline: {
           title,
           id: row?.Id ?? row?.id ?? undefined,
+          name: row?.Name ?? row?.name ?? "",
           type: row?.Type ?? row?.type ?? "TLS-TUNNEL",
           port: row?.Port ?? row?.port ?? "",
-          sni: row?.SNI ?? row?.sni ?? "",
+          auth: row?.Auth ?? row?.auth ?? false,
           certificate: row?.Certificate ?? row?.certificate ?? "",
           remark: row?.Remark ?? row?.remark ?? ""
         }

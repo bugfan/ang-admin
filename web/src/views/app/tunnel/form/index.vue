@@ -11,6 +11,7 @@ const props = withDefaults(defineProps<{ formInline: any }>(), {
     name: "",
     type: "TLS-TUNNEL",
     port: "",
+    auth: false,
     remark: ""
   })
 });
@@ -110,6 +111,22 @@ defineExpose({ getRef });
       <re-col :value="12" :xs="24" :sm="12">
         <el-form-item :label="t('tunnel.port')" prop="port">
           <el-input v-model="newFormInline.port" placeholder="443" clearable />
+        </el-form-item>
+      </re-col>
+
+      <re-col :value="24" :xs="24" :sm="24">
+        <el-form-item :label="t('tunnel.clientAuth', '客户端鉴权')" prop="auth">
+          <div class="flex items-center space-x-3">
+            <el-switch
+              v-model="newFormInline.auth"
+              inline-prompt
+              :active-text="t('buttons.pureOpenText', '开')"
+              :inactive-text="t('buttons.pureCloseText', '关')"
+            />
+            <span class="text-xs text-(--el-text-color-secondary)">
+              {{ t('tunnel.clientAuthTip', '开启后，仅允许在【客户端】列表中已配置且 Token 匹配的节点连接') }}
+            </span>
+          </div>
         </el-form-item>
       </re-col>
 
