@@ -361,22 +361,28 @@ func BuildFullTunnelConfig() entity.TunnelFileConfig {
 	}
 }
 
+// BuildFullCertificateConfig builds the certificate.json data structure
+func BuildFullCertificateConfig() entity.CertificateFileConfig {
+	certMap := buildCertMap()
+	return entity.CertificateFileConfig{
+		Certificate: certMap,
+	}
+}
+
 // BuildFullServerConfig builds the combined server.json data structure matching ang engine
 func BuildFullServerConfig() entity.ServerConfig {
-	certMap := buildCertMap()
 	rulesMap := buildRulesDBMap()
 	dnsMap := buildDNSMap(rulesMap)
 	httpMap := buildHTTPMap(rulesMap)
 
 	return entity.ServerConfig{
-		DNS:         dnsMap,
-		Certificate: certMap,
-		HTTP:        httpMap,
+		DNS:  dnsMap,
+		HTTP: httpMap,
 	}
 }
 
-// PushServerConfigToNodes pushes the compiled server.json and tunnel.json to all registered ang engine nodes
-func PushServerConfigToNodes(serverCfg entity.ServerConfig, tunnelCfg entity.TunnelFileConfig) {
+// PushServerConfigToNodes pushes the compiled server.json, tunnel.json, and certificate.json to all registered ang engine nodes
+func PushServerConfigToNodes(serverCfg entity.ServerConfig, tunnelCfg entity.TunnelFileConfig, certCfg entity.CertificateFileConfig) {
 	engine := models.GetEngine()
 	if engine == nil {
 		return
@@ -387,8 +393,9 @@ func PushServerConfigToNodes(serverCfg entity.ServerConfig, tunnelCfg entity.Tun
 	}
 
 	payload := map[string]interface{}{
-		"server_config": serverCfg,
-		"tunnel_config": tunnelCfg,
+		"server_config":      serverCfg,
+		"tunnel_config":      tunnelCfg,
+		"certificate_config": certCfg,
 	}
 	data, err := json.Marshal(payload)
 	if err != nil {
@@ -435,14 +442,14 @@ func PingNode(node *models.ClusterNode) (bool, string) {
 	return VerifyNode(node.Addr, node.Secret)
 }
 
-// SyncCertificateToCluster queries all certificates, updates cluster and prints server.json
+// SyncCertificateToCluster queries all certificates, updates cluster and prints certificate.json
 func SyncCertificateToCluster() {
-	certMap := buildCertMap()
-	cluster.Put("Certificate", certMap)
+	certCfg := BuildFullCertificateConfig()
+	cluster.Put("Certificate", certCfg)
 	serverCfg := BuildFullServerConfig()
 	tunnelCfg := BuildFullTunnelConfig()
-	cluster.PrintFullServerConfig(serverCfg)
-	go PushServerConfigToNodes(serverCfg, tunnelCfg)
+	cluster.PrintFullCertificateConfig(certCfg)
+	go PushServerConfigToNodes(serverCfg, tunnelCfg, certCfg)
 }
 
 // SyncTunnelToCluster queries all tunnels & clients, updates cluster and prints tunnel.json
@@ -450,8 +457,9 @@ func SyncTunnelToCluster() {
 	tunnelCfg := BuildFullTunnelConfig()
 	cluster.Put("TUNNEL", tunnelCfg)
 	serverCfg := BuildFullServerConfig()
+	certCfg := BuildFullCertificateConfig()
 	cluster.PrintFullTunnelConfig(tunnelCfg)
-	go PushServerConfigToNodes(serverCfg, tunnelCfg)
+	go PushServerConfigToNodes(serverCfg, tunnelCfg, certCfg)
 }
 
 // SyncDNSToCluster queries all DNS proxies, updates cluster and prints server.json
@@ -461,8 +469,9 @@ func SyncDNSToCluster() {
 	cluster.Put("DNS", dnsMap)
 	serverCfg := BuildFullServerConfig()
 	tunnelCfg := BuildFullTunnelConfig()
+	certCfg := BuildFullCertificateConfig()
 	cluster.PrintFullServerConfig(serverCfg)
-	go PushServerConfigToNodes(serverCfg, tunnelCfg)
+	go PushServerConfigToNodes(serverCfg, tunnelCfg, certCfg)
 }
 
 // SyncRuleToCluster queries all rules, updates cluster and prints server.json
@@ -471,8 +480,9 @@ func SyncRuleToCluster() {
 	cluster.Put("Rule", rulesMap)
 	serverCfg := BuildFullServerConfig()
 	tunnelCfg := BuildFullTunnelConfig()
+	certCfg := BuildFullCertificateConfig()
 	cluster.PrintFullServerConfig(serverCfg)
-	go PushServerConfigToNodes(serverCfg, tunnelCfg)
+	go PushServerConfigToNodes(serverCfg, tunnelCfg, certCfg)
 }
 
 // SyncHTTPToCluster queries all HTTP proxies, updates cluster and prints server.json
@@ -482,11 +492,12 @@ func SyncHTTPToCluster() {
 	cluster.Put("HTTP", httpMap)
 	serverCfg := BuildFullServerConfig()
 	tunnelCfg := BuildFullTunnelConfig()
+	certCfg := BuildFullCertificateConfig()
 	cluster.PrintFullServerConfig(serverCfg)
-	go PushServerConfigToNodes(serverCfg, tunnelCfg)
+	go PushServerConfigToNodes(serverCfg, tunnelCfg, certCfg)
 }
 
-// SyncAllToCluster syncs all implemented entities to cluster and prints overall server.json and tunnel.json
+// SyncAllToCluster syncs all implemented entities to cluster and prints overall server.json, tunnel.json, and certificate.json
 func SyncAllToCluster() {
 	SyncCertificateToCluster()
 	SyncTunnelToCluster()

@@ -152,9 +152,11 @@ func SyncClusterNodeHandler(c *gin.Context) {
 
 	serverCfg := service.BuildFullServerConfig()
 	tunnelCfg := service.BuildFullTunnelConfig()
+	certCfg := service.BuildFullCertificateConfig()
 	payload := map[string]interface{}{
-		"server_config": serverCfg,
-		"tunnel_config": tunnelCfg,
+		"server_config":      serverCfg,
+		"tunnel_config":      tunnelCfg,
+		"certificate_config": certCfg,
 	}
 	data, _ := json.Marshal(payload)
 
@@ -196,7 +198,8 @@ func SyncClusterNodeHandler(c *gin.Context) {
 func SyncAllClusterNodesHandler(c *gin.Context) {
 	serverCfg := service.BuildFullServerConfig()
 	tunnelCfg := service.BuildFullTunnelConfig()
-	service.PushServerConfigToNodes(serverCfg, tunnelCfg)
+	certCfg := service.BuildFullCertificateConfig()
+	service.PushServerConfigToNodes(serverCfg, tunnelCfg, certCfg)
 	log.Printf("[cluster_sync] Manual trigger sync config to all nodes executed")
 	c.JSON(http.StatusOK, gin.H{"code": 0, "message": "全集群配置下发任务已触发"})
 }

@@ -31,3 +31,14 @@ func PrintFullTunnelConfig(cfg interface{}) {
 	fmt.Println(string(data))
 	fmt.Println("======================================================================\n")
 }
+
+func PrintFullCertificateConfig(cfg interface{}) {
+	data, err := json.MarshalIndent(cfg, "", "  ")
+	if err != nil {
+		fmt.Printf("=== Overall certificate.json Error: %v ===\n", err)
+		return
+	}
+	fmt.Println("\n=================== OVERALL ANG CERTIFICATE.JSON CONFIG ===================")
+	fmt.Println(string(data))
+	fmt.Println("===========================================================================\n")
+}

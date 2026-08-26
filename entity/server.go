@@ -184,13 +184,17 @@ type TunnelFileConfig struct {
 	TunnelClient map[string]string       `json:"CLIENT,omitempty"`
 }
 
+// CertificateFileConfig represents the certificate.json configuration structure
+type CertificateFileConfig struct {
+	Certificate map[string]CertConfig `json:"Certificate,omitempty"`
+}
+
 // ServerConfig represents the entire server.json configuration structure
 type ServerConfig struct {
 	DNS         map[string]DNSConfig         `json:"DNS,omitempty"`
 	UDP         map[string]UDPConfig         `json:"UDP,omitempty"`
 	SNI         map[string]SNIConfig         `json:"SNI,omitempty"`
 	TCP         map[string]TCPConfig         `json:"TCP,omitempty"`
-	Certificate map[string]CertConfig        `json:"Certificate,omitempty"`
 	DNSResolver map[string]DNSResolverConfig `json:"DNSResolver,omitempty"`
 	HTTP        map[string]HTTPConfig        `json:"HTTP,omitempty"`
 }
