@@ -870,7 +870,7 @@ http:
   ruleSection: "规则"
   rulesTip: "提示: DNS 代理属于传输层 (L4) 服务，下拉列表仅展示在“规则”菜单中配置的传输层 (L4) 中间件规则 (如 ip_matcher / reset_conn_action)，HTTP 应用层规则不适用于 DNS。"
 
-  backendSection: "目标与上游"
+  backendSection: "上游"
   enableHttp: "开启 HTTP"
   enableTls: "开启 HTTPS (TLS)"
   http2: "HTTP/2 (H2)"

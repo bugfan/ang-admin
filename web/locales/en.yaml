@@ -869,7 +869,7 @@ http:
   ruleSection: "Rules"
   rulesTip: "Tip: DNS Proxy is a Layer 4 (L4) service. The dropdown only displays L4 middleware rules configured in the Rules menu (e.g., ip_matcher / reset_conn_action). HTTP application rules are not applicable to DNS."
 
-  backendSection: "Target & Upstream"
+  backendSection: "Upstream"
   enableHttp: "Enable HTTP"
   enableTls: "Enable HTTPS (TLS)"
   http2: "HTTP/2 (H2)"
