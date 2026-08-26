@@ -568,6 +568,8 @@ tunnelClient:
   tunnelRequired: "请选择服务器"
   tokenRequired: "请输入 Token"
   tokenPlaceholder: "请输入或生成 Token 凭证"
+  generateToken: "随机生成"
+  generateTokenSuccess: "Token 生成成功"
   refreshNodes: "刷新在线节点列表"
   refreshNodesSuccess: "已成功刷新实时在线节点！"
   unsavedNode: "待配置节点"

@@ -22,6 +22,9 @@ export const getTunnelClientList = async (params?: object) => {
 export const createTunnelClient = async (data?: object) => {
   try {
     const res = await http.request<any>("post", "/api/tunnel-client", { data });
+    if (res && res.code !== undefined && res.code !== 0) {
+      return res;
+    }
     return { code: 0, message: "success", data: res };
   } catch (err: any) {
     return {
@@ -38,6 +41,9 @@ export const updateTunnelClient = async (data: any) => {
     const res = await http.request<any>("put", `/api/tunnel-client/${id}`, {
       data
     });
+    if (res && res.code !== undefined && res.code !== 0) {
+      return res;
+    }
     return { code: 0, message: "success", data: res };
   } catch (err: any) {
     return {
@@ -78,4 +84,9 @@ export const getActiveTunnelConnections = async () => {
   } catch {
     return { code: 0, message: "success", data: [] };
   }
+};
+
+/** 随机生成 10 位不重复的 Token (GET /api/tunnel-client/generate-token) */
+export const generateTunnelClientToken = async () => {
+  return await http.request<any>("get", "/api/tunnel-client/generate-token");
 };

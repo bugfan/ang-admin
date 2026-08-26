@@ -1,9 +1,12 @@
 package api
 
 import (
+	"crypto/rand"
 	"encoding/json"
 	"fmt"
+	mrand "math/rand"
 	"net/http"
+	"strconv"
 	"strings"
 	"time"
 
@@ -52,10 +55,19 @@ func (t *tunnelClientHandler) Before(g *gin.Context, x *xorm.Engine) bool {
 			return false
 		}
 
+		currentId := t.Id
+		if currentId == 0 {
+			if idStr := g.Param("id"); idStr != "" {
+				if parsedId, err := strconv.ParseInt(idStr, 10, 64); err == nil {
+					currentId = parsedId
+				}
+			}
+		}
+
 		// 1. 检查节点名称唯一性
 		nameSess := x.Where("name = ?", name)
-		if t.Id > 0 {
-			nameSess.And("id != ?", t.Id)
+		if currentId > 0 {
+			nameSess.And("id != ?", currentId)
 		}
 		var nameExist models.TunnelClient
 		hasName, err := nameSess.Get(&nameExist)
@@ -64,15 +76,15 @@ func (t *tunnelClientHandler) Before(g *gin.Context, x *xorm.Engine) bool {
 			return false
 		}
 
-		// 2. 检查同一 Tunnel 下 Token 唯一性 (防止重复添加/关联)
-		tokenSess := x.Where("tunnel_id = ? AND token = ?", tunnelId, token)
-		if t.Id > 0 {
-			tokenSess.And("id != ?", t.Id)
+		// 2. 检查 Token 全局唯一性 (防止重复使用相同 Token)
+		tokenSess := x.Where("token = ?", token)
+		if currentId > 0 {
+			tokenSess.And("id != ?", currentId)
 		}
 		var tokenExist models.TunnelClient
 		hasToken, err := tokenSess.Get(&tokenExist)
 		if err == nil && hasToken {
-			g.AbortWithStatusJSON(http.StatusOK, gin.H{"code": 1, "message": fmt.Sprintf("该客户端节点 (Token: %s) 已经在当前隧道下绑定过，不能重复添加", token)})
+			g.AbortWithStatusJSON(http.StatusOK, gin.H{"code": 1, "message": fmt.Sprintf("Token [%s] 已被节点 [%s] 占用", token, tokenExist.Name)})
 			return false
 		}
 	}
@@ -87,16 +99,16 @@ func (t *tunnelClientHandler) List(c *gin.Context) {
 	if name := c.Query("name"); name != "" {
 		session.Where("name LIKE ?", "%"+name+"%")
 	}
-		if clientType := strings.TrimSpace(c.Query("type")); clientType != "" {
-			upperType := strings.ToUpper(clientType)
-			if upperType == "TLS" || upperType == "TLS-TUNNEL" {
-				session.Where("type LIKE ? OR type LIKE ?", "%TLS%", "%tls%")
-			} else if upperType == "QUIC" || upperType == "QUIC-TUNNEL" {
-				session.Where("type LIKE ? OR type LIKE ?", "%QUIC%", "%quic%")
-			} else {
-				session.Where("type = ?", clientType)
-			}
+	if clientType := strings.TrimSpace(c.Query("type")); clientType != "" {
+		upperType := strings.ToUpper(clientType)
+		if upperType == "TLS" || upperType == "TLS-TUNNEL" {
+			session.Where("type LIKE ? OR type LIKE ?", "%TLS%", "%tls%")
+		} else if upperType == "QUIC" || upperType == "QUIC-TUNNEL" {
+			session.Where("type LIKE ? OR type LIKE ?", "%QUIC%", "%quic%")
+		} else {
+			session.Where("type = ?", clientType)
 		}
+	}
 	if tunnelId := c.Query("tunnel_id"); tunnelId != "" {
 		session.Where("tunnel_id = ?", tunnelId)
 	}
@@ -245,7 +257,7 @@ func fetchActiveConnectionsFromAng() ([]ActiveConnItem, error) {
 		if node.Secret != "" {
 			req.Header.Set("X-Ang-Secret", node.Secret)
 		}
-		
+
 		resp, err := client.Do(req)
 		if err != nil {
 			lastErr = err
@@ -321,5 +333,49 @@ func GetActiveTunnelConnectionsHandler(c *gin.Context) {
 		"code":    0,
 		"message": "success",
 		"data":    list,
+	})
+}
+
+const tokenCharset = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789"
+
+func generateRandomToken(n int) string {
+	b := make([]byte, n)
+	_, err := rand.Read(b)
+	if err != nil {
+		mrand.Seed(time.Now().UnixNano())
+		for i := range b {
+			b[i] = tokenCharset[mrand.Intn(len(tokenCharset))]
+		}
+		return string(b)
+	}
+	for i := range b {
+		b[i] = tokenCharset[int(b[i])%len(tokenCharset)]
+	}
+	return string(b)
+}
+
+func GenerateTunnelClientTokenHandler(c *gin.Context) {
+	engine := models.GetEngine()
+
+	var finalToken string
+	for i := 0; i < 20; i++ {
+		candidate := generateRandomToken(10)
+		finalToken = candidate
+		if engine != nil {
+			has, err := engine.Where("token = ?", candidate).Exist(&models.TunnelClient{})
+			if err == nil && !has {
+				break
+			}
+		} else {
+			break
+		}
+	}
+
+	c.JSON(http.StatusOK, gin.H{
+		"code":    0,
+		"message": "success",
+		"data": gin.H{
+			"token": finalToken,
+		},
 	})
 }

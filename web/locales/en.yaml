@@ -567,6 +567,8 @@ tunnelClient:
   tunnelRequired: "Please select a server"
   tokenRequired: "Please enter Token"
   tokenPlaceholder: "Please enter or generate token"
+  generateToken: "Random"
+  generateTokenSuccess: "Token generated successfully"
   refreshNodes: "Refresh live nodes list"
   refreshNodesSuccess: "Live nodes refreshed successfully!"
   unsavedNode: "Unconfigured Node"

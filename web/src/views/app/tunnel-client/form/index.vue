@@ -4,6 +4,9 @@ import { ref, reactive, onMounted } from "vue";
 import { useI18n } from "vue-i18n";
 import ReCol from "@/components/ReCol";
 import { getTunnelList } from "@/api/tunnel";
+import { generateTunnelClientToken } from "@/api/tunnel-client";
+import { message } from "@/utils/message";
+import { useRenderIcon } from "@/components/ReIcon/src/hooks";
 
 const props = withDefaults(defineProps<{ formInline: any }>(), {
   formInline: () => ({
@@ -66,6 +69,28 @@ function handleServerChange(val: string) {
   );
   if (matched) {
     newFormInline.value.type = matched.type;
+  }
+}
+
+const generatingToken = ref(false);
+
+async function handleGenerateToken() {
+  generatingToken.value = true;
+  try {
+    const res = await generateTunnelClientToken();
+    if (res.code === 0 && res.data?.token) {
+      newFormInline.value.token = res.data.token;
+      ruleFormRef.value?.validateField("token", () => {});
+      message(t("tunnelClient.generateTokenSuccess", "Token 生成成功"), {
+        type: "success"
+      });
+    } else {
+      message(res.message || "生成 Token 失败", { type: "error" });
+    }
+  } catch (err: any) {
+    message(err?.message || "生成 Token 失败", { type: "error" });
+  } finally {
+    generatingToken.value = false;
   }
 }
 
@@ -136,7 +161,17 @@ defineExpose({ getRef });
               t('tunnelClient.tokenPlaceholder', '请输入或生成 Token 凭证')
             "
             clearable
-          />
+          >
+            <template #append>
+              <el-button
+                :loading="generatingToken"
+                :icon="useRenderIcon('ri:magic-line')"
+                @click="handleGenerateToken"
+              >
+                {{ t("tunnelClient.generateToken", "随机生成") }}
+              </el-button>
+            </template>
+          </el-input>
         </el-form-item>
       </re-col>
 
