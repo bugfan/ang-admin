@@ -177,10 +177,15 @@ type HTTPConfig struct {
 	Backend HTTPBackend  `json:"Backend"`
 }
 
+// TunnelFileConfig represents the tunnel.json configuration structure
+type TunnelFileConfig struct {
+	TLSTunnel    map[string]TunnelConfig `json:"TLS,omitempty"`
+	QUICTunnel   map[string]TunnelConfig `json:"QUIC,omitempty"`
+	TunnelClient map[string]string       `json:"CLIENT,omitempty"`
+}
+
 // ServerConfig represents the entire server.json configuration structure
 type ServerConfig struct {
-	TLSTunnel   map[string]TunnelConfig      `json:"TLS-TUNNEL,omitempty"`
-	QUICTunnel  map[string]TunnelConfig      `json:"QUIC-TUNNEL,omitempty"`
 	DNS         map[string]DNSConfig         `json:"DNS,omitempty"`
 	UDP         map[string]UDPConfig         `json:"UDP,omitempty"`
 	SNI         map[string]SNIConfig         `json:"SNI,omitempty"`

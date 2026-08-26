@@ -64,33 +64,6 @@ export function useTunnelClient(t: any, tableRef: Ref) {
       }
     },
     {
-      label: t("tunnelClient.tunnelId"),
-      prop: "TunnelId",
-      minWidth: 110,
-      cellRenderer: scope => {
-        const tid = scope.row.TunnelId || scope.row.tunnel_id || "";
-        return (
-          <el-tag type="info" effect="light" class="font-mono">
-            ID: {tid}
-          </el-tag>
-        );
-      }
-    },
-    {
-      label: t("tunnelClient.type"),
-      prop: "Type",
-      minWidth: 100,
-      cellRenderer: scope => {
-        const rawType = scope.row.Type || scope.row.type || "";
-        const displayType = rawType.toUpperCase().includes("QUIC") ? "QUIC" : "TLS";
-        return (
-          <el-tag type="primary" effect="plain" class="font-bold">
-            {displayType}
-          </el-tag>
-        );
-      }
-    },
-    {
       label: t("tunnelClient.token"),
       prop: "Token",
       minWidth: 120,
@@ -255,8 +228,6 @@ export function useTunnelClient(t: any, tableRef: Ref) {
           title,
           id: row?.Id ?? row?.id ?? undefined,
           name: row?.Name ?? row?.name ?? "",
-          type: (row?.Type ?? row?.type ?? "tls").toLowerCase(),
-          tunnel_id: row?.TunnelId ?? row?.tunnel_id ?? "",
           token: row?.Token ?? row?.token ?? "",
           remark: row?.Remark ?? row?.remark ?? ""
         }

@@ -20,3 +20,14 @@ func PrintFullServerConfig(cfg interface{}) {
 	fmt.Println(string(data))
 	fmt.Println("======================================================================\n")
 }
+
+func PrintFullTunnelConfig(cfg interface{}) {
+	data, err := json.MarshalIndent(cfg, "", "  ")
+	if err != nil {
+		fmt.Printf("=== Overall tunnel.json Error: %v ===\n", err)
+		return
+	}
+	fmt.Println("\n=================== OVERALL ANG TUNNEL.JSON CONFIG ===================")
+	fmt.Println(string(data))
+	fmt.Println("======================================================================\n")
+}

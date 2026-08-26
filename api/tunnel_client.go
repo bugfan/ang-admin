@@ -11,6 +11,7 @@ import (
 	"time"
 
 	"github.com/bugfan/ang-admin/models"
+	"github.com/bugfan/ang-admin/service"
 	"github.com/bugfan/rest"
 	"github.com/gin-gonic/gin"
 	"github.com/go-xorm/xorm"
@@ -53,16 +54,6 @@ func (t *tunnelClientHandler) Before(g *gin.Context, x *xorm.Engine) bool {
 				"code":      1,
 				"error_key": "tokenRequired",
 				"message":   "请输入 Token",
-			})
-			return false
-		}
-
-		tunnelId := strings.TrimSpace(t.TunnelId)
-		if tunnelId == "" {
-			g.AbortWithStatusJSON(http.StatusOK, gin.H{
-				"code":      1,
-				"error_key": "tunnelRequired",
-				"message":   "请选择所属服务器",
 			})
 			return false
 		}
@@ -113,6 +104,12 @@ func (t *tunnelClientHandler) Before(g *gin.Context, x *xorm.Engine) bool {
 	return true
 }
 
+func (t *tunnelClientHandler) After(g *gin.Context, x *xorm.Engine, args ...interface{}) {
+	if g.Request.Method == http.MethodPost || g.Request.Method == http.MethodPut || g.Request.Method == http.MethodPatch || g.Request.Method == http.MethodDelete {
+		service.SyncTunnelToCluster()
+	}
+}
+
 func (t *tunnelClientHandler) List(c *gin.Context) {
 	var clients []models.TunnelClient
 	session := models.GetEngine().NewSession()
@@ -120,19 +117,6 @@ func (t *tunnelClientHandler) List(c *gin.Context) {
 
 	if name := c.Query("name"); name != "" {
 		session.Where("name LIKE ?", "%"+name+"%")
-	}
-	if clientType := strings.TrimSpace(c.Query("type")); clientType != "" {
-		upperType := strings.ToUpper(clientType)
-		if upperType == "TLS" || upperType == "TLS-TUNNEL" {
-			session.Where("type LIKE ? OR type LIKE ?", "%TLS%", "%tls%")
-		} else if upperType == "QUIC" || upperType == "QUIC-TUNNEL" {
-			session.Where("type LIKE ? OR type LIKE ?", "%QUIC%", "%quic%")
-		} else {
-			session.Where("type = ?", clientType)
-		}
-	}
-	if tunnelId := c.Query("tunnel_id"); tunnelId != "" {
-		session.Where("tunnel_id = ?", tunnelId)
 	}
 	if token := c.Query("token"); token != "" {
 		session.Where("token LIKE ?", "%"+token+"%")
@@ -146,34 +130,20 @@ func (t *tunnelClientHandler) List(c *gin.Context) {
 
 	// Fetch live active connections from ang engine
 	activeList, _ := fetchActiveConnectionsFromAng()
-	activeMap := make(map[string]string) // key: "type|tunnel_id|token" -> remote_addr
+	activeMap := make(map[string]string) // key: token -> remote_addr
 	for _, item := range activeList {
-		clientTypeLower := strings.ToLower(item.Type)
-		if clientTypeLower == "tls-tunnel" {
-			clientTypeLower = "tls"
-		} else if clientTypeLower == "quic-tunnel" {
-			clientTypeLower = "quic"
+		if item.Token != "" {
+			activeMap[item.Token] = item.RemoteAddr
 		}
-		key := fmt.Sprintf("%s|%s|%s", clientTypeLower, item.TunnelId, item.Token)
-		activeMap[key] = item.RemoteAddr
 	}
 
 	resList := make([]tunnelClientHandler, 0, len(clients))
 	for _, item := range clients {
-		clientTypeLower := strings.ToLower(item.Type)
-		if clientTypeLower == "tls-tunnel" {
-			clientTypeLower = "tls"
-		} else if clientTypeLower == "quic-tunnel" {
-			clientTypeLower = "quic"
-		}
-		key := fmt.Sprintf("%s|%s|%s", clientTypeLower, item.TunnelId, item.Token)
-		remoteAddr, isOnline := activeMap[key]
+		remoteAddr, isOnline := activeMap[item.Token]
 
 		resList = append(resList, tunnelClientHandler{
 			Id:         item.Id,
 			Name:       item.Name,
-			Type:       item.Type,
-			TunnelId:   item.TunnelId,
 			Token:      item.Token,
 			Remark:     item.Remark,
 			IsOnline:   isOnline,

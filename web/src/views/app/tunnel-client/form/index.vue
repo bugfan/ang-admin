@@ -1,9 +1,8 @@
 <script setup lang="ts">
 import { deviceDetection } from "@pureadmin/utils";
-import { ref, reactive, onMounted } from "vue";
+import { ref, reactive } from "vue";
 import { useI18n } from "vue-i18n";
 import ReCol from "@/components/ReCol";
-import { getTunnelList } from "@/api/tunnel";
 import { generateTunnelClientToken } from "@/api/tunnel-client";
 import { message } from "@/utils/message";
 import { useRenderIcon } from "@/components/ReIcon/src/hooks";
@@ -13,8 +12,6 @@ const props = withDefaults(defineProps<{ formInline: any }>(), {
     title: "新增",
     id: undefined,
     name: "",
-    type: "",
-    tunnel_id: "",
     token: "",
     remark: ""
   })
@@ -24,22 +21,12 @@ const ruleFormRef = ref();
 const newFormInline = ref(props.formInline);
 const { t } = useI18n();
 
-const serverOptions = ref<any[]>([]);
-const serverLoading = ref(false);
-
 const formRules = reactive({
   name: [
     {
       required: true,
       message: () => t("tunnelClient.nameRequired", "请输入节点名称"),
       trigger: "blur"
-    }
-  ],
-  tunnel_id: [
-    {
-      required: true,
-      message: () => t("tunnelClient.tunnelRequired", "请选择所属服务器"),
-      trigger: "change"
     }
   ],
   token: [
@@ -50,27 +37,6 @@ const formRules = reactive({
     }
   ]
 });
-
-async function fetchServers() {
-  serverLoading.value = true;
-  try {
-    const res = await getTunnelList();
-    if (res.code === 0 && res.data?.list) {
-      serverOptions.value = res.data.list;
-    }
-  } finally {
-    serverLoading.value = false;
-  }
-}
-
-function handleServerChange(val: string) {
-  const matched = serverOptions.value.find(
-    item => String(item.id) === String(val)
-  );
-  if (matched) {
-    newFormInline.value.type = matched.type;
-  }
-}
 
 const generatingToken = ref(false);
 
@@ -93,10 +59,6 @@ async function handleGenerateToken() {
     generatingToken.value = false;
   }
 }
-
-onMounted(() => {
-  fetchServers();
-});
 
 function getRef() {
   return ruleFormRef.value;
@@ -124,32 +86,6 @@ defineExpose({ getRef });
             "
             clearable
           />
-        </el-form-item>
-      </re-col>
-
-      <re-col :value="24" :xs="24" :sm="24">
-        <el-form-item
-          :label="t('tunnelClient.tunnelServer', '服务器')"
-          prop="tunnel_id"
-        >
-          <el-select
-            v-model="newFormInline.tunnel_id"
-            clearable
-            filterable
-            :loading="serverLoading"
-            class="w-full"
-            :placeholder="
-              t('tunnelClient.selectServerPlaceholder', '请选择服务器')
-            "
-            @change="handleServerChange"
-          >
-            <el-option
-              v-for="item in serverOptions"
-              :key="item.id"
-              :label="item.name + ' (' + item.type + ')'"
-              :value="String(item.id)"
-            />
-          </el-select>
         </el-form-item>
       </re-col>
 

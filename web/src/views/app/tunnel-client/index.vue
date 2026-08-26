@@ -60,20 +60,6 @@ const {
         />
       </el-form-item>
 
-      <el-form-item :label="t('tunnelClient.type')" prop="type">
-        <el-select
-          v-model="form.type"
-          :placeholder="t('tunnelClient.searchTypePlaceholder')"
-          clearable
-          class="w-full sm:w-45!"
-          @change="onSearch"
-        >
-          <el-option :label="t('tunnel.allTypes')" value="" />
-          <el-option label="TLS" value="TLS" />
-          <el-option label="QUIC" value="QUIC" />
-        </el-select>
-      </el-form-item>
-
       <el-form-item :label="t('tunnelClient.token')" prop="token">
         <el-input
           v-model="form.token"
