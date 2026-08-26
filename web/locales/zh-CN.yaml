@@ -18,6 +18,7 @@ common:
   portInvalid: "端口必须为有效数字(1-65535)"
 
 buttons:
+  pureAdd: 添加
   pureAccountSettings: 账户设置
   pureLoginOut: 退出系统
   pureLogin: 登录
@@ -950,7 +951,7 @@ cluster:
   batchDeleteConfirm: "确认批量删除选中的集群节点？"
   ping: "测试 (Ping)"
   pushConfig: "下发配置"
-  syncAll: "同步配置"
+  syncAll: "同步"
   tunnelOverview: "隧道概览"
   nodeSecret: "密钥"
   nodeSecretPlaceholder: "请输入节点鉴权密钥"

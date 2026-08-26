@@ -347,15 +347,14 @@ onMounted(() => {
             :icon="useRenderIcon(AddFill)"
             @click="handleAddPage"
           >
-            {{ t("cluster.addNode", "添加节点") }}
+            {{ t("buttons.pureAdd", "添加") }}
           </el-button>
           <el-button
-            type="success"
-            plain
+            type="primary"
             :icon="useRenderIcon(SendPlaneIcon)"
             @click="handleSyncAll"
           >
-            {{ t("cluster.syncAll", "同步配置") }}
+            {{ t("cluster.syncAll", "同步") }}
           </el-button>
         </template>
 

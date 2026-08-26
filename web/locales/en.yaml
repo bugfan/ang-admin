@@ -18,6 +18,7 @@ common:
   portInvalid: "Port must be a valid number (1-65535)"
 
 buttons:
+  pureAdd: Add
   pureAccountSettings: Account
   pureLoginOut: LoginOut
   pureLogin: Login
@@ -949,7 +950,7 @@ cluster:
   batchDeleteConfirm: "Confirm batch deleting selected cluster nodes?"
   ping: "Ping Test"
   pushConfig: "Push Config"
-  syncAll: "Sync Configs"
+  syncAll: "Sync"
   tunnelOverview: "Tunnel Overview"
   nodeSecret: "Secret"
   nodeSecretPlaceholder: "Please enter node authentication Secret"

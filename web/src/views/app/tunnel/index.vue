@@ -191,7 +191,7 @@ async function handleSaveSubmit() {
             :icon="useRenderIcon(AddFill)"
             @click="handleAddPage"
           >
-            {{ t("tunnel.addTunnel") }}
+            {{ t("buttons.pureAdd", "添加") }}
           </el-button>
         </template>
         <template v-slot="{ size, dynamicColumns }">

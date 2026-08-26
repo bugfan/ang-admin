@@ -291,7 +291,7 @@ async function handleSaveSubmit() {
             :icon="useRenderIcon(AddFill)"
             @click="handleAddPage"
           >
-            {{ t("dns.addDns") }}
+            {{ t("buttons.pureAdd", "添加") }}
           </el-button>
         </template>
         <template v-slot="{ size, dynamicColumns }">
