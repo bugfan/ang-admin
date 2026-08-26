@@ -219,7 +219,7 @@ async function handleSaveSubmit() {
         showView.value = "list";
         onSearch();
       } catch (e: any) {
-        message(e.message || "提交失败", { type: "error" });
+        message(e.message || t("dns.submitFailed", "提交失败"), { type: "error" });
       } finally {
         saving.value = false;
       }

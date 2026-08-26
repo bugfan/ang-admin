@@ -434,7 +434,7 @@ function getRef() {
         }
         if (!validateCustomBackend()) {
           message(
-            "请至少配置一个有效的 Upstream 上游服务器或选择 Tunnel 隧道！",
+            t("dns.backendConfigRequired", "请至少配置一个有效的 Upstream 上游服务器或选择 Tunnel 隧道！"),
             { type: "warning" }
           );
           callback(false);

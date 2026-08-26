@@ -171,7 +171,7 @@ async function handleGenerate() {
     showGenPanel.value = false;
     message(t("cert.genSuccess"), { type: "success" });
   } else {
-    message(res.message || "生成失败", { type: "error" });
+    message(res.message || t("cert.genFailed", "生成失败"), { type: "error" });
   }
 }
 

@@ -29,7 +29,11 @@ func (r *ruleHandler) Before(g *gin.Context, x *xorm.Engine) bool {
 	method := g.Request.Method
 	if method == http.MethodPost || method == http.MethodPut || method == http.MethodPatch {
 		if r.Name == "" {
-			g.AbortWithStatusJSON(http.StatusOK, gin.H{"code": 1, "message": "规则名称不能为空"})
+			g.AbortWithStatusJSON(http.StatusOK, gin.H{
+				"code":      1,
+				"error_key": "nameRequired",
+				"message":   "规则名称不能为空",
+			})
 			return false
 		}
 	}

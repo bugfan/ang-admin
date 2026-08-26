@@ -26,3 +26,4 @@ ang-admin是ang全协议代理网关的管理端，包含管理后台接口和�
 tunnel client链接时候暂时没有限制，谁都能链接，这个应该在tunnel server添加/编辑时候搞一个配置项，控制是否允许未注册的tunnel client token能链接上来
 tunnel菜单里的server/client改成tunnel和node是否更好
 - [x] server.json tunnel部分，不再需要指定sni，直接使用内置证书与默认 DefaultSNI ("ang")，配置轻量化
+需要把tunnel/client的配置项也下发到ang，后续要对链接上来的client做校验，因为已经用了统一的sni和cert.校验包含配置好的client和动态的client(配置一些js代码动态的根据token到认证源认证)

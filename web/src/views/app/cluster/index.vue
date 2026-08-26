@@ -183,13 +183,13 @@ async function handleSaveSubmit() {
         }
 
         if (res.code === 0) {
-          message(res.message || t("cluster.success", "成功"), {
+          message(t("cluster.success", "成功"), {
             type: "success"
           });
           showView.value = "list";
           fetchData();
         } else {
-          message(res.message || t("rule.submitFailed", "提交失败"), {
+          message(res.message || t("cluster.submitFailed", "提交失败"), {
             type: "error"
           });
         }
@@ -204,10 +204,10 @@ async function handleDelete(row: ClusterNodeItem) {
   if (!row.id) return;
   const res = await deleteClusterNode(row.id);
   if (res.code === 0) {
-    message(t("rule.deleteSuccess", "删除成功"), { type: "success" });
+    message(t("cluster.deleteSuccess", "删除成功"), { type: "success" });
     fetchData();
   } else {
-    message(res.message || t("rule.deleteFailed", "删除失败"), {
+    message(res.message || t("cluster.deleteFailed", "删除失败"), {
       type: "error"
     });
   }
@@ -218,12 +218,12 @@ async function handleBatchDelete() {
   const ids = selectedRows.value.map(r => r.id).filter(Boolean);
   const res = await deleteClusterNode({ ids });
   if (res.code === 0) {
-    message(t("rule.batchDeleteSuccess", "批量删除成功"), { type: "success" });
+    message(t("cluster.batchDeleteSuccess", "批量删除成功"), { type: "success" });
     selectedNum.value = 0;
     selectedRows.value = [];
     fetchData();
   } else {
-    message(res.message || t("rule.deleteFailed", "删除失败"), {
+    message(res.message || t("cluster.deleteFailed", "删除失败"), {
       type: "error"
     });
   }

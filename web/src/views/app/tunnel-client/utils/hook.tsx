@@ -177,9 +177,10 @@ export function useTunnelClient(t: any, tableRef: Ref) {
     const targetId = row.Id || row.id;
     const { code, message: msg } = await deleteTunnelClient({ id: targetId });
     if (code === 0) {
-      message(`${t("tunnel.delete")} ID: ${targetId} success`, {
-        type: "success"
-      });
+      message(
+        `${t("tunnel.delete")} ID: ${targetId} ${t("common.success", "成功")}`,
+        { type: "success" }
+      );
       onSearch();
     } else {
       message(msg, { type: "error" });
@@ -213,7 +214,10 @@ export function useTunnelClient(t: any, tableRef: Ref) {
     const ids = curSelected.map((item: any) => item.Id || item.id);
     const { code, message: msg } = await deleteTunnelClient({ ids });
     if (code === 0) {
-      message(`${t("tunnel.batchDelete")} success`, { type: "success" });
+      message(
+        `${t("tunnel.batchDelete")} ${t("common.success", "成功")}`,
+        { type: "success" }
+      );
       tableRef.value.getTableRef().clearSelection();
       onSearch();
     } else {
@@ -282,7 +286,7 @@ export function useTunnelClient(t: any, tableRef: Ref) {
                 return;
               }
             }
-            message(`${title} success`, { type: "success" });
+            message(`${title} ${t("common.success", "成功")}`, { type: "success" });
             done();
             onSearch();
           }

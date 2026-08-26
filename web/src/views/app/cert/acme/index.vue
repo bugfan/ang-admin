@@ -144,10 +144,10 @@ async function handleSaveSubmit() {
           showView.value = "list";
           onSearch();
         } else {
-          message(res.message || "保存失败", { type: "error" });
+          message(res.message || t("acmeAccount.saveFailed", "保存失败"), { type: "error" });
         }
       } catch (e: any) {
-        message(e.message || "提交失败", { type: "error" });
+        message(e.message || t("acmeAccount.submitFailed", "提交失败"), { type: "error" });
       } finally {
         saving.value = false;
       }

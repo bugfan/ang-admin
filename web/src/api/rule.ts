@@ -1,4 +1,5 @@
 import { http } from "@/utils/http";
+import { formatApiError } from "@/utils/apiError";
 
 export type RuleItem = {
   id?: number;
@@ -45,11 +46,9 @@ export const getRuleList = async (params?: object) => {
       data: { list: [], total: 0, pageSize: 10, currentPage: 1 }
     };
   } catch (err: any) {
-    const msg =
-      err?.response?.data?.message || err?.message || "获取规则列表失败";
     return {
       code: 1,
-      message: msg,
+      message: formatApiError(err, "rule", "获取规则列表失败"),
       data: { list: [], total: 0, pageSize: 10, currentPage: 1 }
     };
   }
@@ -65,12 +64,11 @@ export const createRule = async (data?: object) => {
       res.code !== undefined &&
       res.code !== 0
     ) {
-      return res;
+      return { code: res.code, message: formatApiError(res, "rule", "创建规则失败") };
     }
     return { code: 0, message: "success", data: res };
   } catch (err: any) {
-    const msg = err?.response?.data?.message || err?.message || "创建规则失败";
-    return { code: 1, message: msg };
+    return { code: 1, message: formatApiError(err, "rule", "创建规则失败") };
   }
 };
 
@@ -85,12 +83,11 @@ export const updateRule = async (data: any) => {
       res.code !== undefined &&
       res.code !== 0
     ) {
-      return res;
+      return { code: res.code, message: formatApiError(res, "rule", "更新规则失败") };
     }
     return { code: 0, message: "success", data: res };
   } catch (err: any) {
-    const msg = err?.response?.data?.message || err?.message || "更新规则失败";
-    return { code: 1, message: msg };
+    return { code: 1, message: formatApiError(err, "rule", "更新规则失败") };
   }
 };
 
@@ -107,7 +104,6 @@ export const deleteRule = async (param: any) => {
     }
     return { code: 0, message: "success" };
   } catch (err: any) {
-    const msg = err?.response?.data?.message || err?.message || "删除规则失败";
-    return { code: 1, message: msg };
+    return { code: 1, message: formatApiError(err, "rule", "删除规则失败") };
   }
 };

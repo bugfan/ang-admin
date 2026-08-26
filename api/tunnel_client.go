@@ -39,19 +39,31 @@ func (t *tunnelClientHandler) Before(g *gin.Context, x *xorm.Engine) bool {
 	if method == http.MethodPost || method == http.MethodPut || method == http.MethodPatch {
 		name := strings.TrimSpace(t.Name)
 		if name == "" {
-			g.AbortWithStatusJSON(http.StatusOK, gin.H{"code": 1, "message": "节点名称不能为空"})
+			g.AbortWithStatusJSON(http.StatusOK, gin.H{
+				"code":      1,
+				"error_key": "nameRequired",
+				"message":   "节点名称不能为空",
+			})
 			return false
 		}
 
 		token := strings.TrimSpace(t.Token)
 		if token == "" {
-			g.AbortWithStatusJSON(http.StatusOK, gin.H{"code": 1, "message": "请输入 Token"})
+			g.AbortWithStatusJSON(http.StatusOK, gin.H{
+				"code":      1,
+				"error_key": "tokenRequired",
+				"message":   "请输入 Token",
+			})
 			return false
 		}
 
 		tunnelId := strings.TrimSpace(t.TunnelId)
 		if tunnelId == "" {
-			g.AbortWithStatusJSON(http.StatusOK, gin.H{"code": 1, "message": "请选择所属服务器"})
+			g.AbortWithStatusJSON(http.StatusOK, gin.H{
+				"code":      1,
+				"error_key": "tunnelRequired",
+				"message":   "请选择所属服务器",
+			})
 			return false
 		}
 
@@ -72,7 +84,12 @@ func (t *tunnelClientHandler) Before(g *gin.Context, x *xorm.Engine) bool {
 		var nameExist models.TunnelClient
 		hasName, err := nameSess.Get(&nameExist)
 		if err == nil && hasName {
-			g.AbortWithStatusJSON(http.StatusOK, gin.H{"code": 1, "message": fmt.Sprintf("节点名称 [%s] 已存在，请输入唯一的节点名称", name)})
+			g.AbortWithStatusJSON(http.StatusOK, gin.H{
+				"code":      1,
+				"error_key": "nameDuplicate",
+				"details":   gin.H{"name": name},
+				"message":   fmt.Sprintf("节点名称 [%s] 已存在，请输入唯一的节点名称", name),
+			})
 			return false
 		}
 
@@ -84,7 +101,12 @@ func (t *tunnelClientHandler) Before(g *gin.Context, x *xorm.Engine) bool {
 		var tokenExist models.TunnelClient
 		hasToken, err := tokenSess.Get(&tokenExist)
 		if err == nil && hasToken {
-			g.AbortWithStatusJSON(http.StatusOK, gin.H{"code": 1, "message": fmt.Sprintf("Token [%s] 已被节点 [%s] 占用", token, tokenExist.Name)})
+			g.AbortWithStatusJSON(http.StatusOK, gin.H{
+				"code":      1,
+				"error_key": "tokenDuplicate",
+				"details":   gin.H{"token": token, "node": tokenExist.Name},
+				"message":   fmt.Sprintf("Token [%s] 已被节点 [%s] 占用，Token 必须全局唯一", token, tokenExist.Name),
+			})
 			return false
 		}
 	}

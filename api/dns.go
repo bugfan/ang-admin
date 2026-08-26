@@ -45,12 +45,20 @@ func (d *dnsHandler) Before(g *gin.Context, x *xorm.Engine) bool {
 	if method == http.MethodPost || method == http.MethodPut || method == http.MethodPatch {
 		portStr := strings.TrimSpace(d.Port)
 		if portStr == "" {
-			g.AbortWithStatusJSON(http.StatusOK, gin.H{"code": 1, "message": "监听端口不能为空"})
+			g.AbortWithStatusJSON(http.StatusOK, gin.H{
+				"code":      1,
+				"error_key": "portRequired",
+				"message":   "监听端口不能为空",
+			})
 			return false
 		}
 		portNum, err := strconv.Atoi(portStr)
 		if err != nil || portNum < 1 || portNum > 65535 {
-			g.AbortWithStatusJSON(http.StatusOK, gin.H{"code": 1, "message": "监听端口必须为有效数字(1-65535)"})
+			g.AbortWithStatusJSON(http.StatusOK, gin.H{
+				"code":      1,
+				"error_key": "portInvalid",
+				"message":   "监听端口必须为有效数字(1-65535)",
+			})
 			return false
 		}
 
@@ -58,7 +66,11 @@ func (d *dnsHandler) Before(g *gin.Context, x *xorm.Engine) bool {
 		if strings.TrimSpace(d.TunnelId) != "" {
 			tunnelType := strings.ToLower(strings.TrimSpace(d.TunnelType))
 			if tunnelType != "" && !strings.Contains(tunnelType, "quic") {
-				g.AbortWithStatusJSON(http.StatusOK, gin.H{"code": 1, "message": "当前 DNS 模块仅支持关联 QUIC 类型的隧道"})
+				g.AbortWithStatusJSON(http.StatusOK, gin.H{
+					"code":      1,
+					"error_key": "quicTunnelOnly",
+					"message":   "当前 DNS 模块仅支持关联 QUIC 类型的隧道",
+				})
 				return false
 			}
 		}

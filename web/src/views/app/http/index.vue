@@ -183,7 +183,7 @@ async function handleSaveSubmit() {
         showView.value = "list";
         onSearch();
       } catch (e: any) {
-        message(e.message || "提交失败", { type: "error" });
+        message(e.message || t("http.submitFailed", "提交失败"), { type: "error" });
       } finally {
         saving.value = false;
       }

@@ -1,4 +1,5 @@
 import { http } from "@/utils/http";
+import { formatApiError } from "@/utils/apiError";
 
 export type DnsProxyItem = {
   id?: number;
@@ -54,11 +55,9 @@ export const getDnsList = async (params?: object) => {
       data: { list: [], total: 0, pageSize: 10, currentPage: 1 }
     };
   } catch (err: any) {
-    const msg =
-      err?.response?.data?.message || err?.message || "获取 DNS 列表失败";
     return {
       code: 1,
-      message: msg,
+      message: formatApiError(err, "dns", "获取 DNS 列表失败"),
       data: { list: [], total: 0, pageSize: 10, currentPage: 1 }
     };
   }
@@ -74,12 +73,11 @@ export const createDns = async (data?: object) => {
       res.code !== undefined &&
       res.code !== 0
     ) {
-      return res;
+      return { code: res.code, message: formatApiError(res, "dns", "创建 DNS 失败") };
     }
     return { code: 0, message: "success", data: res };
   } catch (err: any) {
-    const msg = err?.response?.data?.message || err?.message || "创建 DNS 失败";
-    return { code: 1, message: msg };
+    return { code: 1, message: formatApiError(err, "dns", "创建 DNS 失败") };
   }
 };
 
@@ -96,12 +94,11 @@ export const updateDns = async (data: any) => {
       res.code !== undefined &&
       res.code !== 0
     ) {
-      return res;
+      return { code: res.code, message: formatApiError(res, "dns", "更新 DNS 失败") };
     }
     return { code: 0, message: "success", data: res };
   } catch (err: any) {
-    const msg = err?.response?.data?.message || err?.message || "更新 DNS 失败";
-    return { code: 1, message: msg };
+    return { code: 1, message: formatApiError(err, "dns", "更新 DNS 失败") };
   }
 };
 
@@ -118,7 +115,6 @@ export const deleteDns = async (param: any) => {
     }
     return { code: 0, message: "success" };
   } catch (err: any) {
-    const msg = err?.response?.data?.message || err?.message || "删除 DNS 失败";
-    return { code: 1, message: msg };
+    return { code: 1, message: formatApiError(err, "dns", "删除 DNS 失败") };
   }
 };

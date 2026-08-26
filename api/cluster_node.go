@@ -38,11 +38,19 @@ func (h *clusterNodeHandler) Before(g *gin.Context, x *xorm.Engine) bool {
 	method := g.Request.Method
 	if method == http.MethodPost || method == http.MethodPut || method == http.MethodPatch {
 		if h.Name == "" {
-			g.AbortWithStatusJSON(http.StatusOK, gin.H{"code": 1, "message": "节点名称不能为空"})
+			g.AbortWithStatusJSON(http.StatusOK, gin.H{
+				"code":      1,
+				"error_key": "nameRequired",
+				"message":   "节点名称不能为空",
+			})
 			return false
 		}
 		if h.Addr == "" {
-			g.AbortWithStatusJSON(http.StatusOK, gin.H{"code": 1, "message": "节点 API 地址不能为空"})
+			g.AbortWithStatusJSON(http.StatusOK, gin.H{
+				"code":      1,
+				"error_key": "apiAddrRequired",
+				"message":   "节点 API 地址不能为空",
+			})
 			return false
 		}
 		// Standardize address format

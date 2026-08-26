@@ -1,3 +1,22 @@
+common:
+  success: "Success"
+  failed: "Failed"
+  createSuccess: "Created successfully"
+  updateSuccess: "Updated successfully"
+  deleteSuccess: "Deleted successfully"
+  batchDeleteSuccess: "Batch deleted successfully"
+  operationSuccess: "Operation successful"
+  operationFailed: "Operation failed"
+  submitSuccess: "Submitted successfully"
+  submitFailed: "Submission failed"
+  copySuccess: "Copied successfully"
+  copyFailed: "Copy failed"
+  saveSuccess: "Saved successfully"
+  saveFailed: "Save failed"
+  nameRequired: "Name is required"
+  portRequired: "Port is required"
+  portInvalid: "Port must be a valid number (1-65535)"
+
 buttons:
   pureAccountSettings: Account
   pureLoginOut: LoginOut
@@ -567,6 +586,8 @@ tunnelClient:
   tunnelRequired: "Please select a server"
   tokenRequired: "Please enter Token"
   tokenPlaceholder: "Please enter or generate token"
+  nameDuplicate: "Node name [{name}] already exists, please enter a unique name"
+  tokenDuplicate: "Token [{token}] is already used by node [{node}], Token must be globally unique"
   generateToken: "Random"
   generateTokenSuccess: "Token generated successfully"
   refreshNodes: "Refresh live nodes list"
@@ -579,6 +600,14 @@ tunnelClient:
   remarkPlaceholder: "Please enter remark (optional)"
 dns:
   remarkPlaceholder: "Please enter remark (optional)"
+  portRequired: "Listening port cannot be empty"
+  portInvalid: "Listening port must be a valid number (1-65535)"
+  quicTunnelOnly: "DNS module currently only supports QUIC tunnels"
+  hostsFormatError: "Hosts format error at line {line}: each line must contain an IP and at least one domain"
+  ipInvalid: "Invalid IP address [{ip}] at line {line}"
+  domainPatternError: "Domain wildcard [{domain}] validation error at line {line}: {err}"
+  submitFailed: "Submit failed"
+  backendConfigRequired: "Please configure at least one valid upstream DNS server or select a Tunnel!"
 
   ruleSection: "Rules"
   rulesTip: "Tip: DNS Proxy is a Layer 4 (L4) service. The dropdown only displays L4 middleware rules configured in the Rules menu (e.g., ip_matcher / reset_conn_action). HTTP application rules are not applicable to DNS."
@@ -619,7 +648,6 @@ dns:
   selectionColumn: "Selection"
   searchPortPlaceholder: "Enter port"
   searchAddressPlaceholder: "Enter address"
-  portRequired: "Please enter listen port"
   certRequired: "Please select a certificate"
   portFormatError: "Port must be a valid number (1-65535)"
   hostsPlaceholder: "# Format: IP Domain1 Domain2... (Supports exact domain and wildcards *.example.com / www.*.com)\n1.2.3.4 baidu.com *.baidu.com www.*.com\n2.3.9.4 qq.com\n::1 ipv6.baidu.com"
@@ -950,5 +978,8 @@ cluster:
   cancel: "Cancel"
   submit: "Submit"
   success: "Success"
+  deleteSuccess: "Cluster node deleted successfully"
+  deleteFailed: "Failed to delete cluster node"
+  batchDeleteSuccess: "Batch delete cluster nodes succeeded"
   pageDesc: "Configure and manage cluster nodes"
   backToList: "Back to Node List"

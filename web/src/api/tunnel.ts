@@ -1,22 +1,5 @@
 import { http } from "@/utils/http";
-import { i18n } from "@/plugins/i18n";
-
-/** Helper to extract server error message with i18n support */
-const getErrorMessage = (err: any, fallback: string) => {
-  const data = err?.response?.data;
-  if (data?.error_key) {
-    const i18nKey = `tunnel.${data.error_key}`;
-    try {
-      const translated = (i18n.global as any).t(i18nKey, data.details || {});
-      if (translated && translated !== i18nKey) {
-        return translated;
-      }
-    } catch {
-      // fallback
-    }
-  }
-  return data?.message || err?.message || fallback;
-};
+import { formatApiError } from "@/utils/apiError";
 
 /** 获取Tunnel列表 (RESTful GET /api/tunnel) */
 export const getTunnelList = async (params?: object) => {
@@ -40,9 +23,12 @@ export const getTunnelList = async (params?: object) => {
 export const createTunnel = async (data?: object) => {
   try {
     const res = await http.request<any>("post", "/api/tunnel", { data });
+    if (res && res.code !== undefined && res.code !== 0) {
+      return { code: res.code, message: formatApiError(res, "tunnel", "create failed") };
+    }
     return { code: 0, message: "success", data: res };
   } catch (err: any) {
-    return { code: 1, message: getErrorMessage(err, "create failed") };
+    return { code: 1, message: formatApiError(err, "tunnel", "create failed") };
   }
 };
 
@@ -51,9 +37,12 @@ export const updateTunnel = async (data: any) => {
   try {
     const id = data.id || data.Id;
     const res = await http.request<any>("put", `/api/tunnel/${id}`, { data });
+    if (res && res.code !== undefined && res.code !== 0) {
+      return { code: res.code, message: formatApiError(res, "tunnel", "update failed") };
+    }
     return { code: 0, message: "success", data: res };
   } catch (err: any) {
-    return { code: 1, message: getErrorMessage(err, "update failed") };
+    return { code: 1, message: formatApiError(err, "tunnel", "update failed") };
   }
 };
 
@@ -70,6 +59,6 @@ export const deleteTunnel = async (param: any) => {
     }
     return { code: 0, message: "success" };
   } catch (err: any) {
-    return { code: 1, message: getErrorMessage(err, "delete failed") };
+    return { code: 1, message: formatApiError(err, "tunnel", "delete failed") };
   }
 };

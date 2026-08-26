@@ -1,3 +1,22 @@
+common:
+  success: "成功"
+  failed: "失败"
+  createSuccess: "创建成功"
+  updateSuccess: "修改成功"
+  deleteSuccess: "删除成功"
+  batchDeleteSuccess: "批量删除成功"
+  operationSuccess: "操作成功"
+  operationFailed: "操作失败"
+  submitSuccess: "提交成功"
+  submitFailed: "提交失败"
+  copySuccess: "复制成功"
+  copyFailed: "复制失败"
+  saveSuccess: "保存成功"
+  saveFailed: "保存失败"
+  nameRequired: "名称不能为空"
+  portRequired: "端口不能为空"
+  portInvalid: "端口必须为有效数字(1-65535)"
+
 buttons:
   pureAccountSettings: 账户设置
   pureLoginOut: 退出系统
@@ -568,6 +587,8 @@ tunnelClient:
   tunnelRequired: "请选择服务器"
   tokenRequired: "请输入 Token"
   tokenPlaceholder: "请输入或生成 Token 凭证"
+  nameDuplicate: "节点名称 [{name}] 已存在，请输入唯一的节点名称"
+  tokenDuplicate: "Token [{token}] 已被节点 [{node}] 占用，Token 必须全局唯一"
   generateToken: "随机生成"
   generateTokenSuccess: "Token 生成成功"
   refreshNodes: "刷新在线节点列表"
@@ -580,6 +601,14 @@ tunnelClient:
   remarkPlaceholder: "请输入备注信息 (选填)"
 dns:
   remarkPlaceholder: "请输入备注信息 (选填)"
+  portRequired: "监听端口不能为空"
+  portInvalid: "监听端口必须为有效数字(1-65535)"
+  quicTunnelOnly: "当前 DNS 模块仅支持关联 QUIC 类型的隧道"
+  hostsFormatError: "第 {line} 行 Hosts 格式错误: 每行需包含一个 IP 和至少一个域名"
+  ipInvalid: "第 {line} 行 IP 地址 [{ip}] 无效"
+  domainPatternError: "第 {line} 行域名通配符 [{domain}] 校验错误: {err}"
+  submitFailed: "提交失败"
+  backendConfigRequired: "请至少配置一个有效的 Upstream 上游服务器或选择 Tunnel 隧道！"
 
   ruleSection: "规则"
   rulesTip: "提示: DNS 代理属于传输层 (L4) 服务，下拉列表仅展示在“规则”菜单中配置的传输层 (L4) 中间件规则 (如 ip_matcher / reset_conn_action)，HTTP 应用层规则不适用于 DNS。"
@@ -620,7 +649,6 @@ dns:
   selectionColumn: "勾选列"
   searchPortPlaceholder: "请输入端口"
   searchAddressPlaceholder: "请输入地址"
-  portRequired: "请输入监听端口"
   certRequired: "请选择关联证书"
   portFormatError: "端口必须为有效数字 (1-65535)"
   hostsPlaceholder: "# 格式: IP 域名1 域名2... (支持精确域名与通配符 *.example.com / www.*.com)\n1.2.3.4 baidu.com *.baidu.com www.*.com\n2.3.9.4 qq.com\n::1 ipv6.baidu.com"
@@ -951,5 +979,8 @@ cluster:
   cancel: "取消"
   submit: "确认"
   success: "成功"
+  deleteSuccess: "删除集群节点成功"
+  deleteFailed: "删除集群节点失败"
+  batchDeleteSuccess: "批量删除集群节点成功"
   pageDesc: "配置和管理集群节点信息"
   backToList: "返回节点列表"

@@ -163,7 +163,7 @@ function handleDownload(row: any) {
   const intermediateContent = row.intermediate_cert || row.IntermediateCert;
   
   if (!keyContent && !certContent) {
-    message("该证书尚未生成内容，无法下载", { type: "warning" });
+    message(t("cert.noContentToDownload", "该证书尚未生成内容，无法下载"), { type: "warning" });
     return;
   }
 
@@ -226,7 +226,7 @@ async function handleSaveSubmit() {
         showView.value = "list";
         onSearch();
       } catch (e: any) {
-        message(e.message || "提交失败", { type: "error" });
+        message(e.message || t("cert.submitFailed", "提交失败"), { type: "error" });
       } finally {
         saving.value = false;
       }

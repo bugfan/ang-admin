@@ -1,22 +1,5 @@
 import { http } from "@/utils/http";
-import { i18n } from "@/plugins/i18n";
-
-/** Helper to extract server error message with i18n support */
-const getErrorMessage = (err: any, fallback: string) => {
-  const data = err?.response?.data;
-  if (data?.error_key) {
-    const i18nKey = `cert.${data.error_key}`;
-    try {
-      const translated = (i18n.global as any).t(i18nKey, data.details || {});
-      if (translated && translated !== i18nKey) {
-        return translated;
-      }
-    } catch {
-      // fallback
-    }
-  }
-  return data?.message || err?.message || fallback;
-};
+import { formatApiError } from "@/utils/apiError";
 
 /** 获取证书列表 (RESTful GET /api/certificate) */
 export const getCertList = async (params?: object) => {
@@ -40,9 +23,12 @@ export const getCertList = async (params?: object) => {
 export const createCert = async (data?: object) => {
   try {
     const res = await http.request<any>("post", "/api/certificate", { data });
+    if (res && res.code !== undefined && res.code !== 0) {
+      return { code: res.code, message: formatApiError(res, "cert", "create failed") };
+    }
     return { code: 0, message: "success", data: res };
   } catch (err: any) {
-    return { code: 1, message: getErrorMessage(err, "create failed") };
+    return { code: 1, message: formatApiError(err, "cert", "create failed") };
   }
 };
 
@@ -55,7 +41,7 @@ export const batchDeleteCert = async (data?: Array<any>) => {
     }
     return { code: 0, message: "success" };
   } catch (err: any) {
-    return { code: 1, message: getErrorMessage(err, "batch delete failed") };
+    return { code: 1, message: formatApiError(err, "cert", "batch delete failed") };
   }
 };
 
@@ -66,7 +52,7 @@ export const issueCert = async (id: string | number) => {
     const res = await http.request<any>("post", `/api/certificate/${id}/issue`, { timeout: 300000 });
     return res;
   } catch (err: any) {
-    return { code: 1, message: getErrorMessage(err, "issue failed") };
+    return { code: 1, message: formatApiError(err, "cert", "issue failed") };
   }
 };
 
@@ -77,9 +63,12 @@ export const updateCert = async (data: any) => {
     const res = await http.request<any>("put", `/api/certificate/${id}`, {
       data
     });
+    if (res && res.code !== undefined && res.code !== 0) {
+      return { code: res.code, message: formatApiError(res, "cert", "update failed") };
+    }
     return { code: 0, message: "success", data: res };
   } catch (err: any) {
-    return { code: 1, message: getErrorMessage(err, "update failed") };
+    return { code: 1, message: formatApiError(err, "cert", "update failed") };
   }
 };
 
@@ -96,22 +85,27 @@ export const deleteCert = async (param: any) => {
     }
     return { code: 0, message: "success" };
   } catch (err: any) {
-    return { code: 1, message: getErrorMessage(err, "delete failed") };
+    return { code: 1, message: formatApiError(err, "cert", "delete failed") };
   }
 };
 
-/** 自动生成自签证书 (POST /api/certificate/generate) */
-export const generateSelfSignedCert = async (data: {
+/** 生成自签名证书 (POST /api/certificate/generate-self-signed) */
+export const generateSelfSignedCert = async (data?: {
   common_name: string;
-  dns_names: string[];
-  valid_days: number;
+  dns_names?: string[];
+  valid_days?: number;
 }) => {
   try {
-    const res = await http.request<any>("post", "/api/certificate/generate", {
-      data
-    });
+    const res = await http.request<any>(
+      "post",
+      "/api/certificate/generate-self-signed",
+      { data }
+    );
     return res;
   } catch (err: any) {
-    return { code: 1, message: getErrorMessage(err, "generate failed") };
+    return {
+      code: 1,
+      message: formatApiError(err, "cert", "generate self-signed cert failed")
+    };
   }
 };

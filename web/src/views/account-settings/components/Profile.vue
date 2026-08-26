@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { message } from "@/utils/message";
 import { onMounted, reactive, ref } from "vue";
+import { useI18n } from "vue-i18n";
 import { type UserInfo, getMine } from "@/api/user";
 import type { FormInstance, FormRules } from "element-plus";
 import { deviceDetection } from "@pureadmin/utils";
@@ -9,6 +10,7 @@ defineOptions({
   name: "Profile"
 });
 
+const { t } = useI18n();
 const userInfoFormRef = ref<FormInstance>();
 
 const userInfos = reactive({
@@ -27,7 +29,9 @@ function queryEmail(queryString, callback) {
   const emailList = [
     { value: "@qq.com" },
     { value: "@126.com" },
-    { value: "@163.com" }
+    { value: "@163.com" },
+    { value: "@gmail.com" },
+    { value: "@foxmail.com" }
   ];
   let results = [];
   let queryList = [];
@@ -48,7 +52,7 @@ const onSubmit = async (formEl: FormInstance) => {
   await formEl.validate((valid, fields) => {
     if (valid) {
       console.log(userInfos);
-      message("更新信息成功", { type: "success" });
+      message(t("common.updateSuccess", "更新信息成功"), { type: "success" });
     } else {
       console.log("error submit!", fields);
     }

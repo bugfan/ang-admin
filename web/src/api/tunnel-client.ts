@@ -1,4 +1,5 @@
 import { http } from "@/utils/http";
+import { formatApiError } from "@/utils/apiError";
 
 /** 获取TunnelClient配置列表 (RESTful GET /api/tunnel-client) */
 export const getTunnelClientList = async (params?: object) => {
@@ -23,13 +24,13 @@ export const createTunnelClient = async (data?: object) => {
   try {
     const res = await http.request<any>("post", "/api/tunnel-client", { data });
     if (res && res.code !== undefined && res.code !== 0) {
-      return res;
+      return { code: res.code, message: formatApiError(res, "tunnelClient", "create failed") };
     }
     return { code: 0, message: "success", data: res };
   } catch (err: any) {
     return {
       code: 1,
-      message: err?.response?.data?.message || err?.message || "create failed"
+      message: formatApiError(err, "tunnelClient", "create failed")
     };
   }
 };
@@ -42,13 +43,13 @@ export const updateTunnelClient = async (data: any) => {
       data
     });
     if (res && res.code !== undefined && res.code !== 0) {
-      return res;
+      return { code: res.code, message: formatApiError(res, "tunnelClient", "update failed") };
     }
     return { code: 0, message: "success", data: res };
   } catch (err: any) {
     return {
       code: 1,
-      message: err?.response?.data?.message || err?.message || "update failed"
+      message: formatApiError(err, "tunnelClient", "update failed")
     };
   }
 };
@@ -68,7 +69,7 @@ export const deleteTunnelClient = async (param: any) => {
   } catch (err: any) {
     return {
       code: 1,
-      message: err?.response?.data?.message || err?.message || "delete failed"
+      message: formatApiError(err, "tunnelClient", "delete failed")
     };
   }
 };

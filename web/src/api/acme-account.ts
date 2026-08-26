@@ -1,4 +1,5 @@
 import { http } from "@/utils/http";
+import { formatApiError } from "@/utils/apiError";
 
 /** 获取 ACME 签发账号列表 */
 export const getAcmeAccounts = async (params?: object) => {
@@ -15,13 +16,19 @@ export const saveAcmeAccount = async (data: any) => {
   try {
     if (data.id) {
       const res = await http.request<any>("put", `/api/acme-account/${data.id}`, { data });
+      if (res && res.code !== undefined && res.code !== 0) {
+        return { code: res.code, message: formatApiError(res, "acmeAccount", "保存失败") };
+      }
       return { code: 0, data: res };
     } else {
       const res = await http.request<any>("post", "/api/acme-account", { data });
+      if (res && res.code !== undefined && res.code !== 0) {
+        return { code: res.code, message: formatApiError(res, "acmeAccount", "保存失败") };
+      }
       return { code: 0, data: res };
     }
   } catch (err: any) {
-    return { code: 1, message: err?.response?.data?.message || err?.message || "保存失败" };
+    return { code: 1, message: formatApiError(err, "acmeAccount", "保存失败") };
   }
 };
 
@@ -31,6 +38,6 @@ export const deleteAcmeAccount = async (id: number | string) => {
     await http.request<any>("delete", `/api/acme-account/${id}`);
     return { code: 0 };
   } catch (err: any) {
-    return { code: 1, message: err?.response?.data?.message || err?.message || "删除失败" };
+    return { code: 1, message: formatApiError(err, "acmeAccount", "删除失败") };
   }
 };
