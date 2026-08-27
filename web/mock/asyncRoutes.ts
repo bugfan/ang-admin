@@ -158,12 +158,33 @@ const httpRouter = {
   ]
 };
 
+const tcpRouter = {
+  path: "/tcp",
+  meta: {
+    icon: "ri:terminal-box-line",
+    title: "menus.pureTcp",
+    rank: 7
+  },
+  children: [
+    {
+      path: "/tcp/index",
+      name: "AppTcpProxy",
+      component: "app/tcp/index",
+      meta: {
+        icon: "ri:terminal-box-line",
+        title: "menus.pureTcp",
+        roles: ["admin", "common"]
+      }
+    }
+  ]
+};
+
 const clusterRouter = {
   path: "/cluster",
   meta: {
     icon: "ri:server-line",
     title: "menus.pureCluster",
-    rank: 7
+    rank: 8
   },
   children: [
     {
@@ -215,6 +236,7 @@ export default defineFakeRoute([
           ruleRouter,
           dnsRouter,
           httpRouter,
+          tcpRouter,
           clusterRouter,
           accountManagementRouter
         ]

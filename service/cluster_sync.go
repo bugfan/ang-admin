@@ -369,15 +369,93 @@ func BuildFullCertificateConfig() entity.CertificateFileConfig {
 	}
 }
 
+func buildTCPMap(rulesMap map[string]models.Rule) map[string]entity.TCPConfig {
+	engine := models.GetEngine()
+	if engine == nil {
+		return nil
+	}
+	var tcpList []models.TcpProxy
+	err := engine.Find(&tcpList)
+	if err != nil {
+		log.Printf("buildTCPMap error: %v\n", err)
+		return nil
+	}
+
+	tcpMap := make(map[string]entity.TCPConfig)
+	for _, item := range tcpList {
+		keyStr := strconv.FormatInt(item.Id, 10)
+
+		// Parse Rules (Rule Set expansion)
+		var ruleConfigs []entity.RuleConfig
+		if item.Rules != "" {
+			var ruleNames []string
+			_ = json.Unmarshal([]byte(item.Rules), &ruleNames)
+			for _, rName := range ruleNames {
+				rName = strings.TrimSpace(rName)
+				if dbRule, exists := rulesMap[rName]; exists {
+					if dbRule.Items != "" {
+						var items []entity.RuleConfig
+						if err := json.Unmarshal([]byte(dbRule.Items), &items); err == nil {
+							ruleConfigs = append(ruleConfigs, items...)
+						}
+					}
+				}
+			}
+		}
+
+		// Parse Backend
+		var backend *entity.TCPBackend
+		hasTunnel := item.TunnelId != ""
+		var upstreamServers []entity.UpstreamServer
+		if item.UpstreamServers != "" {
+			_ = json.Unmarshal([]byte(item.UpstreamServers), &upstreamServers)
+		}
+		hasUpstream := len(upstreamServers) > 0
+
+		if hasTunnel || hasUpstream {
+			backend = &entity.TCPBackend{}
+			if hasTunnel {
+				backend.Tunnel = &entity.BackendTunnel{
+					Type:  item.TunnelType,
+					ID:    item.TunnelId,
+					Token: item.TunnelToken,
+				}
+			}
+			if hasUpstream {
+				method := item.UpstreamMethod
+				if method == "" {
+					method = "round_robin"
+				}
+				backend.Upstream = &entity.UpstreamConfig{
+					Method: method,
+					Data: entity.UpstreamData{
+						Servers: upstreamServers,
+					},
+				}
+			}
+		}
+
+		tcpMap[keyStr] = entity.TCPConfig{
+			Address: item.Address,
+			Port:    item.Port,
+			Rule:    ruleConfigs,
+			Backend: backend,
+		}
+	}
+	return tcpMap
+}
+
 // BuildFullServerConfig builds the combined server.json data structure matching ang engine
 func BuildFullServerConfig() entity.ServerConfig {
 	rulesMap := buildRulesDBMap()
 	dnsMap := buildDNSMap(rulesMap)
 	httpMap := buildHTTPMap(rulesMap)
+	tcpMap := buildTCPMap(rulesMap)
 
 	return entity.ServerConfig{
 		DNS:  dnsMap,
 		HTTP: httpMap,
+		TCP:  tcpMap,
 	}
 }
 
@@ -497,6 +575,18 @@ func SyncHTTPToCluster() {
 	go PushServerConfigToNodes(serverCfg, tunnelCfg, certCfg)
 }
 
+// SyncTCPToCluster queries all TCP proxies, updates cluster and prints server.json
+func SyncTCPToCluster() {
+	rulesMap := buildRulesDBMap()
+	tcpMap := buildTCPMap(rulesMap)
+	cluster.Put("TCP", tcpMap)
+	serverCfg := BuildFullServerConfig()
+	tunnelCfg := BuildFullTunnelConfig()
+	certCfg := BuildFullCertificateConfig()
+	cluster.PrintFullServerConfig(serverCfg)
+	go PushServerConfigToNodes(serverCfg, tunnelCfg, certCfg)
+}
+
 // SyncAllToCluster syncs all implemented entities to cluster and prints overall server.json, tunnel.json, and certificate.json
 func SyncAllToCluster() {
 	SyncCertificateToCluster()
@@ -504,6 +594,7 @@ func SyncAllToCluster() {
 	SyncDNSToCluster()
 	SyncRuleToCluster()
 	SyncHTTPToCluster()
+	SyncTCPToCluster()
 }
 
 func VerifyNode(addr, secret string) (bool, string) {

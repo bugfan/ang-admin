@@ -411,11 +411,31 @@ func AsyncRoutesHandler(c *gin.Context) {
 				},
 			},
 			{
+				"path": "/tcp",
+				"meta": gin.H{
+					"icon":  "ri:terminal-box-line",
+					"title": "menus.pureTcp",
+					"rank":  7,
+				},
+				"children": []gin.H{
+					{
+						"path":      "/tcp/index",
+						"name":      "AppTcpProxy",
+						"component": "app/tcp/index",
+						"meta": gin.H{
+							"icon":  "ri:terminal-box-line",
+							"title": "menus.pureTcp",
+							"roles": []string{"admin", "common"},
+						},
+					},
+				},
+			},
+			{
 				"path": "/cluster",
 				"meta": gin.H{
 					"icon":  "ri:server-line",
 					"title": "menus.pureCluster",
-					"rank":  7,
+					"rank":  8,
 				},
 				"children": []gin.H{
 					{

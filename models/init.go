@@ -50,7 +50,7 @@ func InitDB(dsn string) {
 	}
 
 	// Automatically sync database schemas if necessary
-	err = engine.Sync2(new(AdminUser), new(Tunnel), new(Certificate), new(TunnelClient), new(DnsProxy), new(Rule), new(HttpProxy), new(ClusterNode), new(AcmeAccount))
+	err = engine.Sync2(new(AdminUser), new(Tunnel), new(Certificate), new(TunnelClient), new(DnsProxy), new(TcpProxy), new(Rule), new(HttpProxy), new(ClusterNode), new(AcmeAccount))
 
 	if err != nil {
 		log.Fatalf("Failed to sync database: %v", err)
