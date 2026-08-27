@@ -14,7 +14,6 @@ import { type Ref, ref, computed, reactive, onMounted } from "vue";
 export function useTcpProxy(t: any, tableRef: Ref) {
   const form = reactive({
     name: "",
-    address: "",
     port: ""
   });
   const formRef = ref();
@@ -233,7 +232,6 @@ export function useTcpProxy(t: any, tableRef: Ref) {
     try {
       const { data } = await getTcpList({
         name: form.name,
-        address: form.address,
         port: form.port
       });
       dataList.value = data?.list || [];
@@ -249,7 +247,6 @@ export function useTcpProxy(t: any, tableRef: Ref) {
     if (!formEl) return;
     formEl.resetFields();
     form.name = "";
-    form.address = "";
     form.port = "";
     onSearch();
   };

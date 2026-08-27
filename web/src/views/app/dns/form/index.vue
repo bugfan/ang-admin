@@ -346,8 +346,13 @@ function removeUpstreamRow(index: number) {
   syncUpstreamJSON();
 }
 
+const upstreamError = ref("");
+
 function syncUpstreamJSON() {
   newFormInline.value.upstream_servers = JSON.stringify(upstreamList.value);
+  if (!upstreamList.value.some(s => !s.target || s.target.trim() === "")) {
+    upstreamError.value = "";
+  }
 }
 
 watch(
@@ -406,17 +411,6 @@ const formRules = reactive({
   ]
 });
 
-function validateCustomBackend() {
-  const hasTunnel = Boolean(newFormInline.value.tunnel_id);
-  const validServers = upstreamList.value.filter(
-    s => s.target && s.target.trim().length > 0
-  );
-  if (!hasTunnel && validServers.length === 0) {
-    return false;
-  }
-  return true;
-}
-
 onMounted(() => {
   fetchTunnels();
   fetchCustomRules();
@@ -428,15 +422,14 @@ function getRef() {
   return {
     validate: (callback: (valid: boolean) => void) => {
       ruleFormRef.value.validate((valid: boolean) => {
-        if (!valid) {
-          callback(false);
-          return;
+        const hasEmptyTarget = upstreamList.value.some(s => !s.target || s.target.trim() === "");
+        if (hasEmptyTarget) {
+          upstreamError.value = t("dns.targetRequired", "请输入目标地址");
+        } else {
+          upstreamError.value = "";
         }
-        if (!validateCustomBackend()) {
-          message(
-            t("dns.backendConfigRequired", "请至少配置一个有效的 Upstream 上游服务器或选择 Tunnel 隧道！"),
-            { type: "warning" }
-          );
+        
+        if (!valid || hasEmptyTarget) {
           callback(false);
           return;
         }
@@ -713,32 +706,39 @@ defineExpose({ getRef });
 
           <!-- 上游 DNS 服务器列表表格 -->
           <div class="space-y-2">
-            <div class="flex-bc">
-              <span class="text-xs font-medium text-(--el-text-color-primary)">
-                {{ t("dns.upstreamServers") }}
-              </span>
+            <div
+              class="flex flex-col sm:flex-row sm:items-center justify-between gap-2 mb-3"
+            >
+              <div>
+                <span class="font-bold text-sm text-(--el-text-color-primary)">
+                  {{ t("dns.upstreamServers") }}
+                </span>
+              </div>
               <el-button
                 type="primary"
                 size="small"
                 :icon="useRenderIcon(AddFill)"
+                class="self-start sm:self-auto shrink-0"
                 @click="addUpstreamRow"
               >
                 {{ t("dns.addServer") }}
               </el-button>
             </div>
 
-            <el-table
-              :data="upstreamList"
-              border
-              size="small"
-              class="w-full text-xs"
-              :empty-text="t('dns.noUpstreamServers')"
+            <div
+              class="border border-(--el-border-color-lighter) rounded-lg overflow-hidden"
             >
-              <el-table-column label="#" width="50" align="center">
-                <template #default="{ $index }">
-                  <span class="font-mono text-gray-400">{{ $index + 1 }}</span>
-                </template>
-              </el-table-column>
+              <el-table
+                :data="upstreamList"
+                size="small"
+                class="w-full text-xs"
+                :empty-text="t('dns.noUpstreamServers')"
+              >
+                <el-table-column label="#" width="50" align="center">
+                  <template #default="{ $index }">
+                    <span class="font-mono text-gray-400">{{ $index + 1 }}</span>
+                  </template>
+                </el-table-column>
               <el-table-column :label="t('dns.targetServer')" min-width="180">
                 <template #default="{ row }">
                   <el-input
@@ -782,6 +782,10 @@ defineExpose({ getRef });
                 </template>
               </el-table-column>
             </el-table>
+            </div>
+            <div v-if="upstreamError" class="text-xs text-red-500 mt-1.5 ml-1">
+              {{ upstreamError }}
+            </div>
           </div>
         </div>
       </div>

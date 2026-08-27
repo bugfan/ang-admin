@@ -696,6 +696,18 @@ function syncLocationJSON() {
       }
     };
   });
+  
+  // clear errors for locations that are now valid
+  for (let i = 0; i < locationList.value.length; i++) {
+    const loc = locationList.value[i];
+    if (loc.Upstream?.Type === "proxy_pass" && locationErrors.value[i]) {
+      const servers = loc.Upstream.Data?.Servers || [];
+      if (!servers.some((s: any) => !s.Target || s.Target.trim() === "")) {
+        locationErrors.value[i] = false;
+      }
+    }
+  }
+
   newFormInline.value.location_json = JSON.stringify(cleanedLocations, null, 2);
 }
 
@@ -736,8 +748,36 @@ const formRules = reactive({
   certificate: [{ validator: validateCertificate, trigger: ["change", "blur"] }]
 });
 
+const locationErrors = ref<Record<number, boolean>>({});
+
 function getRef() {
-  return httpFormRef.value;
+  syncLocationJSON();
+  return {
+    validate: (callback: (valid: boolean) => void) => {
+      httpFormRef.value.validate((valid: boolean) => {
+        let hasEmptyTarget = false;
+        locationErrors.value = {}; // reset
+        
+        for (let i = 0; i < locationList.value.length; i++) {
+          const loc = locationList.value[i];
+          if (loc.Upstream?.Type === "proxy_pass") {
+             const servers = loc.Upstream.Data?.Servers || [];
+             if (servers.some((s: any) => !s.Target || s.Target.trim() === "")) {
+               locationErrors.value[i] = true;
+               hasEmptyTarget = true;
+             }
+          }
+        }
+        
+        if (!valid || hasEmptyTarget) {
+          callback(false);
+          return;
+        }
+        
+        callback(true);
+      });
+    }
+  };
 }
 
 defineExpose({ getRef, syncLocationJSON });
@@ -1281,58 +1321,76 @@ defineExpose({ getRef, syncLocationJSON });
                 <!-- Case A: Upstream Target Servers (proxy_pass) -->
                 <div
                   v-if="loc.Upstream.Type === 'proxy_pass'"
-                  class="mt-1 p-2.5 sm:p-3 bg-(--el-bg-color) rounded-lg border border-(--el-border-color-lighter) space-y-2"
+                  class="mt-3 space-y-2"
                 >
                   <div
-                    class="flex-bc text-xs font-bold text-(--el-text-color-primary)"
+                    class="flex flex-col sm:flex-row sm:items-center justify-between gap-2 mb-3"
                   >
-                    <span>{{ t("http.targetUrl") }}</span>
+                    <div>
+                      <span class="font-bold text-sm text-(--el-text-color-primary)">
+                        {{ t("http.targetUrl") }}
+                      </span>
+                    </div>
                     <el-button
-                      size="small"
-                      link
                       type="primary"
+                      size="small"
+                      :icon="useRenderIcon(AddFill)"
+                      class="self-start sm:self-auto shrink-0"
                       @click="addUpstreamServer(lIdx)"
-                      >{{ t("http.addBackendNode") }}</el-button
                     >
+                      {{ t("http.addBackendNode") }}
+                    </el-button>
                   </div>
 
                   <div
-                    v-for="(srv, sIdx) in loc.Upstream.Data.Servers || []"
-                    :key="sIdx"
-                    class="flex flex-wrap sm:flex-nowrap items-center gap-2 pb-2 sm:pb-0 border-b sm:border-b-0 border-(--el-border-color-lighter) last:border-b-0"
+                    class="border border-(--el-border-color-lighter) rounded-lg overflow-hidden"
                   >
-                    <el-input
-                      v-model="srv.Target"
+                    <el-table
+                      :data="loc.Upstream.Data.Servers || []"
                       size="small"
-                      placeholder="http://127.0.0.1:8080"
-                      class="w-full sm:flex-1"
-                      @input="syncLocationJSON"
-                    />
-                    <div
-                      class="flex items-center space-x-2 shrink-0 self-end sm:self-auto"
+                      class="w-full text-xs"
+                      :empty-text="t('tcp.noUpstreamServers', '暂无服务器')"
                     >
-                      <span class="text-xs text-(--el-text-color-secondary)">{{
-                        t("http.weight")
-                      }}</span>
-                      <el-input-number
-                        v-model="srv.Weight"
-                        size="small"
-                        :min="1"
-                        :max="100"
-                        class="w-24!"
-                        @change="syncLocationJSON"
-                      />
-                      <el-button
-                        size="small"
-                        link
-                        type="danger"
-                        :disabled="
-                          (loc.Upstream.Data.Servers || []).length <= 1
-                        "
-                        :icon="useRenderIcon(Delete)"
-                        @click="removeUpstreamServer(lIdx, sIdx)"
-                      />
-                    </div>
+                      <el-table-column type="index" label="#" width="50" align="center" />
+                      <el-table-column :label="t('http.targetUrl')" min-width="220">
+                        <template #default="{ row }">
+                          <el-input
+                            v-model="row.Target"
+                            size="small"
+                            placeholder="http://127.0.0.1:8080"
+                            class="w-full"
+                            @input="syncLocationJSON"
+                          />
+                        </template>
+                      </el-table-column>
+                      <el-table-column :label="t('http.weight')" width="140" align="center">
+                        <template #default="{ row }">
+                          <el-input-number
+                            v-model="row.Weight"
+                            size="small"
+                            :min="1"
+                            :max="1000"
+                            class="w-full"
+                            @change="syncLocationJSON"
+                          />
+                        </template>
+                      </el-table-column>
+                      <el-table-column :label="t('http.operation', '操作')" width="80" align="center">
+                        <template #default="{ $index }">
+                          <el-button
+                            type="danger"
+                            link
+                            size="small"
+                            :disabled="(loc.Upstream.Data.Servers || []).length <= 1"
+                            :icon="useRenderIcon(Delete)"
+                            @click="removeUpstreamServer(lIdx, $index)"
+                          />
+                        </template>
+                      </el-table-column>
+                    </el-table>
+                  </div>
+                  <div v-if="locationErrors[lIdx]" class="text-xs text-red-500 mt-1.5 ml-1">
+                    {{ t("tcp.targetRequired", "请输入目标地址") }}
                   </div>
                 </div>
 

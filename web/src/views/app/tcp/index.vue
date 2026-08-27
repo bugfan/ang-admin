@@ -182,15 +182,6 @@ async function handleSaveSubmit() {
             @keyup.enter="onSearch"
           />
         </el-form-item>
-        <el-form-item :label="t('tcp.address', '地址')" prop="address">
-          <el-input
-            v-model="form.address"
-            :placeholder="t('tcp.searchAddressPlaceholder', '请输入地址')"
-            clearable
-            class="w-full sm:w-45!"
-            @keyup.enter="onSearch"
-          />
-        </el-form-item>
         <el-form-item>
           <el-button
             type="primary"

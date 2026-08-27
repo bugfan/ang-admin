@@ -323,8 +323,13 @@ function initUpstreamFromProps() {
   upstreamList.value = [{ target: "127.0.0.1:9999", weight: 1 }];
 }
 
+const upstreamError = ref("");
+
 function syncUpstreamToForm() {
   newFormInline.value.upstream_servers = JSON.stringify(upstreamList.value);
+  if (!upstreamList.value.some(s => !s.target || s.target.trim() === "")) {
+    upstreamError.value = "";
+  }
 }
 
 function addUpstreamRow() {
@@ -362,7 +367,24 @@ const rules = reactive({
 
 function getRef() {
   syncUpstreamToForm();
-  return ruleFormRef.value;
+  return {
+    validate: (callback: (valid: boolean) => void) => {
+      ruleFormRef.value.validate((valid: boolean) => {
+        const hasEmptyTarget = upstreamList.value.some(s => !s.target || s.target.trim() === "");
+        if (hasEmptyTarget) {
+          upstreamError.value = t("tcp.targetRequired", "请输入目标地址");
+        } else {
+          upstreamError.value = "";
+        }
+        
+        if (!valid || hasEmptyTarget) {
+          callback(false);
+          return;
+        }
+        callback(true);
+      });
+    }
+  };
 }
 
 defineExpose({ getRef });
@@ -422,7 +444,7 @@ watch(
         </re-col>
 
         <re-col :value="12" :xs="24">
-          <el-form-item :label="t('tcp.port', '监听端口')" prop="port">
+          <el-form-item :label="t('tcp.port', '端口')" prop="port">
             <el-input
               v-model="newFormInline.port"
               clearable
@@ -432,7 +454,7 @@ watch(
         </re-col>
 
         <re-col :value="12" :xs="24">
-          <el-form-item :label="t('tcp.address', '绑定地址')" prop="address">
+          <el-form-item :label="t('tcp.address', '地址')" prop="address">
             <el-input
               v-model="newFormInline.address"
               clearable
@@ -626,6 +648,21 @@ watch(
 
         <!-- 2. Target Server Address & Load Balance (Bottom part) -->
         <div class="border-t border-(--el-border-color-lighter) pt-4">
+          <el-row :gutter="16" class="mb-3">
+            <re-col :value="12" :xs="24">
+              <el-form-item :label="t('tcp.upstreamMethod', '负载均衡')">
+                <el-select
+                  v-model="newFormInline.upstream_method"
+                  class="w-full"
+                >
+                  <el-option label="轮询 (Round Robin)" value="round_robin" />
+                  <el-option label="权重 (Weight)" value="weight" />
+                  <el-option label="IP 哈希 (IP Hash)" value="ip_hash" />
+                </el-select>
+              </el-form-item>
+            </re-col>
+          </el-row>
+
           <div
             class="flex flex-col sm:flex-row sm:items-center justify-between gap-2 mb-3"
           >
@@ -644,21 +681,6 @@ watch(
               {{ t("tcp.addTarget", "添加服务器") }}
             </el-button>
           </div>
-
-          <el-row :gutter="16" class="mb-3">
-            <re-col :value="12" :xs="24">
-              <el-form-item :label="t('tcp.upstreamMethod', '负载均衡')">
-                <el-select
-                  v-model="newFormInline.upstream_method"
-                  class="w-full"
-                >
-                  <el-option label="轮询 (Round Robin)" value="round_robin" />
-                  <el-option label="权重 (Weight)" value="weight" />
-                  <el-option label="IP 哈希 (IP Hash)" value="ip_hash" />
-                </el-select>
-              </el-form-item>
-            </re-col>
-          </el-row>
 
           <div
             class="border border-(--el-border-color-lighter) rounded-lg overflow-hidden"
@@ -730,6 +752,9 @@ watch(
                 </template>
               </el-table-column>
             </el-table>
+          </div>
+          <div v-if="upstreamError" class="text-xs text-red-500 mt-1.5 ml-1">
+            {{ upstreamError }}
           </div>
         </div>
       </div>
