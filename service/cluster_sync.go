@@ -459,7 +459,84 @@ func BuildFullServerConfig() entity.ServerConfig {
 	}
 }
 
-// PushServerConfigToNodes pushes the compiled server.json, tunnel.json, and certificate.json to all registered ang engine nodes
+// PushPartialConfigToNodes pushes only the changed sections to all ang engine nodes.
+// serverSections: map of top-level server.json keys to include (e.g. {"TCP": tcpMap}).
+//
+//	Pass nil to skip pushing server_config.
+//
+// tunnelCfg: pass non-nil to include tunnel_config in the push.
+// certCfg:   pass non-nil to include certificate_config in the push.
+//
+// The ang engine's /api/config/sync endpoint applies a merge-patch — only the keys
+// present in the payload are updated; everything else is left untouched on the node.
+func PushPartialConfigToNodes(
+	serverSections map[string]interface{},
+	tunnelCfg *entity.TunnelFileConfig,
+	certCfg *entity.CertificateFileConfig,
+) {
+	engine := models.GetEngine()
+	if engine == nil {
+		return
+	}
+	var nodes []models.ClusterNode
+	if err := engine.Find(&nodes); err != nil || len(nodes) == 0 {
+		return
+	}
+
+	payload := make(map[string]interface{})
+	if len(serverSections) > 0 {
+		payload["server_config"] = serverSections
+	}
+	if tunnelCfg != nil {
+		payload["tunnel_config"] = tunnelCfg
+	}
+	if certCfg != nil {
+		payload["certificate_config"] = certCfg
+	}
+	if len(payload) == 0 {
+		return
+	}
+
+	data, err := json.Marshal(payload)
+	if err != nil {
+		return
+	}
+
+	client := &http.Client{Timeout: 5 * time.Second}
+	for _, node := range nodes {
+		addr := strings.TrimRight(node.Addr, "/")
+		if addr == "" {
+			continue
+		}
+		syncURL := addr + "/api/config/sync"
+		req, err := http.NewRequest("POST", syncURL, bytes.NewBuffer(data))
+		if err != nil {
+			continue
+		}
+		req.Header.Set("Content-Type", "application/json")
+		if node.Secret != "" {
+			req.Header.Set("X-Ang-Secret", node.Secret)
+		}
+		resp, err := client.Do(req)
+		if err == nil && resp.StatusCode == 200 {
+			resp.Body.Close()
+			node.Status = 1
+			node.LastPing = time.Now()
+			_, _ = engine.ID(node.Id).Cols("status", "last_ping").Update(&node)
+			log.Printf("[cluster_sync] Partial push to node %s (%s) OK", node.Name, node.Addr)
+		} else {
+			if resp != nil {
+				resp.Body.Close()
+			}
+			node.Status = 0
+			_, _ = engine.ID(node.Id).Cols("status").Update(&node)
+			log.Printf("[cluster_sync] Partial push to node %s (%s) FAILED", node.Name, node.Addr)
+		}
+	}
+}
+
+// PushServerConfigToNodes pushes the full server.json, tunnel.json, and certificate.json
+// to all registered ang engine nodes. Used by SyncAllToCluster for full syncs.
 func PushServerConfigToNodes(serverCfg entity.ServerConfig, tunnelCfg entity.TunnelFileConfig, certCfg entity.CertificateFileConfig) {
 	engine := models.GetEngine()
 	if engine == nil {
@@ -520,81 +597,88 @@ func PingNode(node *models.ClusterNode) (bool, string) {
 	return VerifyNode(node.Addr, node.Secret)
 }
 
-// SyncCertificateToCluster queries all certificates, updates cluster and prints certificate.json
+// SyncCertificateToCluster syncs certificate changes. Only certificate_config is pushed.
 func SyncCertificateToCluster() {
 	certCfg := BuildFullCertificateConfig()
 	cluster.Put("Certificate", certCfg)
-	serverCfg := BuildFullServerConfig()
-	tunnelCfg := BuildFullTunnelConfig()
 	cluster.PrintFullCertificateConfig(certCfg)
-	go PushServerConfigToNodes(serverCfg, tunnelCfg, certCfg)
+	go PushPartialConfigToNodes(nil, nil, &certCfg)
 }
 
-// SyncTunnelToCluster queries all tunnels & clients, updates cluster and prints tunnel.json
+// SyncTunnelToCluster syncs tunnel changes. Only tunnel_config is pushed.
 func SyncTunnelToCluster() {
 	tunnelCfg := BuildFullTunnelConfig()
 	cluster.Put("TUNNEL", tunnelCfg)
-	serverCfg := BuildFullServerConfig()
-	certCfg := BuildFullCertificateConfig()
 	cluster.PrintFullTunnelConfig(tunnelCfg)
-	go PushServerConfigToNodes(serverCfg, tunnelCfg, certCfg)
+	go PushPartialConfigToNodes(nil, &tunnelCfg, nil)
 }
 
-// SyncDNSToCluster queries all DNS proxies, updates cluster and prints server.json
+// SyncDNSToCluster syncs DNS proxy changes. Only the DNS section of server_config is pushed.
 func SyncDNSToCluster() {
 	rulesMap := buildRulesDBMap()
 	dnsMap := buildDNSMap(rulesMap)
 	cluster.Put("DNS", dnsMap)
-	serverCfg := BuildFullServerConfig()
-	tunnelCfg := BuildFullTunnelConfig()
-	certCfg := BuildFullCertificateConfig()
-	cluster.PrintFullServerConfig(serverCfg)
-	go PushServerConfigToNodes(serverCfg, tunnelCfg, certCfg)
+	cluster.PrintFullServerConfig(BuildFullServerConfig())
+	go PushPartialConfigToNodes(
+		map[string]interface{}{"DNS": dnsMap},
+		nil, nil,
+	)
 }
 
-// SyncRuleToCluster queries all rules, updates cluster and prints server.json
+// SyncRuleToCluster syncs rule changes. Rules affect all server sections,
+// so HTTP + TCP + DNS are all pushed together (but tunnel/cert unchanged).
 func SyncRuleToCluster() {
 	rulesMap := buildRulesDBMap()
 	cluster.Put("Rule", rulesMap)
 	serverCfg := BuildFullServerConfig()
-	tunnelCfg := BuildFullTunnelConfig()
-	certCfg := BuildFullCertificateConfig()
 	cluster.PrintFullServerConfig(serverCfg)
-	go PushServerConfigToNodes(serverCfg, tunnelCfg, certCfg)
+	go PushPartialConfigToNodes(
+		map[string]interface{}{
+			"HTTP": serverCfg.HTTP,
+			"TCP":  serverCfg.TCP,
+			"DNS":  serverCfg.DNS,
+		},
+		nil, nil,
+	)
 }
 
-// SyncHTTPToCluster queries all HTTP proxies, updates cluster and prints server.json
+// SyncHTTPToCluster syncs HTTP proxy changes. Only the HTTP section of server_config is pushed.
 func SyncHTTPToCluster() {
 	rulesMap := buildRulesDBMap()
 	httpMap := buildHTTPMap(rulesMap)
 	cluster.Put("HTTP", httpMap)
-	serverCfg := BuildFullServerConfig()
-	tunnelCfg := BuildFullTunnelConfig()
-	certCfg := BuildFullCertificateConfig()
-	cluster.PrintFullServerConfig(serverCfg)
-	go PushServerConfigToNodes(serverCfg, tunnelCfg, certCfg)
+	cluster.PrintFullServerConfig(BuildFullServerConfig())
+	go PushPartialConfigToNodes(
+		map[string]interface{}{"HTTP": httpMap},
+		nil, nil,
+	)
 }
 
-// SyncTCPToCluster queries all TCP proxies, updates cluster and prints server.json
+// SyncTCPToCluster syncs TCP proxy changes. Only the TCP section of server_config is pushed.
 func SyncTCPToCluster() {
 	rulesMap := buildRulesDBMap()
 	tcpMap := buildTCPMap(rulesMap)
 	cluster.Put("TCP", tcpMap)
-	serverCfg := BuildFullServerConfig()
-	tunnelCfg := BuildFullTunnelConfig()
-	certCfg := BuildFullCertificateConfig()
-	cluster.PrintFullServerConfig(serverCfg)
-	go PushServerConfigToNodes(serverCfg, tunnelCfg, certCfg)
+	cluster.PrintFullServerConfig(BuildFullServerConfig())
+	go PushPartialConfigToNodes(
+		map[string]interface{}{"TCP": tcpMap},
+		nil, nil,
+	)
 }
 
-// SyncAllToCluster syncs all implemented entities to cluster and prints overall server.json, tunnel.json, and certificate.json
+// SyncAllToCluster syncs everything to the cluster. Sends the full config payload.
 func SyncAllToCluster() {
-	SyncCertificateToCluster()
-	SyncTunnelToCluster()
-	SyncDNSToCluster()
-	SyncRuleToCluster()
-	SyncHTTPToCluster()
-	SyncTCPToCluster()
+	certCfg := BuildFullCertificateConfig()
+	tunnelCfg := BuildFullTunnelConfig()
+	serverCfg := BuildFullServerConfig()
+
+	cluster.Put("Certificate", certCfg)
+	cluster.Put("TUNNEL", tunnelCfg)
+	cluster.PrintFullCertificateConfig(certCfg)
+	cluster.PrintFullTunnelConfig(tunnelCfg)
+	cluster.PrintFullServerConfig(serverCfg)
+
+	go PushServerConfigToNodes(serverCfg, tunnelCfg, certCfg)
 }
 
 func VerifyNode(addr, secret string) (bool, string) {
