@@ -12,6 +12,8 @@ const props = withDefaults(defineProps<{ formInline: any }>(), {
     email: "",
     serverSelect: "https://acme-v02.api.letsencrypt.org/directory",
     customServerUrl: "",
+    eabKid: "",
+    eabHmacKey: "",
     keyType: "EC256",
     challengeType: "DNS-01",
     provider: "tencentcloud",
@@ -27,9 +29,24 @@ const newFormInline = ref(props.formInline);
 const acmeServers = [
   { label: "Let's Encrypt (生产环境 - 推荐)", value: "https://acme-v02.api.letsencrypt.org/directory" },
   { label: "Let's Encrypt (Staging 测试环境 - 无速率限制)", value: "https://acme-staging-v02.api.letsencrypt.org/directory" },
-  { label: "ZeroSSL (需支持标准 ACME)", value: "https://acme.zerossl.com/v2/DV90" },
+  { label: "ZeroSSL (需配置 EAB 凭据)", value: "https://acme.zerossl.com/v2/DV90" },
+  { label: "Google Trust Services (GTS - 需 EAB 凭据)", value: "https://dv.acme-v02.api.pki.goog/directory" },
+  { label: "BuyPass Go SSL (免 EAB, 180天单域名)", value: "https://api.buypass.com/acme/directory" },
   { label: "自定义 Directory URL", value: "custom" }
 ];
+
+const showEabSection = computed(() => {
+  const s = newFormInline.value.serverSelect;
+  const custom = newFormInline.value.customServerUrl || "";
+  return (
+    s === "https://acme.zerossl.com/v2/DV90" ||
+    s === "https://dv.acme-v02.api.pki.goog/directory" ||
+    s === "custom" ||
+    custom.includes("zerossl") ||
+    custom.includes("pki.goog") ||
+    Boolean(newFormInline.value.eabKid || newFormInline.value.eabHmacKey)
+  );
+});
 
 // 密钥算法
 const keyTypes = [
@@ -228,6 +245,45 @@ defineExpose({ getRef });
             </el-select>
           </el-form-item>
         </re-col>
+
+        <!-- EAB 外部账户绑定 (ZeroSSL / GTS / 自定义) -->
+        <template v-if="showEabSection">
+          <re-col :value="24" :xs="24" :sm="24">
+            <div class="font-bold text-sm text-(--el-text-color-primary) border-b border-(--el-border-color-lighter) pb-2 mt-4 mb-4 flex items-center gap-1.5">
+              <IconifyIconOffline icon="ri:key-2-line" class="text-amber-500" />
+              <span>{{ t("acmeAccount.eabSection") }}</span>
+            </div>
+          </re-col>
+
+          <re-col :value="24" :xs="24" :sm="24">
+            <div class="bg-(--el-fill-color-light) p-3 rounded-xl mb-3 text-xs text-(--el-text-color-secondary) border border-(--el-border-color-lighter) flex items-center gap-2">
+              <IconifyIconOffline icon="ri:information-line" class="text-amber-500 shrink-0 text-base" />
+              <span>{{ t("acmeAccount.eabTip") }}</span>
+            </div>
+          </re-col>
+
+          <re-col :value="12" :xs="24" :sm="12">
+            <el-form-item :label="t('acmeAccount.eabKid')">
+              <el-input
+                v-model="newFormInline.eabKid"
+                :placeholder="t('acmeAccount.eabKidPlaceholder')"
+                clearable
+              />
+            </el-form-item>
+          </re-col>
+
+          <re-col :value="12" :xs="24" :sm="12">
+            <el-form-item :label="t('acmeAccount.eabHmacKey')">
+              <el-input
+                v-model="newFormInline.eabHmacKey"
+                type="password"
+                show-password
+                :placeholder="t('acmeAccount.eabHmacKeyPlaceholder')"
+                clearable
+              />
+            </el-form-item>
+          </re-col>
+        </template>
 
         <!-- API 凭证 -->
         <re-col :value="24" :xs="24" :sm="24">

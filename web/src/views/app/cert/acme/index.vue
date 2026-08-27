@@ -58,6 +58,8 @@ function getDefaultFormInline() {
     email: "",
     serverSelect: "https://acme-v02.api.letsencrypt.org/directory",
     customServerUrl: "",
+    eabKid: "",
+    eabHmacKey: "",
     keyType: "EC256",
     challengeType: "DNS-01",
     provider: "tencentcloud",
@@ -71,7 +73,9 @@ function getFormInlineFromRow(row: any) {
   if (
     row.directory_url === "https://acme-v02.api.letsencrypt.org/directory" ||
     row.directory_url === "https://acme-staging-v02.api.letsencrypt.org/directory" ||
-    row.directory_url === "https://acme.zerossl.com/v2/DV90"
+    row.directory_url === "https://acme.zerossl.com/v2/DV90" ||
+    row.directory_url === "https://dv.acme-v02.api.pki.goog/directory" ||
+    row.directory_url === "https://api.buypass.com/acme/directory"
   ) {
     serverSelect = row.directory_url;
   } else if (row.directory_url) {
@@ -90,8 +94,15 @@ function getFormInlineFromRow(row: any) {
     id: row.id,
     name: row.name,
     email: row.email,
+    originalEmail: row.email,
     serverSelect,
     customServerUrl,
+    originalDirectoryUrl: row.directory_url,
+    eabKid: row.eab_kid || row.EabKid || "",
+    eabHmacKey: row.eab_hmac_key || row.EabHmacKey || "",
+    originalEabKid: row.eab_kid || row.EabKid || "",
+    privateKey: row.private_key || row.PrivateKey || "",
+    registration: row.registration || row.Registration || "",
     keyType: row.key_type || "EC256",
     challengeType: row.challenge_type || "DNS-01",
     provider: row.provider || "tencentcloud",
@@ -124,11 +135,23 @@ async function handleSaveSubmit() {
       try {
         const curData = formInline.value;
         const directoryUrl = curData.serverSelect === "custom" ? curData.customServerUrl : curData.serverSelect;
+        
+        // 若用户修改了邮箱、CA 服务器或 EAB Key，重置已保存的私钥让其重新注册新账号；若只是改名或改 DNS 密钥，则完好保留已绑定的 ACME 账号凭据
+        const isAccountChanged = curData.id && (
+          curData.email !== curData.originalEmail ||
+          directoryUrl !== curData.originalDirectoryUrl ||
+          (curData.eabKid || "") !== (curData.originalEabKid || "")
+        );
+
         const payload = {
           id: curData.id,
           name: curData.name,
           email: curData.email,
           directory_url: directoryUrl,
+          eab_kid: curData.eabKid || "",
+          eab_hmac_key: curData.eabHmacKey || "",
+          private_key: isAccountChanged ? "" : (curData.privateKey || ""),
+          registration: isAccountChanged ? "" : (curData.registration || ""),
           key_type: curData.keyType,
           challenge_type: curData.challengeType,
           provider: curData.provider,

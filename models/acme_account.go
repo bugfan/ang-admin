@@ -11,6 +11,10 @@ type AcmeAccount struct {
 	DnsEnv        string    `xorm:"'dns_env' text" json:"dns_env"`
 	Email         string    `xorm:"'email' varchar(128)" json:"email"`
 	DirectoryUrl  string    `xorm:"'directory_url' varchar(128)" json:"directory_url"`
+	EabKid        string    `xorm:"'eab_kid' varchar(255)" json:"eab_kid"`
+	EabHmacKey    string    `xorm:"'eab_hmac_key' varchar(255)" json:"eab_hmac_key"`
+	PrivateKey    string    `xorm:"'private_key' text" json:"private_key"`
+	Registration  string    `xorm:"'registration' text" json:"registration"`
 	KeyType       string    `xorm:"'key_type' varchar(32)" json:"key_type"`
 	ChallengeType string    `xorm:"'challenge_type' varchar(32)" json:"challenge_type"`
 	CreatedAt     time.Time `xorm:"created" json:"created_at"`

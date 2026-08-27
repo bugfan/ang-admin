@@ -21,6 +21,10 @@ type acmeAccountHandler struct {
 	DnsEnv        string    `json:"dns_env"`
 	Email         string    `json:"email"`
 	DirectoryUrl  string    `json:"directory_url"`
+	EabKid        string    `json:"eab_kid"`
+	EabHmacKey    string    `json:"eab_hmac_key"`
+	PrivateKey    string    `json:"private_key"`
+	Registration  string    `json:"registration"`
 	KeyType       string    `json:"key_type"`
 	ChallengeType string    `json:"challenge_type"`
 	CreatedAt     time.Time `json:"created_at"`

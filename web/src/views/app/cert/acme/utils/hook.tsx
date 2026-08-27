@@ -92,6 +92,10 @@ export function useAcmeAccount(t: any, tableRef: Ref, emitEdit: (row: any) => vo
           serverName = "Let's Encrypt (Staging)";
         } else if (url.includes("zerossl.com")) {
           serverName = "ZeroSSL";
+        } else if (url.includes("pki.goog")) {
+          serverName = "Google GTS";
+        } else if (url.includes("buypass.com")) {
+          serverName = "BuyPass";
         } else if (!url) {
           serverName = "Let's Encrypt";
         }

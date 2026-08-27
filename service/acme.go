@@ -8,6 +8,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"log"
+	"net/http"
 	"os"
 	"strings"
 	"time"
@@ -47,10 +48,8 @@ func (s *safeDnsProviderWrapper) FinalCleanUp() {
 }
 
 func (s *safeDnsProviderWrapper) Timeout() (time.Duration, time.Duration) {
-	if pt, ok := s.inner.(challenge.ProviderTimeout); ok {
-		return pt.Timeout()
-	}
-	return dns01.DefaultPropagationTimeout, dns01.DefaultPollingInterval
+	// 为跨国/高校复杂 DNS 解析提供 5 分钟充裕传播等待时间，每 5 秒探测一次
+	return 5 * time.Minute, 5 * time.Second
 }
 
 type AcmeUser struct {
@@ -72,17 +71,22 @@ func (u *AcmeUser) GetPrivateKey() crypto.PrivateKey {
 }
 
 type IssueCertificateRequest struct {
-	CertId        string            `json:"cert_id"`
-	Email         string            `json:"email"`
-	DirectoryUrl  string            `json:"directory_url"`
-	KeyType       string            `json:"key_type"`
-	ChallengeType string            `json:"challenge_type"` // "DNS-01", "HTTP-01"
-	DnsProvider   string            `json:"dns_provider"`   // e.g. "alidns", "dnspod", "cloudflare", "huaweicloud"
-	DnsEnvMap     map[string]string `json:"dns_env_map"`
-	Domains       []string          `json:"domains"`
-	DisableCname  bool              `json:"disable_cname"` // 禁用 CNAME 别名跳转 (防止跨账号找不到 Zone)
-	SaveCert      bool              `json:"save_cert"`
-	AcmeConfigId  int64             `json:"acme_config_id"` // 关联的配置项 ID (选填，用于自动更新状态)
+	CertId           string            `json:"cert_id"`
+	Email            string            `json:"email"`
+	DirectoryUrl     string            `json:"directory_url"`
+	EabKid           string            `json:"eab_kid"`
+	EabHmacKey       string            `json:"eab_hmac_key"`
+	AccountKey       string            `json:"account_key"`       // 持久化的 ACME 账户私钥 (PEM)
+	RegistrationData string            `json:"registration_data"` // 持久化的 ACME 注册资源 (JSON)
+	KeyType          string            `json:"key_type"`
+	ChallengeType    string            `json:"challenge_type"` // "DNS-01", "HTTP-01"
+	DnsProvider      string            `json:"dns_provider"`   // e.g. "alidns", "dnspod", "cloudflare", "huaweicloud"
+	DnsEnvMap        map[string]string `json:"dns_env_map"`
+	Domains          []string          `json:"domains"`
+	DisableCname     bool              `json:"disable_cname"` // 禁用 CNAME 别名跳转 (防止跨账号找不到 Zone)
+	SaveCert         bool              `json:"save_cert"`
+	AcmeAccountId    int64             `json:"acme_account_id"` // 关联的 AcmeAccount ID，用于注册后即时持久化
+	AcmeConfigId     int64             `json:"acme_config_id"`  // 关联的配置项 ID (选填，用于自动更新状态)
 }
 
 type IssueCertificateResponse struct {
@@ -95,6 +99,8 @@ type IssueCertificateResponse struct {
 	NotBefore        time.Time `json:"not_before"`
 	NotAfter         time.Time `json:"not_after"`
 	SANs             string    `json:"sans"`
+	AccountKey       string    `json:"account_key"`
+	RegistrationData string    `json:"registration_data"`
 }
 
 func normalizeDnsEnv(provider string, envMap map[string]string) (string, map[string]string) {
@@ -184,19 +190,51 @@ func IssueAcmeCertificate(req *IssueCertificateRequest) (*IssueCertificateRespon
 		return nil, fmt.Errorf("必须提供 ACME 注册邮箱")
 	}
 
-	// 1. 生成 ACME 账户私钥
-	privateKey, err := ecdsa.GenerateKey(elliptic.P256(), rand.Reader)
-	if err != nil {
-		return nil, fmt.Errorf("生成 ACME 私钥失败: %w", err)
+	// 1. 获取或生成 ACME 账户私钥与注册信息
+	var privateKey crypto.PrivateKey
+	var reg *registration.Resource
+	isExistingAccount := false
+
+	if req.AccountKey != "" {
+		if k, err := certcrypto.ParsePEMPrivateKey([]byte(req.AccountKey)); err == nil {
+			privateKey = k
+			if req.RegistrationData != "" {
+				var r registration.Resource
+				if err := json.Unmarshal([]byte(req.RegistrationData), &r); err == nil && r.URI != "" {
+					reg = &r
+					isExistingAccount = true
+				}
+			}
+		}
+	}
+
+	if privateKey == nil {
+		k, err := ecdsa.GenerateKey(elliptic.P256(), rand.Reader)
+		if err != nil {
+			return nil, fmt.Errorf("生成 ACME 私钥失败: %w", err)
+		}
+		privateKey = k
 	}
 
 	user := &AcmeUser{
-		Email: req.Email,
-		key:   privateKey,
+		Email:        req.Email,
+		key:          privateKey,
+		Registration: reg,
 	}
 
 	// 2. 配置 lego Client
 	config := lego.NewConfig(user)
+	config.HTTPClient = &http.Client{
+		Timeout: 5 * time.Minute,
+		Transport: &http.Transport{
+			Proxy:                 http.ProxyFromEnvironment,
+			TLSHandshakeTimeout:   45 * time.Second,
+			ResponseHeaderTimeout: 4 * time.Minute,
+			ExpectContinueTimeout: 1 * time.Second,
+			IdleConnTimeout:       90 * time.Second,
+		},
+	}
+
 	if req.DirectoryUrl != "" {
 		config.CADirURL = req.DirectoryUrl
 	} else {
@@ -219,12 +257,32 @@ func IssueAcmeCertificate(req *IssueCertificateRequest) (*IssueCertificateRespon
 		return nil, fmt.Errorf("创建 ACME 客户端失败: %w", err)
 	}
 
-	// 3. 注册 ACME 账户
-	reg, err := client.Registration.Register(registration.RegisterOptions{TermsOfServiceAgreed: true})
-	if err != nil {
-		return nil, fmt.Errorf("注册 ACME 账户失败: %w", err)
+	// 3. 注册或复用 ACME 账户
+	if !isExistingAccount || user.Registration == nil {
+		if strings.TrimSpace(req.EabKid) != "" && strings.TrimSpace(req.EabHmacKey) != "" {
+			reg, err = client.Registration.RegisterWithExternalAccountBinding(registration.RegisterEABOptions{
+				TermsOfServiceAgreed: true,
+				Kid:                  strings.TrimSpace(req.EabKid),
+				HmacEncoded:          strings.TrimSpace(req.EabHmacKey),
+			})
+		} else {
+			reg, err = client.Registration.Register(registration.RegisterOptions{TermsOfServiceAgreed: true})
+		}
+		if err != nil {
+			return nil, fmt.Errorf("注册 ACME 账户失败: %w", err)
+		}
+		user.Registration = reg
+
+		// 注册成功后第一时间持久化账户凭据到数据库，确保即使后续 DNS 校验超时，账户也绝不重复注册
+		if req.AcmeAccountId > 0 {
+			pemKey := string(certcrypto.PEMEncode(privateKey))
+			regJson, _ := json.Marshal(user.Registration)
+			_, _ = models.GetEngine().ID(req.AcmeAccountId).Cols("private_key", "registration").Update(&models.AcmeAccount{
+				PrivateKey:   pemKey,
+				Registration: string(regJson),
+			})
+		}
 	}
-	user.Registration = reg
 
 	// 4. 配置验证模式 (DNS-01 或 HTTP-01)
 	challengeType := strings.ToUpper(strings.TrimSpace(req.ChallengeType))
@@ -344,6 +402,9 @@ func IssueAcmeCertificate(req *IssueCertificateRequest) (*IssueCertificateRespon
 	}
 
 
+	pemKey := string(certcrypto.PEMEncode(privateKey))
+	regJson, _ := json.Marshal(user.Registration)
+
 	return &IssueCertificateResponse{
 		CertId:           certId,
 		Domain:           certModel.SubjectCN,
@@ -354,6 +415,8 @@ func IssueAcmeCertificate(req *IssueCertificateRequest) (*IssueCertificateRespon
 		NotBefore:        certModel.NotBefore,
 		NotAfter:         certModel.NotAfter,
 		SANs:             certModel.SANs,
+		AccountKey:       pemKey,
+		RegistrationData: string(regJson),
 	}, nil
 }
 
@@ -369,18 +432,22 @@ func IssueAcmeCertificateForId(certId int64) (*IssueCertificateResponse, error) 
 		return nil, fmt.Errorf("该证书不是 ACME 自动签发的证书")
 	}
 
-	var email, directoryUrl, keyType, challengeType, provider, dnsEnv string
+	var email, directoryUrl, keyType, challengeType, provider, dnsEnv, eabKid, eabHmacKey, accountKey, registrationData string
 	var disableCname bool
+	var dp models.AcmeAccount
 
 	// If an ACME Issuance Config (DnsProvider) is linked, load its settings
 	if cert.AcmeAccountId > 0 {
-		var dp models.AcmeAccount
 		hasDP, errDP := models.GetEngine().ID(cert.AcmeAccountId).Get(&dp)
 		if errDP == nil && hasDP {
 			provider = dp.Provider
 			dnsEnv = dp.DnsEnv
 			email = dp.Email
 			directoryUrl = dp.DirectoryUrl
+			eabKid = dp.EabKid
+			eabHmacKey = dp.EabHmacKey
+			accountKey = dp.PrivateKey
+			registrationData = dp.Registration
 			keyType = dp.KeyType
 			challengeType = dp.ChallengeType
 		} else {
@@ -409,17 +476,22 @@ func IssueAcmeCertificateForId(certId int64) (*IssueCertificateResponse, error) 
 	disableCname = !cert.AcmeUseCname
 
 	req := &IssueCertificateRequest{
-		CertId:        cert.CertId,
-		Email:         email,
-		DirectoryUrl:  directoryUrl,
-		KeyType:       keyType,
-		ChallengeType: challengeType,
-		DnsProvider:   provider,
-		DnsEnvMap:     envMap,
-		Domains:       domains,
-		DisableCname:  disableCname,
-		SaveCert:      true,
-		AcmeConfigId:  0, // We no longer have AcmeConfigId
+		CertId:           cert.CertId,
+		Email:            email,
+		DirectoryUrl:     directoryUrl,
+		EabKid:           eabKid,
+		EabHmacKey:       eabHmacKey,
+		AccountKey:       accountKey,
+		RegistrationData: registrationData,
+		KeyType:          keyType,
+		ChallengeType:    challengeType,
+		DnsProvider:      provider,
+		DnsEnvMap:        envMap,
+		Domains:          domains,
+		DisableCname:     disableCname,
+		SaveCert:         true,
+		AcmeAccountId:    cert.AcmeAccountId,
+		AcmeConfigId:     0, // We no longer have AcmeConfigId
 	}
 
 	// 开始签发前，先将状态设为 ISSUING
@@ -437,6 +509,12 @@ func IssueAcmeCertificateForId(certId int64) (*IssueCertificateResponse, error) 
 	} else {
 		cert.AcmeIssueStatus = "SUCCESS"
 		cert.AcmeIssueError = ""
+		// 若此前该 ACME 配置未持久化账户密钥与注册信息，自动保存回数据库，实现终身复用
+		if resp != nil && dp.Id > 0 && (dp.PrivateKey == "" || dp.Registration == "") {
+			dp.PrivateKey = resp.AccountKey
+			dp.Registration = resp.RegistrationData
+			_, _ = models.GetEngine().ID(dp.Id).Cols("private_key", "registration").Update(&dp)
+		}
 	}
 	
 	// 只更新状态字段，防止覆盖已有内容

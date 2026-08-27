@@ -489,6 +489,12 @@ acmeAccount:
   deleteConfirm: "是否确认删除该 ACME 配置?"
   backToList: "返回列表"
   pageHeaderDesc: "统一管理 ACME API 凭证账号，可复用于多条免费证书签发任务"
+  eabSection: "外部账户绑定 (EAB)"
+  eabKid: "EAB Key ID (KID)"
+  eabKidPlaceholder: "例如: ZeroSSL Developer 页面生成的 Key ID"
+  eabHmacKey: "EAB HMAC Key"
+  eabHmacKeyPlaceholder: "例如: ZeroSSL Developer 页面生成的 HMAC Key"
+  eabTip: "ZeroSSL / Google Trust Services 等服务商强制要求绑定 EAB。请前往 ZeroSSL 官网 (app.zerossl.com) -> Developer -> Generate EAB Credentials 获取 Key ID 与 HMAC Key。"
   enabled: "已启用"
   disabled: "未启用"
 
