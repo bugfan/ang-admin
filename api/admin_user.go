@@ -431,6 +431,26 @@ func AsyncRoutesHandler(c *gin.Context) {
 				},
 			},
 			{
+				"path": "/udp",
+				"meta": gin.H{
+					"icon":  "ri:share-forward-line",
+					"title": "menus.pureUdp",
+					"rank":  8,
+				},
+				"children": []gin.H{
+					{
+						"path":      "/udp/index",
+						"name":      "AppUdpProxy",
+						"component": "app/udp/index",
+						"meta": gin.H{
+							"icon":  "ri:share-forward-line",
+							"title": "menus.pureUdp",
+							"roles": []string{"admin", "common"},
+						},
+					},
+				},
+			},
+			{
 				"path": "/cluster",
 				"meta": gin.H{
 					"icon":  "ri:server-line",

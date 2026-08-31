@@ -1,13 +1,13 @@
 <script setup lang="ts">
 import { ref } from "vue";
 import { useI18n } from "vue-i18n";
-import { useTcpProxy } from "./utils/hook";
+import { useUdpProxy } from "./utils/hook";
 import editForm from "./form/index.vue";
 import PageHeader from "@/components/PageHeader/index.vue";
 import { PureTableBar } from "@/components/RePureTableBar";
 import { useRenderIcon } from "@/components/ReIcon/src/hooks";
 import { message } from "@/utils/message";
-import { createTcp, updateTcp } from "@/api/tcp";
+import { createUdp, updateUdp } from "@/api/udp";
 
 import Delete from "~icons/ep/delete";
 import EditPen from "~icons/ep/edit-pen";
@@ -17,7 +17,7 @@ import CheckIcon from "~icons/ep/check";
 import CloseIcon from "~icons/ep/close";
 
 defineOptions({
-  name: "AppTcpProxy"
+  name: "AppUdpProxy"
 });
 
 const { t } = useI18n();
@@ -45,7 +45,7 @@ const {
   onSelectionCancel,
   handleCurrentChange,
   handleSelectionChange
-} = useTcpProxy(t, tableRef);
+} = useUdpProxy(t, tableRef);
 
 function parseUpstreamJSON(upstreamJsonStr: string) {
   let servers: Array<{ target: string; weight: number }> = [];
@@ -67,7 +67,7 @@ function parseUpstreamJSON(upstreamJsonStr: string) {
 
 function getDefaultFormInline() {
   return {
-    title: t("tcp.addTcp", "添加 TCP 代理"),
+    title: t("udp.addUdp", "添加 UDP 代理"),
     id: undefined,
     name: "",
     address: "",
@@ -84,7 +84,7 @@ function getDefaultFormInline() {
 
 function getFormInlineFromRow(row: any) {
   return {
-    title: `${t("tcp.editTcp", "编辑 TCP 代理")} (${row.Name || row.name || row.Port || row.port})`,
+    title: `${t("udp.editUdp", "编辑 UDP 代理")} (${row.Name || row.name || row.Port || row.port})`,
     id: row.Id || row.id,
     name: row.Name || row.name || "",
     address: row.Address || row.address || "",
@@ -127,19 +127,19 @@ async function handleSaveSubmit() {
       try {
         const curData = formInline.value;
         if (showView.value === "new") {
-          const { code, message: msg } = await createTcp(curData);
+          const { code, message: msg } = await createUdp(curData);
           if (code !== 0) {
             message(msg, { type: "error" });
             return;
           }
-          message(t("tcp.success", "添加成功"), { type: "success" });
+          message(t("udp.success", "添加成功"), { type: "success" });
         } else {
-          const { code, message: msg } = await updateTcp(curData);
+          const { code, message: msg } = await updateUdp(curData);
           if (code !== 0) {
             message(msg, { type: "error" });
             return;
           }
-          message(t("tcp.success", "更新成功"), { type: "success" });
+          message(t("udp.success", "更新成功"), { type: "success" });
         }
         showView.value = "list";
         onSearch();
@@ -164,19 +164,19 @@ async function handleSaveSubmit() {
         :model="form"
         class="search-form bg-bg_color w-full pl-8 pt-3 pb-2 overflow-auto"
       >
-        <el-form-item :label="t('tcp.name', '名称')" prop="name">
+        <el-form-item :label="t('udp.name', '名称')" prop="name">
           <el-input
             v-model="form.name"
-            :placeholder="t('tcp.namePlaceholder', '请输入 TCP 代理名称')"
+            :placeholder="t('udp.namePlaceholder', '请输入 UDP 代理名称')"
             clearable
             class="w-full sm:w-45!"
             @keyup.enter="onSearch"
           />
         </el-form-item>
-        <el-form-item :label="t('tcp.port', '端口')" prop="port">
+        <el-form-item :label="t('udp.port', '端口')" prop="port">
           <el-input
             v-model="form.port"
-            :placeholder="t('tcp.searchPortPlaceholder', '请输入端口')"
+            :placeholder="t('udp.searchPortPlaceholder', '请输入端口')"
             clearable
             class="w-full sm:w-40!"
             @keyup.enter="onSearch"
@@ -189,20 +189,20 @@ async function handleSaveSubmit() {
             :loading="loading"
             @click="onSearch"
           >
-            {{ t("tcp.search", "搜索") }}
+            {{ t("udp.search", "搜索") }}
           </el-button>
           <el-button
             :icon="useRenderIcon('ri:refresh-line')"
             @click="resetForm(searchFormRef)"
           >
-            {{ t("tcp.reset", "重置") }}
+            {{ t("udp.reset", "重置") }}
           </el-button>
         </el-form-item>
       </el-form>
 
       <!-- 表格及操作栏 -->
       <PureTableBar
-        :title="t('menus.pureTcp', 'TCP')"
+        :title="t('menus.pureUdp', 'UDP')"
         :columns="columns"
         @refresh="onSearch"
       >
@@ -221,8 +221,8 @@ async function handleSaveSubmit() {
             class="bg-(--el-color-primary-light-9) text-(--el-color-primary) border border-(--el-color-primary-light-7) px-4 py-2 rounded-lg text-sm mb-3 flex-bc"
           >
             <span
-              >{{ t("tcp.selected", "已选") }} {{ selectedNum }}
-              {{ t("tcp.items", "项") }}</span
+              >{{ t("udp.selected", "已选") }} {{ selectedNum }}
+              {{ t("udp.items", "项") }}</span
             >
             <div>
               <el-button
@@ -231,15 +231,15 @@ async function handleSaveSubmit() {
                 size="small"
                 @click="onSelectionCancel"
               >
-                {{ t("tcp.cancelSelection", "取消选择") }}
+                {{ t("udp.cancelSelection", "取消选择") }}
               </el-button>
               <el-popconfirm
-                :title="t('tcp.confirmDelete', '是否确认删除选中的配置?')"
+                :title="t('udp.confirmDelete', '是否确认删除选中的配置?')"
                 @confirm="onbatchDel"
               >
                 <template #reference>
                   <el-button type="danger" link size="small">
-                    {{ t("tcp.batchDelete", "批量删除") }}
+                    {{ t("udp.batchDelete", "批量删除") }}
                   </el-button>
                 </template>
               </el-popconfirm>
@@ -279,7 +279,7 @@ async function handleSaveSubmit() {
                   <div class="flex items-center space-x-2">
                     <span
                       class="px-2 py-0.5 text-xs font-bold rounded bg-primary text-white"
-                      >TCP PROXY</span
+                      >UDP PROXY</span
                     >
                     <span class="font-bold text-sm text-(--el-text-color-primary)"
                       >{{ row.Name || row.name || "-" }}</span
@@ -302,7 +302,7 @@ async function handleSaveSubmit() {
                       class="text-xs font-bold text-(--el-text-color-regular) mb-2 flex items-center space-x-1.5"
                     >
                       <div class="w-1.5 h-3 bg-emerald-500 rounded-full" />
-                      <span>{{ t("tcp.rulesSection", "中间件规则") }}</span>
+                      <span>{{ t("udp.rulesSection", "中间件规则") }}</span>
                     </div>
                     <div class="space-y-1.5">
                       <template
@@ -341,7 +341,7 @@ async function handleSaveSubmit() {
                       class="text-xs font-bold text-(--el-text-color-regular) mb-2 flex items-center space-x-1.5"
                     >
                       <div class="w-1.5 h-3 bg-purple-500 rounded-full" />
-                      <span>{{ t("tcp.backendSection", "上游与后端") }}</span>
+                      <span>{{ t("udp.backendSection", "上游与后端") }}</span>
                     </div>
 
                     <!-- Tunnel Badge -->
@@ -350,7 +350,7 @@ async function handleSaveSubmit() {
                       class="mb-3 p-2 bg-purple-50 dark:bg-purple-950/30 rounded border border-purple-200 dark:border-purple-800/50 text-xs"
                     >
                       <div class="font-bold text-purple-700 dark:text-purple-300 mb-1">
-                        {{ t("tcp.tunnelConfig", "Tunnel 隧道代理") }}
+                        {{ t("udp.tunnelConfig", "Tunnel 隧道代理") }}
                       </div>
                       <div class="font-mono text-purple-600 dark:text-purple-400">
                         Type: {{ (row.TunnelType || row.tunnel_type || "quic").toUpperCase() }} |
@@ -361,7 +361,7 @@ async function handleSaveSubmit() {
                     <!-- Upstream Servers Table -->
                     <div>
                       <div class="text-xs font-semibold text-(--el-text-color-secondary) mb-1.5 flex items-center justify-between">
-                        <span>{{ t("tcp.upstreamServers", "上游服务器列表") }}</span>
+                        <span>{{ t("udp.upstreamServers", "上游服务器列表") }}</span>
                         <el-tag size="small" type="info" effect="plain" class="font-mono">
                           {{ row.UpstreamMethod || row.upstream_method || "round_robin" }}
                         </el-tag>
@@ -388,7 +388,7 @@ async function handleSaveSubmit() {
                           "
                           class="text-xs text-(--el-text-color-placeholder) py-2"
                         >
-                          {{ t("tcp.noUpstreamConfig", "暂无上游服务器配置") }}
+                          {{ t("udp.noUpstreamConfig", "暂无上游服务器配置") }}
                         </div>
                       </div>
                     </div>
@@ -412,10 +412,10 @@ async function handleSaveSubmit() {
                   :icon="useRenderIcon(EditPen)"
                   @click="handleEditPage(row)"
                 >
-                  {{ t("tcp.edit", "编辑") }}
+                  {{ t("udp.edit", "编辑") }}
                 </el-button>
                 <el-popconfirm
-                  :title="t('tcp.confirmDelete', '是否确认删除该 TCP 代理配置?')"
+                  :title="t('udp.confirmDelete', '是否确认删除该 UDP 代理配置?')"
                   @confirm="handleDelete(row)"
                 >
                   <template #reference>
@@ -426,7 +426,7 @@ async function handleSaveSubmit() {
                       :size="size"
                       :icon="useRenderIcon(Delete)"
                     >
-                      {{ t("tcp.delete", "删除") }}
+                      {{ t("udp.delete", "删除") }}
                     </el-button>
                   </template>
                 </el-popconfirm>
@@ -444,14 +444,14 @@ async function handleSaveSubmit() {
     >
       <!-- Full Page Header Bar -->
       <PageHeader
-        :title="showView === 'new' ? t('tcp.addTcp') : t('tcp.editTcp') + ' (id: ' + (formInline.id || 'new') + ')'"
-        :description="t('tcp.headerDesc', '配置 TCP 代理监听端口、传输层中间件规则 (Rule) 与 Backend 上游服务器')"
-        :backTitle="t('tcp.backToList', '返回 TCP 列表')"
+        :title="showView === 'new' ? t('udp.addUdp') : t('udp.editUdp') + ' (id: ' + (formInline.id || 'new') + ')'"
+        :description="t('udp.headerDesc', '配置 UDP 代理监听端口、传输层中间件规则 (Rule) 与 Backend 上游服务器')"
+        :backTitle="t('udp.backToList', '返回 UDP 列表')"
         @back="handleCancelPage"
       >
         <template #actions>
           <el-button :icon="useRenderIcon(CloseIcon)" @click="handleCancelPage">
-            {{ t("tcp.cancel", "取消") }}
+            {{ t("udp.cancel", "取消") }}
           </el-button>
           <el-button
             type="primary"
@@ -459,7 +459,7 @@ async function handleSaveSubmit() {
             :icon="useRenderIcon(CheckIcon)"
             @click="handleSaveSubmit"
           >
-            {{ t("tcp.save", "保存") }}
+            {{ t("udp.save", "保存") }}
           </el-button>
         </template>
       </PageHeader>
@@ -472,7 +472,7 @@ async function handleSaveSubmit() {
         class="flex items-center justify-end space-x-3 pt-4 mt-4 border-t border-(--el-border-color-lighter)"
       >
         <el-button :icon="useRenderIcon(CloseIcon)" @click="handleCancelPage">
-          {{ t("tcp.cancel", "取消") }}
+          {{ t("udp.cancel", "取消") }}
         </el-button>
         <el-button
           type="primary"
@@ -480,7 +480,7 @@ async function handleSaveSubmit() {
           :icon="useRenderIcon(CheckIcon)"
           @click="handleSaveSubmit"
         >
-          {{ t("tcp.save", "保存") }}
+          {{ t("udp.save", "保存") }}
         </el-button>
       </div>
     </div>

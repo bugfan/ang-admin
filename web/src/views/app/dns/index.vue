@@ -842,14 +842,14 @@ async function handleSaveSubmit() {
     >
       <!-- Full Page Header Bar -->
       <PageHeader
-        :title="formInline.title"
-        description="配置 DNS 代理监听端口、传输层规则过滤 (Rule)、本地 Hosts 静态解析与 Backend 上游服务器"
+        :title="showView === 'new' ? t('dns.addDns') : t('dns.editDns') + ' (id: ' + (formInline.id || 'new') + ')'"
+        :description="t('dns.headerDesc', '配置 DNS 代理监听端口、传输层规则过滤 (Rule)、本地 Hosts 静态解析与 Backend 上游服务器')"
         :backTitle="t('dns.backToList', '返回 DNS 列表')"
         @back="handleCancelPage"
       >
         <template #actions>
           <el-button :icon="useRenderIcon(CloseIcon)" @click="handleCancelPage">
-            取消
+            {{ t("dns.cancel", "取消") }}
           </el-button>
           <el-button
             type="primary"
@@ -857,7 +857,7 @@ async function handleSaveSubmit() {
             :icon="useRenderIcon(CheckIcon)"
             @click="handleSaveSubmit"
           >
-            保存
+            {{ t("dns.save", "保存") }}
           </el-button>
         </template>
       </PageHeader>
@@ -870,7 +870,7 @@ async function handleSaveSubmit() {
         class="flex items-center justify-end space-x-3 pt-4 mt-4 border-t border-(--el-border-color-lighter)"
       >
         <el-button :icon="useRenderIcon(CloseIcon)" @click="handleCancelPage">
-          取消
+          {{ t("dns.cancel", "取消") }}
         </el-button>
         <el-button
           type="primary"
@@ -878,7 +878,7 @@ async function handleSaveSubmit() {
           :icon="useRenderIcon(CheckIcon)"
           @click="handleSaveSubmit"
         >
-          保存
+          {{ t("dns.save", "保存") }}
         </el-button>
       </div>
     </div>

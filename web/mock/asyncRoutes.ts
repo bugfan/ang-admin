@@ -158,6 +158,28 @@ const httpRouter = {
   ]
 };
 
+
+const udpRouter = {
+  path: "/udp",
+  meta: {
+    icon: "ri:share-forward-line",
+    title: "menus.pureUdp",
+    rank: 8
+  },
+  children: [
+    {
+      path: "/udp/index",
+      name: "AppUdpProxy",
+      component: "app/udp/index",
+      meta: {
+        icon: "ri:share-forward-line",
+        title: "menus.pureUdp",
+        roles: ["admin", "common"]
+      }
+    }
+  ]
+};
+
 const tcpRouter = {
   path: "/tcp",
   meta: {
@@ -237,6 +259,7 @@ export default defineFakeRoute([
           dnsRouter,
           httpRouter,
           tcpRouter,
+          udpRouter,
           clusterRouter,
           accountManagementRouter
         ]

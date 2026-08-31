@@ -451,11 +451,13 @@ func BuildFullServerConfig() entity.ServerConfig {
 	dnsMap := buildDNSMap(rulesMap)
 	httpMap := buildHTTPMap(rulesMap)
 	tcpMap := buildTCPMap(rulesMap)
+	udpMap := buildUDPMap(rulesMap)
 
 	return entity.ServerConfig{
 		DNS:  dnsMap,
 		HTTP: httpMap,
 		TCP:  tcpMap,
+		UDP:  udpMap,
 	}
 }
 
@@ -707,4 +709,92 @@ func VerifyNode(addr, secret string) (bool, string) {
 		return false, "auth_failed"
 	}
 	return false, fmt.Sprintf("http_status_%d", resp.StatusCode)
+}
+
+func buildUDPMap(rulesMap map[string]models.Rule) map[string]entity.UDPConfig {
+	engine := models.GetEngine()
+	if engine == nil {
+		return nil
+	}
+	var udpList []models.UdpProxy
+	err := engine.Find(&udpList)
+	if err != nil {
+		log.Printf("buildUDPMap error: %v\n", err)
+		return nil
+	}
+
+	udpMap := make(map[string]entity.UDPConfig)
+	for _, item := range udpList {
+		keyStr := strconv.FormatInt(item.Id, 10)
+
+		// Parse Rules (Rule Set expansion)
+		var ruleConfigs []entity.RuleConfig
+		if item.Rules != "" {
+			var ruleNames []string
+			_ = json.Unmarshal([]byte(item.Rules), &ruleNames)
+			for _, rName := range ruleNames {
+				rName = strings.TrimSpace(rName)
+				if dbRule, exists := rulesMap[rName]; exists {
+					if dbRule.Items != "" {
+						var items []entity.RuleConfig
+						if err := json.Unmarshal([]byte(dbRule.Items), &items); err == nil {
+							ruleConfigs = append(ruleConfigs, items...)
+						}
+					}
+				}
+			}
+		}
+
+		// Parse Backend
+		var backend *entity.UDPBackend
+		hasTunnel := item.TunnelId != ""
+		var upstreamServers []entity.UpstreamServer
+		if item.UpstreamServers != "" {
+			_ = json.Unmarshal([]byte(item.UpstreamServers), &upstreamServers)
+		}
+		hasUpstream := len(upstreamServers) > 0
+
+		if hasTunnel || hasUpstream {
+			backend = &entity.UDPBackend{}
+			if hasTunnel {
+				backend.Tunnel = &entity.BackendTunnel{
+					Type:  item.TunnelType,
+					ID:    item.TunnelId,
+					Token: item.TunnelToken,
+				}
+			}
+			if hasUpstream {
+				method := item.UpstreamMethod
+				if method == "" {
+					method = "round_robin"
+				}
+				backend.Upstream = &entity.UpstreamConfig{
+					Method: method,
+					Data: entity.UpstreamData{
+						Servers: upstreamServers,
+					},
+				}
+			}
+		}
+
+		udpMap[keyStr] = entity.UDPConfig{
+			Address: item.Address,
+			Port:    item.Port,
+			Rule:    ruleConfigs,
+			Backend: backend,
+		}
+	}
+	return udpMap
+}
+
+// SyncUDPToCluster syncs UDP proxy changes. Only the UDP section of server_config is pushed.
+func SyncUDPToCluster() {
+	rulesMap := buildRulesDBMap()
+	udpMap := buildUDPMap(rulesMap)
+	cluster.Put("UDP", udpMap)
+	cluster.PrintFullServerConfig(BuildFullServerConfig())
+	go PushPartialConfigToNodes(
+		map[string]interface{}{"UDP": udpMap},
+		nil, nil,
+	)
 }
