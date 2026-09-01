@@ -258,7 +258,7 @@ export function useSniProxy(t: any, tableRef: Ref) {
     formEl.resetFields();
     form.name = "";
     form.sni = "";
-    form.port = "";
+
     onSearch();
   };
 

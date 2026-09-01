@@ -62,12 +62,7 @@ func (t *tunnelHandler) List(c *gin.Context) {
 				session.Where("type = ?", tunnelType)
 			}
 		}
-	if sni := c.Query("sni"); sni != "" {
-		session.Where("sni LIKE ?", "%"+sni+"%")
-	}
-	if port := c.Query("port"); port != "" {
-		session.Where("port LIKE ?", "%"+port+"%")
-	}
+
 
 	err := session.Desc("id").Find(&tunnels)
 	if err != nil {

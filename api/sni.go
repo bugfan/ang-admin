@@ -90,9 +90,7 @@ func (s *sniHandler) List(c *gin.Context) {
 	if name := c.Query("name"); name != "" {
 		session.Where("name LIKE ?", "%"+name+"%")
 	}
-	if port := c.Query("port"); port != "" {
-		session.Where("port LIKE ?", "%"+port+"%")
-	}
+
 	if sni := c.Query("sni"); sni != "" {
 		session.Where("sni LIKE ? OR extra_sni LIKE ?", "%"+sni+"%", "%"+sni+"%")
 	}

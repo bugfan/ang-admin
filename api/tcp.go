@@ -102,9 +102,7 @@ func (t *tcpHandler) List(c *gin.Context) {
 	if port := c.Query("port"); port != "" {
 		session.Where("port LIKE ?", "%"+port+"%")
 	}
-	if address := c.Query("address"); address != "" {
-		session.Where("address LIKE ?", "%"+address+"%")
-	}
+
 
 	err := session.Desc("id").Find(&list)
 	if err != nil {

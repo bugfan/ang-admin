@@ -69,16 +69,6 @@ func (h *httpProxyHandler) List(c *gin.Context) {
 	if keyword := c.Query("keyword"); keyword != "" {
 		pattern := "%" + keyword + "%"
 		session.Where("name LIKE ? OR hostname LIKE ? OR port LIKE ? OR remark LIKE ?", pattern, pattern, pattern, pattern)
-	} else {
-		if name := c.Query("name"); name != "" {
-			session.Where("name LIKE ?", "%"+name+"%")
-		}
-		if hostname := c.Query("hostname"); hostname != "" {
-			session.Where("hostname LIKE ?", "%"+hostname+"%")
-		}
-		if port := c.Query("port"); port != "" {
-			session.Where("port LIKE ?", "%"+port+"%")
-		}
 	}
 
 	err := session.Desc("id").Find(&list)
