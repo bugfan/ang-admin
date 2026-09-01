@@ -100,7 +100,7 @@ type UDPConfig struct {
 // SNIBackend represents SNI backend config
 type SNIBackend struct {
 	Tunnel      *BackendTunnel `json:"Tunnel,omitempty"`
-	DNSResolver string         `json:"DNSResolver,omitempty"`
+	DNSResolver []string       `json:"DNSResolver,omitempty"`
 }
 
 // SNIConfig represents a single item in SNI section

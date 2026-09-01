@@ -452,12 +452,14 @@ func BuildFullServerConfig() entity.ServerConfig {
 	httpMap := buildHTTPMap(rulesMap)
 	tcpMap := buildTCPMap(rulesMap)
 	udpMap := buildUDPMap(rulesMap)
+	sniMap := buildSNIMap(rulesMap)
 
 	return entity.ServerConfig{
 		DNS:  dnsMap,
 		HTTP: httpMap,
 		TCP:  tcpMap,
 		UDP:  udpMap,
+		SNI:  sniMap,
 	}
 }
 
@@ -795,6 +797,95 @@ func SyncUDPToCluster() {
 	cluster.PrintFullServerConfig(BuildFullServerConfig())
 	go PushPartialConfigToNodes(
 		map[string]interface{}{"UDP": udpMap},
+		nil, nil,
+	)
+}
+
+func buildSNIMap(rulesMap map[string]models.Rule) map[string]entity.SNIConfig {
+	engine := models.GetEngine()
+	if engine == nil {
+		return nil
+	}
+	var sniList []models.SniProxy
+	err := engine.Find(&sniList)
+	if err != nil {
+		log.Printf("buildSNIMap error: %v\n", err)
+		return nil
+	}
+
+	sniMap := make(map[string]entity.SNIConfig)
+	for _, item := range sniList {
+		keyStr := strconv.FormatInt(item.Id, 10)
+
+		// Parse Rules (Rule Set expansion)
+		var ruleConfigs []entity.RuleConfig
+		if item.Rules != "" {
+			var ruleNames []string
+			_ = json.Unmarshal([]byte(item.Rules), &ruleNames)
+			for _, rName := range ruleNames {
+				rName = strings.TrimSpace(rName)
+				if dbRule, exists := rulesMap[rName]; exists {
+					if dbRule.Items != "" {
+						var items []entity.RuleConfig
+						if err := json.Unmarshal([]byte(dbRule.Items), &items); err == nil {
+							ruleConfigs = append(ruleConfigs, items...)
+						}
+					}
+				}
+			}
+		}
+
+		// Parse Backend
+		var backend *entity.SNIBackend
+		hasTunnel := item.TunnelId != ""
+		hasDnsResolver := item.DNSResolver != ""
+
+		if hasTunnel || hasDnsResolver {
+			backend = &entity.SNIBackend{}
+			if hasTunnel {
+				backend.Tunnel = &entity.BackendTunnel{
+					Type:  item.TunnelType,
+					ID:    item.TunnelId,
+					Token: item.TunnelToken,
+				}
+			}
+			if hasDnsResolver {
+				var dnsResolvers []string
+				if err := json.Unmarshal([]byte(item.DNSResolver), &dnsResolvers); err == nil {
+					backend.DNSResolver = dnsResolvers
+				} else {
+					// Fallback for comma separated or single string
+					parts := strings.Split(item.DNSResolver, ",")
+					var cleaned []string
+					for _, p := range parts {
+						p = strings.TrimSpace(p)
+						if p != "" {
+							cleaned = append(cleaned, p)
+						}
+					}
+					backend.DNSResolver = cleaned
+				}
+			}
+		}
+
+		sniMap[keyStr] = entity.SNIConfig{
+			SNI:     item.SNI,
+			Port:    item.Port,
+			Rule:    ruleConfigs,
+			Backend: backend,
+		}
+	}
+	return sniMap
+}
+
+// SyncSNIToCluster syncs SNI proxy changes. Only the SNI section of server_config is pushed.
+func SyncSNIToCluster() {
+	rulesMap := buildRulesDBMap()
+	sniMap := buildSNIMap(rulesMap)
+	cluster.Put("SNI", sniMap)
+	cluster.PrintFullServerConfig(BuildFullServerConfig())
+	go PushPartialConfigToNodes(
+		map[string]interface{}{"SNI": sniMap},
 		nil, nil,
 	)
 }

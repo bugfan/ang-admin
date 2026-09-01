@@ -120,6 +120,12 @@ export function useDnsProxy(t: any, tableRef: Ref) {
       }
     },
     {
+      label: t("dns.tunnel"),
+      minWidth: 150,
+      align: "center",
+      slot: "tunnel"
+    },
+    {
       label: t("dns.backend"),
       minWidth: 200,
       slot: "backend"

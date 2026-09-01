@@ -3,17 +3,18 @@ import { message } from "@/utils/message";
 import type { PaginationProps } from "@pureadmin/table";
 import { deviceDetection } from "@pureadmin/utils";
 import {
-  getTcpList,
-  createTcp,
-  updateTcp,
-  deleteTcp,
-  type TcpProxyItem
-} from "@/api/tcp";
+  getSniList,
+  createSni,
+  updateSni,
+  deleteSni,
+  type SniProxyItem
+} from "@/api/sni";
 import { type Ref, ref, computed, reactive, onMounted } from "vue";
 
-export function useTcpProxy(t: any, tableRef: Ref) {
+export function useSniProxy(t: any, tableRef: Ref) {
   const form = reactive({
     name: "",
+    sni: "",
     port: ""
   });
   const formRef = ref();
@@ -37,7 +38,7 @@ export function useTcpProxy(t: any, tableRef: Ref) {
       slot: "expand"
     },
     {
-      label: t("tcp.selectionColumn", "勾选列"),
+      label: t("sni.selectionColumn", "勾选列"),
       type: "selection",
       fixed: "left",
       reserveSelection: true
@@ -49,11 +50,11 @@ export function useTcpProxy(t: any, tableRef: Ref) {
       formatter: row => row.Id || row.id
     },
     {
-      label: t("tcp.name", "名称"),
+      label: t("sni.name", "名称"),
       prop: "Name",
       minWidth: 140,
       headerRenderer: () => (
-        <span class="whitespace-nowrap">{t("tcp.name", "名称")}</span>
+        <span class="whitespace-nowrap">{t("sni.name", "名称")}</span>
       ),
       cellRenderer: scope => {
         const name = scope.row.Name || scope.row.name || "-";
@@ -65,10 +66,10 @@ export function useTcpProxy(t: any, tableRef: Ref) {
       }
     },
     {
-      label: t("tcp.listenAddressPort", "监听地址与端口"),
+      label: t("sni.sni", "SNI与端口"),
       minWidth: 170,
       cellRenderer: scope => {
-        const addr = scope.row.Address || scope.row.address || "0.0.0.0";
+        const sni = scope.row.SNI || scope.row.sni || "*";
         const port = scope.row.Port || scope.row.port || "";
         return (
           <el-tag
@@ -76,14 +77,18 @@ export function useTcpProxy(t: any, tableRef: Ref) {
             effect="light"
             class="font-mono font-bold whitespace-nowrap"
           >
-            {addr}:{port}
+            {sni}:{port}
           </el-tag>
         );
       }
     },
     {
-      label: t("tcp.rules", "中间件"),
+      label: t("sni.rules", "中间件"),
       minWidth: 160,
+      align: "center",
+      headerRenderer: () => (
+        <span class="whitespace-nowrap">{t("sni.rules", "中间件")}</span>
+      ),
       cellRenderer: scope => {
         const rulesStr = scope.row.Rules || scope.row.rules || "";
         let ruleList: string[] = [];
@@ -96,14 +101,14 @@ export function useTcpProxy(t: any, tableRef: Ref) {
           return <span class="text-gray-400 text-xs">-</span>;
         }
         return (
-          <div class="flex flex-wrap gap-1">
+          <div class="flex flex-wrap justify-center gap-1">
             {ruleList.map(r => (
               <el-tag
                 key={r}
                 size="small"
                 type="info"
                 effect="plain"
-                class="font-mono"
+                class="font-mono whitespace-nowrap"
               >
                 {r}
               </el-tag>
@@ -113,11 +118,11 @@ export function useTcpProxy(t: any, tableRef: Ref) {
       }
     },
     {
-      label: t("tcp.tunnel", "Tunnel"),
+      label: t("sni.tunnel", "Tunnel"),
       minWidth: 150,
       align: "center",
       headerRenderer: () => (
-        <span class="whitespace-nowrap">{t("tcp.tunnel", "Tunnel")}</span>
+        <span class="whitespace-nowrap">{t("sni.tunnel", "Tunnel")}</span>
       ),
       cellRenderer: scope => {
         const row = scope.row;
@@ -142,88 +147,67 @@ export function useTcpProxy(t: any, tableRef: Ref) {
       }
     },
     {
-      label: t("tcp.backend", "上游"),
+      label: t("sni.dnsResolve", "解析"),
       minWidth: 200,
+      align: "center",
+      headerRenderer: () => (
+        <span class="whitespace-nowrap">{t("sni.dnsResolve", "解析")}</span>
+      ),
       cellRenderer: scope => {
         const row = scope.row;
-        const serversStr = row.UpstreamServers || row.upstream_servers || "";
-        let servers: Array<{ target: string; weight: number }> = [];
+        const rawDns = row.DNSResolver || row.dns_resolver;
+        let dnsList: string[] = [];
         try {
-          if (serversStr) {
-            const parsed =
-              typeof serversStr === "string"
-                ? JSON.parse(serversStr)
-                : serversStr;
-            if (Array.isArray(parsed)) {
-              servers = parsed
-                .map((item: any) => ({
-                  target: item.target || item.Target || "",
-                  weight: Number(item.weight || item.Weight || 1)
-                }))
-                .filter((item: any) => item.target);
+          if (rawDns) {
+            if (typeof rawDns === "string" && rawDns.startsWith("[")) {
+              dnsList = JSON.parse(rawDns);
+            } else if (Array.isArray(rawDns)) {
+              dnsList = rawDns;
+            } else if (typeof rawDns === "string") {
+              dnsList = rawDns.split(/[\n,;]+/).map((s: string) => s.trim()).filter(Boolean);
             }
           }
-        } catch (e) {}
-
-        if (!servers || servers.length === 0) {
-          return (
-            <span class="text-(--el-text-color-placeholder) text-xs">-</span>
-          );
-        }
-
-        const method =
-          row.UpstreamMethod || row.upstream_method || "round_robin";
-
-        const serverChunks: any[][] = [];
-        for (let i = 0; i < servers.length; i += 2) {
-          serverChunks.push(servers.slice(i, i + 2));
+        } catch {
+          if (rawDns) dnsList = [String(rawDns)];
         }
 
         return (
-          <div class="p-1.5 rounded-lg border border-(--el-border-color-lighter) bg-(--el-fill-color-light) space-y-1 py-1">
-            <div class="flex items-center gap-1.5 flex-wrap">
+          <div class="p-1.5 rounded-lg border border-(--el-border-color-lighter) bg-(--el-fill-color-light) flex flex-col items-center gap-1.5 py-1">
+            {dnsList.length > 0 ? (
+              <div class="flex flex-wrap justify-center gap-1">
+                {dnsList.map(dns => (
+                  <el-tag
+                    key={dns}
+                    size="small"
+                    type="warning"
+                    effect="plain"
+                    class="font-mono whitespace-nowrap"
+                  >
+                    DNS: {dns}
+                  </el-tag>
+                ))}
+              </div>
+            ) : (
               <el-tag
                 size="small"
                 type="info"
                 effect="plain"
-                class="text-[11px] font-mono font-bold"
+                class="font-mono whitespace-nowrap"
               >
-                {method}
+                DNS: Default
               </el-tag>
-              <span class="text-xs text-gray-400">
-                ({servers.length})
-              </span>
-            </div>
-            <div class="space-y-1 pt-0.5">
-              {serverChunks.map((chunk, cIdx) => (
-                <div key={cIdx} class="flex items-center gap-1.5 flex-wrap">
-                  {chunk.map((srv, sIdx) => (
-                    <span
-                      key={sIdx}
-                      class="inline-flex items-center gap-1 font-mono text-[11px] bg-(--el-bg-color) px-1.5 py-0.5 rounded border border-(--el-border-color-lighter) shrink-0"
-                    >
-                      <span class="font-medium text-(--el-text-color-primary)">
-                        {srv.target}
-                      </span>
-                      <span class="text-[10px] text-gray-400 font-normal">
-                        ({srv.weight})
-                      </span>
-                    </span>
-                  ))}
-                </div>
-              ))}
-            </div>
+            )}
           </div>
         );
       }
     },
     {
-      label: t("tcp.remark", "备注"),
+      label: t("sni.remark", "备注"),
       prop: "Remark",
       minWidth: 120,
       align: "center",
       headerRenderer: () => (
-        <span class="whitespace-nowrap">{t("tcp.remark", "备注")}</span>
+        <span class="whitespace-nowrap">{t("sni.remark", "备注")}</span>
       ),
       cellRenderer: scope => {
         const remark = scope.row.Remark || scope.row.remark || "-";
@@ -240,7 +224,7 @@ export function useTcpProxy(t: any, tableRef: Ref) {
       }
     },
     {
-      label: t("tcp.createTime", "创建时间"),
+      label: t("sni.createTime", "创建时间"),
       prop: "CreatedAt",
       minWidth: 160,
       formatter: ({ CreatedAt, created_at }) =>
@@ -249,7 +233,7 @@ export function useTcpProxy(t: any, tableRef: Ref) {
           : "-"
     },
     {
-      label: t("tcp.operation", "操作"),
+      label: t("sni.operation", "操作"),
       fixed: "right",
       width: 160,
       slot: "operation"
@@ -259,14 +243,15 @@ export function useTcpProxy(t: any, tableRef: Ref) {
   async function onSearch() {
     loading.value = true;
     try {
-      const { data } = await getTcpList({
+      const { data } = await getSniList({
         name: form.name,
+        sni: form.sni,
         port: form.port
       });
       dataList.value = data?.list || [];
       pagination.total = data?.total || dataList.value.length;
     } catch (e: any) {
-      message(e.message || "获取 TCP 列表失败", { type: "error" });
+      message(e.message || "获取 SNI 列表失败", { type: "error" });
     } finally {
       loading.value = false;
     }
@@ -276,6 +261,7 @@ export function useTcpProxy(t: any, tableRef: Ref) {
     if (!formEl) return;
     formEl.resetFields();
     form.name = "";
+    form.sni = "";
     form.port = "";
     onSearch();
   };
@@ -283,9 +269,9 @@ export function useTcpProxy(t: any, tableRef: Ref) {
   async function handleDelete(row: any) {
     try {
       const targetId = row.Id || row.id;
-      const { code, message: msg } = await deleteTcp(targetId);
+      const { code, message: msg } = await deleteSni(targetId);
       if (code === 0) {
-        message(t("tcp.deleteSuccess", "删除成功"), { type: "success" });
+        message(t("sni.success", "成功"), { type: "success" });
         onSearch();
       } else {
         message(msg || "删除失败", { type: "error" });
@@ -309,9 +295,9 @@ export function useTcpProxy(t: any, tableRef: Ref) {
     if (!rows || rows.length === 0) return;
     const ids = rows.map((r: any) => r.Id || r.id);
     try {
-      const { code, message: msg } = await deleteTcp({ ids });
+      const { code, message: msg } = await deleteSni({ ids });
       if (code === 0) {
-        message(t("tcp.batchDeleteSuccess", "批量删除成功"), {
+        message(t("sni.batchDeleteSuccess", "批量删除成功"), {
           type: "success"
         });
         tableRef.value?.getTableRef()?.clearSelection();

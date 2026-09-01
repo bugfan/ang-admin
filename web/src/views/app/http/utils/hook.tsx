@@ -221,6 +221,35 @@ export function useHttpProxy(t: any, tableRef: Ref) {
       }
     },
     {
+      label: t("http.tunnel", "Tunnel"),
+      minWidth: 150,
+      align: "center",
+      headerRenderer: () => (
+        <span class="whitespace-nowrap">{t("http.tunnel", "Tunnel")}</span>
+      ),
+      cellRenderer: scope => {
+        const row = scope.row;
+        const tunnelId = row.TunnelId || row.tunnel_id;
+
+        return (
+          <div class="flex justify-center items-center h-full w-full py-1">
+            {tunnelId ? (
+              <el-tag
+                size="small"
+                type="success"
+                effect="light"
+                class="font-mono whitespace-nowrap"
+              >
+                {(row.TunnelType || row.tunnel_type || "TLS").toUpperCase()} {tunnelId}
+              </el-tag>
+            ) : (
+              <span class="text-(--el-text-color-placeholder) text-xs">-</span>
+            )}
+          </div>
+        );
+      }
+    },
+    {
       label: t("http.backendSection"),
       minWidth: 160,
       cellRenderer: scope => {

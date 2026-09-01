@@ -491,29 +491,28 @@ async function handleSaveSubmit() {
             </template>
 
             <!-- 2. 上游 (Backend) 列 -->
+            <template #tunnel="{ row }">
+              <div class="flex justify-center items-center h-full w-full">
+                <el-tag
+                  v-if="row.tunnel_id || row.TunnelId"
+                  type="success"
+                  effect="light"
+                  size="small"
+                  class="font-mono font-medium inline-flex items-center gap-1 whitespace-nowrap"
+                >
+                  {{ (row.tunnel_type || row.TunnelType || "TLS").toUpperCase() }} {{ row.tunnel_id || row.TunnelId }}
+                </el-tag>
+                <span v-else class="text-(--el-text-color-placeholder) text-xs">-</span>
+              </div>
+            </template>
+
+            <!-- 2. 上游 (Backend) 列 -->
             <template #backend="{ row }">
               <el-popover placement="top" :width="380" trigger="hover">
                 <template #reference>
                   <div
                     class="inline-flex items-center gap-1.5 flex-wrap cursor-pointer"
                   >
-                    <el-tag
-                      v-if="row.tunnel_id || row.TunnelId"
-                      type="primary"
-                      effect="light"
-                      size="small"
-                      class="font-mono font-medium inline-flex items-center gap-1"
-                    >
-                      <IconifyIconOffline icon="ri:route-line" />
-                      Tunnel #{{ row.tunnel_id || row.TunnelId }} ({{
-                        (
-                          row.tunnel_type ||
-                          row.TunnelType ||
-                          "quic"
-                        ).toUpperCase()
-                      }})
-                    </el-tag>
-
                     <el-tag
                       v-if="
                         parseUpstreamServers(
@@ -570,7 +569,6 @@ async function handleSaveSubmit() {
 
                   <div
                     v-if="
-                      !(row.tunnel_id || row.TunnelId) &&
                       parseUpstreamServers(
                         row.upstream_servers || row.UpstreamServers
                       ).length === 0
@@ -582,38 +580,8 @@ async function handleSaveSubmit() {
 
                   <div v-else class="space-y-2.5 max-h-60 overflow-auto">
                     <div
-                      v-if="row.tunnel_id || row.TunnelId"
-                      class="p-2 bg-blue-50/60 dark:bg-blue-900/20 rounded border border-blue-100 dark:border-blue-800/40"
-                    >
-                      <div
-                        class="font-semibold text-blue-600 dark:text-blue-400 text-[11px] mb-1 inline-flex items-center gap-1"
-                      >
-                        <IconifyIconOffline icon="ri:route-line" />
-                        {{ t("dns.tunnelConfig") }}
-                      </div>
-                      <div
-                        class="font-mono text-gray-700 dark:text-gray-300 space-y-0.5"
-                      >
-                        <div>
-                          <span class="text-gray-400">Tunnel ID:</span> #{{
-                            row.tunnel_id || row.TunnelId
-                          }}
-                        </div>
-                        <div>
-                          <span class="text-gray-400">Type:</span>
-                          {{
-                            (
-                              row.tunnel_type ||
-                              row.TunnelType ||
-                              "quic"
-                            ).toUpperCase()
-                          }}
-                        </div>
-                      </div>
-                    </div>
-
-                    <div
                       v-if="
+
                         parseUpstreamServers(
                           row.upstream_servers || row.UpstreamServers
                         ).length > 0

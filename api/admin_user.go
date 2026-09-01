@@ -415,7 +415,7 @@ func AsyncRoutesHandler(c *gin.Context) {
 				"meta": gin.H{
 					"icon":  "ri:terminal-box-line",
 					"title": "menus.pureTcp",
-					"rank":  7,
+					"rank":  8,
 				},
 				"children": []gin.H{
 					{
@@ -435,7 +435,7 @@ func AsyncRoutesHandler(c *gin.Context) {
 				"meta": gin.H{
 					"icon":  "ri:share-forward-line",
 					"title": "menus.pureUdp",
-					"rank":  8,
+					"rank":  9,
 				},
 				"children": []gin.H{
 					{
@@ -451,11 +451,31 @@ func AsyncRoutesHandler(c *gin.Context) {
 				},
 			},
 			{
+				"path": "/sni",
+				"meta": gin.H{
+					"icon":  "ri:shield-keyhole-line",
+					"title": "menus.pureSni",
+					"rank":  7,
+				},
+				"children": []gin.H{
+					{
+						"path":      "/sni/index",
+						"name":      "AppSniProxy",
+						"component": "app/sni/index",
+						"meta": gin.H{
+							"icon":  "ri:shield-keyhole-line",
+							"title": "menus.pureSni",
+							"roles": []string{"admin", "common"},
+						},
+					},
+				},
+			},
+			{
 				"path": "/cluster",
 				"meta": gin.H{
 					"icon":  "ri:server-line",
 					"title": "menus.pureCluster",
-					"rank":  8,
+					"rank":  10,
 				},
 				"children": []gin.H{
 					{
@@ -475,7 +495,7 @@ func AsyncRoutesHandler(c *gin.Context) {
 				"meta": gin.H{
 					"icon":  "ri:admin-line",
 					"title": "menus.pureAdminManagement",
-					"rank":  10,
+					"rank":  11,
 				},
 				"children": []gin.H{
 					{

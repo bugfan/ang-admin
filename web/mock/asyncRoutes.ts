@@ -159,12 +159,32 @@ const httpRouter = {
 };
 
 
+const sniRouter = {
+  path: "/sni",
+  meta: {
+    icon: "ri:shield-keyhole-line",
+    title: "menus.pureSni",
+    rank: 7
+  },
+  children: [
+    {
+      path: "/sni/index",
+      name: "AppSniProxy",
+      meta: {
+        icon: "ri:shield-keyhole-line",
+        title: "menus.pureSni",
+        roles: ["admin", "common"]
+      }
+    }
+  ]
+};
+
 const udpRouter = {
   path: "/udp",
   meta: {
     icon: "ri:share-forward-line",
     title: "menus.pureUdp",
-    rank: 8
+    rank: 9
   },
   children: [
     {
@@ -185,7 +205,7 @@ const tcpRouter = {
   meta: {
     icon: "ri:terminal-box-line",
     title: "menus.pureTcp",
-    rank: 7
+    rank: 8
   },
   children: [
     {
@@ -206,7 +226,7 @@ const clusterRouter = {
   meta: {
     icon: "ri:server-line",
     title: "menus.pureCluster",
-    rank: 8
+    rank: 10
   },
   children: [
     {
@@ -259,6 +279,7 @@ export default defineFakeRoute([
           dnsRouter,
           httpRouter,
           tcpRouter,
+          sniRouter,
           udpRouter,
           clusterRouter,
           accountManagementRouter
