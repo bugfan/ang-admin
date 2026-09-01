@@ -491,20 +491,7 @@ async function handleSaveSubmit() {
             </template>
 
             <!-- 2. 上游 (Backend) 列 -->
-            <template #tunnel="{ row }">
-              <div class="flex justify-center items-center h-full w-full">
-                <el-tag
-                  v-if="row.tunnel_id || row.TunnelId"
-                  type="success"
-                  effect="light"
-                  size="small"
-                  class="font-mono font-medium inline-flex items-center gap-1 whitespace-nowrap"
-                >
-                  {{ (row.tunnel_type || row.TunnelType || "TLS").toUpperCase() }} {{ row.tunnel_id || row.TunnelId }}
-                </el-tag>
-                <span v-else class="text-(--el-text-color-placeholder) text-xs">-</span>
-              </div>
-            </template>
+            
 
             <!-- 2. 上游 (Backend) 列 -->
             <template #backend="{ row }">

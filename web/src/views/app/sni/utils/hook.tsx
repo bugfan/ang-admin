@@ -9,6 +9,7 @@ import {
   deleteSni,
   type SniProxyItem
 } from "@/api/sni";
+import { getTunnelList } from "@/api/tunnel";
 import { type Ref, ref, computed, reactive, onMounted } from "vue";
 
 export function useSniProxy(t: any, tableRef: Ref) {
@@ -32,11 +33,10 @@ export function useSniProxy(t: any, tableRef: Ref) {
       : "total, sizes, prev, pager, next, jumper"
   });
 
+  const tunnelMap = ref<Record<string, string>>({});
+
   const columns = computed<TableColumnList>(() => [
-    {
-      type: "expand",
-      slot: "expand"
-    },
+    
     {
       label: t("sni.selectionColumn", "勾选列"),
       type: "selection",
@@ -83,11 +83,11 @@ export function useSniProxy(t: any, tableRef: Ref) {
       }
     },
     {
-      label: t("sni.rules", "中间件"),
+      label: t("sni.rules", "规则"),
       minWidth: 160,
       align: "center",
       headerRenderer: () => (
-        <span class="whitespace-nowrap">{t("sni.rules", "中间件")}</span>
+        <span class="whitespace-nowrap">{t("sni.rules", "规则")}</span>
       ),
       cellRenderer: scope => {
         const rulesStr = scope.row.Rules || scope.row.rules || "";
@@ -127,6 +127,13 @@ export function useSniProxy(t: any, tableRef: Ref) {
       cellRenderer: scope => {
         const row = scope.row;
         const tunnelId = row.TunnelId || row.tunnel_id;
+        const tunnelToken = row.TunnelToken || row.tunnel_token || "";
+        const mapKey = `${tunnelId}|${tunnelToken}`;
+        const tName = tunnelMap.value[mapKey];
+        let displayName = `${(row.TunnelType || row.tunnel_type || "TLS").toUpperCase()} ${tunnelId}`;
+        if (tName) {
+          displayName = tName;
+        }
 
         return (
           <div class="flex justify-center items-center h-full w-full py-1">
@@ -137,7 +144,7 @@ export function useSniProxy(t: any, tableRef: Ref) {
                 effect="light"
                 class="font-mono whitespace-nowrap"
               >
-                {(row.TunnelType || row.tunnel_type || "TLS").toUpperCase()} {tunnelId}
+                {displayName}
               </el-tag>
             ) : (
               <span class="text-(--el-text-color-placeholder) text-xs">-</span>
@@ -149,7 +156,6 @@ export function useSniProxy(t: any, tableRef: Ref) {
     {
       label: t("sni.dnsResolve", "解析"),
       minWidth: 200,
-      align: "center",
       headerRenderer: () => (
         <span class="whitespace-nowrap">{t("sni.dnsResolve", "解析")}</span>
       ),
@@ -172,30 +178,24 @@ export function useSniProxy(t: any, tableRef: Ref) {
         }
 
         return (
-          <div class="p-1.5 rounded-lg border border-(--el-border-color-lighter) bg-(--el-fill-color-light) flex flex-col items-center gap-1.5 py-1">
+          <div class="p-1.5 rounded-lg border border-(--el-border-color-lighter) bg-(--el-fill-color-light) space-y-1 py-1 text-left">
             {dnsList.length > 0 ? (
-              <div class="flex flex-wrap justify-center gap-1">
+              <div class="flex items-center gap-1.5 flex-wrap">
                 {dnsList.map(dns => (
-                  <el-tag
+                  <span
                     key={dns}
-                    size="small"
-                    type="warning"
-                    effect="plain"
-                    class="font-mono whitespace-nowrap"
+                    class="inline-flex items-center font-mono text-[11px] bg-(--el-bg-color) px-1.5 py-0.5 rounded border border-(--el-border-color-lighter) shrink-0 whitespace-nowrap"
                   >
-                    DNS: {dns}
-                  </el-tag>
+                    <span class="font-medium text-(--el-text-color-primary)">
+                      {dns}
+                    </span>
+                  </span>
                 ))}
               </div>
             ) : (
-              <el-tag
-                size="small"
-                type="info"
-                effect="plain"
-                class="font-mono whitespace-nowrap"
-              >
-                DNS: Default
-              </el-tag>
+              <span class="inline-flex items-center font-mono text-[11px] bg-(--el-bg-color) px-1.5 py-0.5 rounded border border-(--el-border-color-lighter) shrink-0 whitespace-nowrap text-gray-400">
+                Default
+              </span>
             )}
           </div>
         );
@@ -321,7 +321,31 @@ export function useSniProxy(t: any, tableRef: Ref) {
     pagination.currentPage = val;
   }
 
+  async function fetchTunnelNames() {
+    try {
+      const res = await getTunnelList();
+      let list: any[] = [];
+      if (Array.isArray(res?.data?.list)) list = res.data.list;
+      else if (Array.isArray(res?.data)) list = res.data;
+      else if (Array.isArray(res)) list = res;
+
+      const map: Record<string, string> = {};
+      list.forEach((tItem: any) => {
+        const tid = String(tItem.Id || tItem.id);
+        const cNodes = tItem.client_nodes || tItem.ClientNodes || [];
+        cNodes.forEach((c: any) => {
+          const cName = c.Name || c.name || "";
+          if (cName) {
+            map[`${tid}|${c.token || c.Token}`] = cName;
+          }
+        });
+      });
+      tunnelMap.value = map;
+    } catch (e) {}
+  }
+
   onMounted(() => {
+    fetchTunnelNames();
     onSearch();
   });
 

@@ -9,6 +9,7 @@ import {
   deleteTcp,
   type TcpProxyItem
 } from "@/api/tcp";
+import { getTunnelList } from "@/api/tunnel";
 import { type Ref, ref, computed, reactive, onMounted } from "vue";
 
 export function useTcpProxy(t: any, tableRef: Ref) {
@@ -31,11 +32,10 @@ export function useTcpProxy(t: any, tableRef: Ref) {
       : "total, sizes, prev, pager, next, jumper"
   });
 
+  const tunnelMap = ref<Record<string, string>>({});
+
   const columns = computed<TableColumnList>(() => [
-    {
-      type: "expand",
-      slot: "expand"
-    },
+    
     {
       label: t("tcp.selectionColumn", "勾选列"),
       type: "selection",
@@ -82,7 +82,8 @@ export function useTcpProxy(t: any, tableRef: Ref) {
       }
     },
     {
-      label: t("tcp.rules", "中间件"),
+      label: t("tcp.rules", "规则"),
+      align: "center",
       minWidth: 160,
       cellRenderer: scope => {
         const rulesStr = scope.row.Rules || scope.row.rules || "";
@@ -96,7 +97,7 @@ export function useTcpProxy(t: any, tableRef: Ref) {
           return <span class="text-gray-400 text-xs">-</span>;
         }
         return (
-          <div class="flex flex-wrap gap-1">
+          <div class="flex flex-wrap justify-center gap-1">
             {ruleList.map(r => (
               <el-tag
                 key={r}
@@ -122,6 +123,13 @@ export function useTcpProxy(t: any, tableRef: Ref) {
       cellRenderer: scope => {
         const row = scope.row;
         const tunnelId = row.TunnelId || row.tunnel_id;
+        const tunnelToken = row.TunnelToken || row.tunnel_token || "";
+        const mapKey = `${tunnelId}|${tunnelToken}`;
+        const tName = tunnelMap.value[mapKey];
+        let displayName = `${(row.TunnelType || row.tunnel_type || "TLS").toUpperCase()} ${tunnelId}`;
+        if (tName) {
+          displayName = tName;
+        }
 
         return (
           <div class="flex justify-center items-center h-full w-full py-1">
@@ -132,7 +140,7 @@ export function useTcpProxy(t: any, tableRef: Ref) {
                 effect="light"
                 class="font-mono whitespace-nowrap"
               >
-                {(row.TunnelType || row.tunnel_type || "TLS").toUpperCase()} {tunnelId}
+                {displayName}
               </el-tag>
             ) : (
               <span class="text-(--el-text-color-placeholder) text-xs">-</span>
@@ -335,7 +343,31 @@ export function useTcpProxy(t: any, tableRef: Ref) {
     pagination.currentPage = val;
   }
 
+  async function fetchTunnelNames() {
+    try {
+      const res = await getTunnelList();
+      let list: any[] = [];
+      if (Array.isArray(res?.data?.list)) list = res.data.list;
+      else if (Array.isArray(res?.data)) list = res.data;
+      else if (Array.isArray(res)) list = res;
+
+      const map: Record<string, string> = {};
+      list.forEach((tItem: any) => {
+        const tid = String(tItem.Id || tItem.id);
+        const cNodes = tItem.client_nodes || tItem.ClientNodes || [];
+        cNodes.forEach((c: any) => {
+          const cName = c.Name || c.name || "";
+          if (cName) {
+            map[`${tid}|${c.token || c.Token}`] = cName;
+          }
+        });
+      });
+      tunnelMap.value = map;
+    } catch (e) {}
+  }
+
   onMounted(() => {
+    fetchTunnelNames();
     onSearch();
   });
 

@@ -11,6 +11,7 @@ import {
   deleteDns,
   type DnsProxyItem
 } from "@/api/dns";
+import { getTunnelList } from "@/api/tunnel";
 import { type Ref, h, ref, computed, toRaw, reactive, onMounted } from "vue";
 
 export function useDnsProxy(t: any, tableRef: Ref) {
@@ -19,6 +20,7 @@ export function useDnsProxy(t: any, tableRef: Ref) {
     port: ""
   });
   const formRef = ref();
+  const tunnelMap = ref<Record<string, string>>({});
   const dataList = ref([]);
   const loading = ref(true);
   const selectedNum = ref(0);
@@ -90,6 +92,7 @@ export function useDnsProxy(t: any, tableRef: Ref) {
     },
     {
       label: t("dns.rules"),
+      align: "center",
       minWidth: 160,
       cellRenderer: scope => {
         const rulesStr = scope.row.Rules || scope.row.rules || "";
@@ -103,7 +106,7 @@ export function useDnsProxy(t: any, tableRef: Ref) {
           return <span class="text-gray-400 text-xs">-</span>;
         }
         return (
-          <div class="flex flex-wrap gap-1">
+          <div class="flex flex-wrap justify-center gap-1">
             {ruleList.map(r => (
               <el-tag
                 key={r}
@@ -123,7 +126,34 @@ export function useDnsProxy(t: any, tableRef: Ref) {
       label: t("dns.tunnel"),
       minWidth: 150,
       align: "center",
-      slot: "tunnel"
+      cellRenderer: scope => {
+        const row = scope.row;
+        const tunnelId = row.TunnelId || row.tunnel_id;
+        const tunnelToken = row.TunnelToken || row.tunnel_token || "";
+        const mapKey = `${tunnelId}|${tunnelToken}`;
+        const tName = tunnelMap.value[mapKey];
+        let displayName = `${(row.TunnelType || row.tunnel_type || "TLS").toUpperCase()} ${tunnelId}`;
+        if (tName) {
+          displayName = tName;
+        }
+
+        return (
+          <div class="flex justify-center items-center h-full w-full py-1">
+            {tunnelId ? (
+              <el-tag
+                size="small"
+                type="success"
+                effect="light"
+                class="font-mono whitespace-nowrap"
+              >
+                {displayName}
+              </el-tag>
+            ) : (
+              <span class="text-(--el-text-color-placeholder) text-xs">-</span>
+            )}
+          </div>
+        );
+      }
     },
     {
       label: t("dns.backend"),
@@ -309,7 +339,31 @@ export function useDnsProxy(t: any, tableRef: Ref) {
     });
   }
 
+  async function fetchTunnelNames() {
+    try {
+      const res = await getTunnelList();
+      let list: any[] = [];
+      if (Array.isArray(res?.data?.list)) list = res.data.list;
+      else if (Array.isArray(res?.data)) list = res.data;
+      else if (Array.isArray(res)) list = res;
+
+      const map: Record<string, string> = {};
+      list.forEach((tItem: any) => {
+        const tid = String(tItem.Id || tItem.id);
+        const cNodes = tItem.client_nodes || tItem.ClientNodes || [];
+        cNodes.forEach((c: any) => {
+          const cName = c.Name || c.name || "";
+          if (cName) {
+            map[`${tid}|${c.token || c.Token}`] = cName;
+          }
+        });
+      });
+      tunnelMap.value = map;
+    } catch (e) {}
+  }
+
   onMounted(() => {
+    fetchTunnelNames();
     onSearch();
   });
 

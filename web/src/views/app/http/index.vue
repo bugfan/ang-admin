@@ -351,50 +351,7 @@ function formatJSON(row: any) {
             @page-current-change="handleCurrentChange"
           >
             <!-- Expand Row Slot: Theme-Adaptive JSON Preview -->
-            <template #expand="{ row }">
-              <div
-                class="p-3 sm:p-4 bg-(--el-fill-color-light) rounded-xl m-1 sm:m-2 border border-(--el-border-color-lighter)"
-              >
-                <div
-                  class="text-xs font-bold text-(--el-text-color-regular) mb-2 flex-bc flex-wrap gap-1"
-                >
-                  <div class="flex items-center space-x-2">
-                    <div class="size-2 bg-(--el-color-primary) rounded-full" />
-                    <span
-                      >{{ t("http.engineJsonTitle") }} [ID:
-                      {{ row.Id || row.id }}]</span
-                    >
-                  </div>
-                  <span
-                    class="text-(--el-text-color-secondary) font-mono text-[11px]"
-                    >HTTP Server JSON</span
-                  >
-                </div>
-                <div
-                  class="bg-(--el-bg-color) p-3 rounded-lg border border-(--el-border-color-lighter)"
-                >
-                  <div
-                    class="flex-bc mb-2 pb-1.5 border-b border-(--el-border-color-lighter)"
-                  >
-                    <span class="text-xs font-bold text-(--el-color-primary)"
-                      >Front + Feature + Rule + Backend</span
-                    >
-                    <el-tag
-                      size="small"
-                      type="primary"
-                      effect="plain"
-                      class="font-mono"
-                      >JSON Config</el-tag
-                    >
-                  </div>
-                  <el-scrollbar max-height="220px" class="item-scrollbar pr-1">
-                    <pre
-                      class="text-xs/relaxed text-(--el-text-color-primary) font-mono whitespace-pre-wrap break-all"
-                      >{{ formatJSON(row) }}</pre>
-                  </el-scrollbar>
-                </div>
-              </div>
-            </template>
+            
 
             <!-- Operation Slot -->
             <template #operation="{ row }">

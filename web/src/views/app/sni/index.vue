@@ -267,67 +267,7 @@ async function handleSaveSubmit() {
             @page-current-change="handleCurrentChange"
           >
             <!-- Sub table expand -->
-            <template #expand="{ row }">
-              <div class="p-4 bg-(--el-fill-color-lighter)">
-                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  <!-- Left Card: Rules -->
-                  <div class="bg-(--el-bg-color) p-3 rounded-lg border border-(--el-border-color-lighter)">
-                    <div class="text-xs font-bold text-(--el-text-color-regular) mb-2 flex items-center space-x-1.5">
-                      <div class="w-1.5 h-3 bg-emerald-500 rounded-full" />
-                      <span>{{ t("sni.rulesSection", "中间件规则") }}</span>
-                    </div>
-                    <div class="space-y-1.5">
-                      <template v-if="row.Rules && row.Rules !== '[]' && row.Rules !== ''">
-                        <div
-                          v-for="(r, idx) in JSON.parse(row.Rules || row.rules || '[]')"
-                          :key="r"
-                          class="flex items-center justify-between p-2 rounded bg-(--el-fill-color-light) border border-(--el-border-color-lighter) text-xs"
-                        >
-                          <span class="font-mono text-emerald-600 dark:text-emerald-400 font-bold">#{{ idx + 1 }} {{ r }}</span>
-                        </div>
-                      </template>
-                      <div v-else class="text-xs text-(--el-text-color-placeholder) py-2">-</div>
-                    </div>
-                  </div>
-
-                  <!-- Right Card: Upstream & Tunnel -->
-                  <div class="bg-(--el-bg-color) p-3 rounded-lg border border-(--el-border-color-lighter)">
-                    <div class="text-xs font-bold text-(--el-text-color-regular) mb-2 flex items-center space-x-1.5">
-                      <div class="w-1.5 h-3 bg-purple-500 rounded-full" />
-                      <span>{{ t("sni.backendSection", "上游与后端") }}</span>
-                    </div>
-
-                    <div v-if="row.TunnelId || row.tunnel_id" class="mb-3 p-2 bg-purple-50 dark:bg-purple-950/30 rounded border border-purple-200 dark:border-purple-800/50 text-xs">
-                      <div class="font-bold text-purple-700 dark:text-purple-300 mb-1">Tunnel 隧道</div>
-                      <div class="font-mono text-purple-600 dark:text-purple-400">
-                        Type: {{ (row.TunnelType || row.tunnel_type || "quic").toUpperCase() }} |
-                        ID: {{ row.TunnelId || row.tunnel_id }}
-                      </div>
-                    </div>
-
-                    <div v-if="parseDnsList(row.DNSResolver || row.dns_resolver).length > 0" class="mb-3 p-2 bg-yellow-50 dark:bg-yellow-950/30 rounded border border-yellow-200 dark:border-yellow-800/50 text-xs">
-                      <div class="font-bold text-yellow-700 dark:text-yellow-300 mb-1">DNS Resolver</div>
-                      <div class="flex flex-wrap gap-1.5 pt-0.5">
-                        <el-tag
-                          v-for="dns in parseDnsList(row.DNSResolver || row.dns_resolver)"
-                          :key="dns"
-                          size="small"
-                          type="warning"
-                          effect="plain"
-                          class="font-mono"
-                        >
-                          {{ dns }}
-                        </el-tag>
-                      </div>
-                    </div>
-
-                    <div v-if="!row.TunnelId && !row.tunnel_id && parseDnsList(row.DNSResolver || row.dns_resolver).length === 0" class="text-xs text-(--el-text-color-placeholder) py-2">
-                      暂无后端配置
-                    </div>
-                  </div>
-                </div>
-              </div>
-            </template>
+            
 
             <!-- Operation Column -->
             <template #operation="{ row }">

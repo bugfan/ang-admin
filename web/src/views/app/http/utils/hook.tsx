@@ -11,6 +11,7 @@ import {
   deleteHttpProxy,
   type HttpProxyItem
 } from "@/api/http_proxy";
+import { getTunnelList } from "@/api/tunnel";
 import { type Ref, h, ref, computed, toRaw, reactive, onMounted } from "vue";
 
 export function useHttpProxy(t: any, tableRef: Ref) {
@@ -32,11 +33,9 @@ export function useHttpProxy(t: any, tableRef: Ref) {
       : "total, sizes, prev, pager, next, jumper"
   });
 
+  const tunnelMap = ref<Record<string, string>>({});
+
   const columns = computed<TableColumnList>(() => [
-    {
-      type: "expand",
-      slot: "expand"
-    },
     {
       label: t("admin.selectionColumn", "勾选列"),
       type: "selection",
@@ -202,21 +201,30 @@ export function useHttpProxy(t: any, tableRef: Ref) {
       align: "center",
       cellRenderer: scope => {
         const rulesStr = scope.row.Rules || scope.row.rules || "";
-        let count = 0;
+        let ruleList: string[] = [];
         try {
-          const parsed =
-            typeof rulesStr === "string" ? JSON.parse(rulesStr) : rulesStr;
-          if (Array.isArray(parsed)) count = parsed.length;
-        } catch (e) {}
+          if (rulesStr) ruleList = typeof rulesStr === "string" ? JSON.parse(rulesStr) : rulesStr;
+        } catch (e) {
+          ruleList = [];
+        }
+        if (!Array.isArray(ruleList)) ruleList = [];
+        if (ruleList.length === 0) {
+          return <span class="text-gray-400 text-xs">-</span>;
+        }
         return (
-          <el-tag
-            size="small"
-            type="primary"
-            effect="light"
-            class="font-mono font-bold"
-          >
-            {count} Rules
-          </el-tag>
+          <div class="flex flex-wrap justify-center gap-1">
+            {ruleList.map(r => (
+              <el-tag
+                key={r}
+                size="small"
+                type="info"
+                effect="plain"
+                class="font-mono"
+              >
+                {r}
+              </el-tag>
+            ))}
+          </div>
         );
       }
     },
@@ -230,6 +238,13 @@ export function useHttpProxy(t: any, tableRef: Ref) {
       cellRenderer: scope => {
         const row = scope.row;
         const tunnelId = row.TunnelId || row.tunnel_id;
+        const tunnelToken = row.TunnelToken || row.tunnel_token || "";
+        const mapKey = `${tunnelId}|${tunnelToken}`;
+        const tName = tunnelMap.value[mapKey];
+        let displayName = `${(row.TunnelType || row.tunnel_type || "TLS").toUpperCase()} ${tunnelId}`;
+        if (tName) {
+          displayName = tName;
+        }
 
         return (
           <div class="flex justify-center items-center h-full w-full py-1">
@@ -240,7 +255,7 @@ export function useHttpProxy(t: any, tableRef: Ref) {
                 effect="light"
                 class="font-mono whitespace-nowrap"
               >
-                {(row.TunnelType || row.tunnel_type || "TLS").toUpperCase()} {tunnelId}
+                {displayName}
               </el-tag>
             ) : (
               <span class="text-(--el-text-color-placeholder) text-xs">-</span>
@@ -572,7 +587,31 @@ export function useHttpProxy(t: any, tableRef: Ref) {
     });
   }
 
+  async function fetchTunnelNames() {
+    try {
+      const res = await getTunnelList();
+      let list: any[] = [];
+      if (Array.isArray(res?.data?.list)) list = res.data.list;
+      else if (Array.isArray(res?.data)) list = res.data;
+      else if (Array.isArray(res)) list = res;
+
+      const map: Record<string, string> = {};
+      list.forEach((tItem: any) => {
+        const tid = String(tItem.Id || tItem.id);
+        const cNodes = tItem.client_nodes || tItem.ClientNodes || [];
+        cNodes.forEach((c: any) => {
+          const cName = c.Name || c.name || "";
+          if (cName) {
+            map[`${tid}|${c.token || c.Token}`] = cName;
+          }
+        });
+      });
+      tunnelMap.value = map;
+    } catch (e) {}
+  }
+
   onMounted(() => {
+    fetchTunnelNames();
     onSearch();
   });
 

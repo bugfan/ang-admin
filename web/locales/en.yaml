@@ -626,14 +626,14 @@ dns:
   submitFailed: "Submit failed"
   backendConfigRequired: "Please configure at least one valid upstream DNS server or select a Tunnel!"
 
-  ruleSection: "Rules"
+  ruleSection: "Rule"
   rulesTip: "Tip: DNS Proxy is a Layer 4 (L4) service. The dropdown only displays L4 middleware rules configured in the Rules menu (e.g., ip_matcher / reset_conn_action). HTTP application rules are not applicable to DNS."
 
 
   address: "Address"
   port: "Port"
   listenAddressPort: "Listen Address / Port"
-  rules: "Middleware"
+  rules: "Rule"
   hosts: "Hosts Mapping"
   backend: "Upstream"
   backendType: "Backend Type"
@@ -878,7 +878,7 @@ http:
   selected: "Selected {count} App site(s)"
   frontSection: "Basic Information"
   featureSection: "Features"
-  ruleSection: "Rules"
+  ruleSection: "Rule"
   rulesTip: "Tip: DNS Proxy is a Layer 4 (L4) service. The dropdown only displays L4 middleware rules configured in the Rules menu (e.g., ip_matcher / reset_conn_action). HTTP application rules are not applicable to DNS."
 
   backendSection: "Upstream"
@@ -1015,7 +1015,7 @@ tcp:
   portFormatError: "Port must be a valid number (1-65535)"
   portExists: "The listen port is already in use by another TCP proxy"
   listenAddressPort: "Listen Address & Port"
-  rules: "Middleware"
+  rules: "Rule"
   rulesTip: "Tip: The dropdown only displays Layer 4 (L4) middleware rules configured in the Rules menu (e.g., ip_matcher / reset_conn_action)."
   ruleOrderTip: "Middleware rules are executed sequentially from top to bottom"
   selectRulesPlaceholder: "Select middleware"
@@ -1076,7 +1076,7 @@ udp:
   portFormatError: "Port must be a valid number (1-65535)"
   portExists: "The listen port is already in use by another UDP proxy"
   listenAddressPort: "Listen Address & Port"
-  rules: "Middleware"
+  rules: "Rule"
   rulesTip: "Tip: The dropdown only displays Layer 4 (L4) middleware rules configured in the Rules menu (e.g., ip_matcher / reset_conn_action)."
   ruleOrderTip: "Middleware rules are executed sequentially from top to bottom"
   selectRulesPlaceholder: "Select middleware"
