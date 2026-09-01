@@ -150,6 +150,10 @@ function initSortableDns() {
 }
 
 function addDnsResolver() {
+  if (dnsResolverList.value.some(item => item.value.trim() === "")) {
+    message(t("sni.dnsEmptyExists", "已存在默认解析(空项)，无需重复添加"), { type: "warning" });
+    return;
+  }
   dnsResolverList.value.push({
     id: Math.random().toString(36).substring(2, 9),
     value: ""
@@ -163,9 +167,20 @@ function removeDnsResolver(idx: number) {
 }
 
 function syncDnsResolver() {
-  newFormInline.value.dns_resolver = JSON.stringify(
-    dnsResolverList.value.map(item => item.value.trim()).filter(v => v !== "")
-  );
+  let hasEmpty = false;
+  const activeList = [];
+  for (const item of dnsResolverList.value) {
+    const val = item.value.trim();
+    if (val === "") {
+      if (!hasEmpty) {
+        hasEmpty = true;
+        activeList.push(val);
+      }
+    } else {
+      activeList.push(val);
+    }
+  }
+  newFormInline.value.dns_resolver = JSON.stringify(activeList);
 }
 
 onMounted(() => {

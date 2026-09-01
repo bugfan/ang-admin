@@ -181,14 +181,12 @@ export function useSniProxy(t: any, tableRef: Ref) {
           <div class="p-1.5 rounded-lg border border-(--el-border-color-lighter) bg-(--el-fill-color-light) space-y-1 py-1 text-left">
             {dnsList.length > 0 ? (
               <div class="flex items-center gap-1.5 flex-wrap">
-                {dnsList.map(dns => (
+                {dnsList.map((dns, idx) => (
                   <span
-                    key={dns}
+                    key={idx}
                     class="inline-flex items-center font-mono text-[11px] bg-(--el-bg-color) px-1.5 py-0.5 rounded border border-(--el-border-color-lighter) shrink-0 whitespace-nowrap"
                   >
-                    <span class="font-medium text-(--el-text-color-primary)">
-                      {dns}
-                    </span>
+                    <span class="font-medium text-(--el-text-color-primary)">{dns || "Default"}</span>
                   </span>
                 ))}
               </div>
