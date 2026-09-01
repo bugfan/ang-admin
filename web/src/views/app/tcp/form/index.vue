@@ -124,10 +124,7 @@ function handleRulesChange(val: string[]) {
   newFormInline.value.rules = JSON.stringify(val);
 }
 
-function removeRule(index: number) {
-  selectedRules.value.splice(index, 1);
-  handleRulesChange(selectedRules.value);
-}
+
 
 interface TunnelGroupOption {
   label: string;
@@ -501,8 +498,6 @@ watch(
           multiple
           filterable
           clearable
-          collapse-tags
-          collapse-tags-tooltip
           class="w-full"
           :placeholder="t('tcp.selectRulesPlaceholder', '请选择中间件')"
           @change="handleRulesChange"
@@ -528,36 +523,6 @@ watch(
             "提示: 下拉列表仅展示在“规则”菜单中配置的传输层 (L4) 中间件规则 (如 ip_matcher / reset_conn_action)。"
           )
         }}
-      </div>
-
-      <!-- Selected rule tag ordering visualization -->
-      <div
-        v-if="selectedRules && selectedRules.length > 0"
-        class="mt-3 p-3 bg-(--el-fill-color-light) rounded-lg border border-(--el-border-color-lighter)"
-      >
-        <div class="text-xs font-semibold text-gray-500 mb-2">
-          {{
-            t(
-              "tcp.ruleOrderTip",
-              "中间件规则按列表从上到下先后顺序依次执行"
-            )
-          }}:
-        </div>
-        <div class="flex flex-wrap gap-2">
-          <el-tag
-            v-for="(r, idx) in selectedRules"
-            :key="r"
-            closable
-            size="default"
-            type="success"
-            effect="light"
-            class="font-mono text-sm py-1 px-2.5 flex items-center"
-            @close="removeRule(idx)"
-          >
-            <span class="opacity-60 text-xs mr-1 font-sans">#{{ idx + 1 }}</span>
-            {{ r }}
-          </el-tag>
-        </div>
       </div>
     </el-card>
 

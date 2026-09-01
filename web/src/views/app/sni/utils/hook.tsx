@@ -15,8 +15,7 @@ import { type Ref, ref, computed, reactive, onMounted } from "vue";
 export function useSniProxy(t: any, tableRef: Ref) {
   const form = reactive({
     name: "",
-    sni: "",
-    port: ""
+    sni: ""
   });
   const formRef = ref();
   const dataList = ref([]);
@@ -66,7 +65,7 @@ export function useSniProxy(t: any, tableRef: Ref) {
       }
     },
     {
-      label: t("sni.sni", "SNI与端口"),
+      label: t("sni.sniAndPort", "SNI / 端口"),
       minWidth: 170,
       cellRenderer: scope => {
         const sni = scope.row.SNI || scope.row.sni || "*";
@@ -243,8 +242,7 @@ export function useSniProxy(t: any, tableRef: Ref) {
     try {
       const { data } = await getSniList({
         name: form.name,
-        sni: form.sni,
-        port: form.port
+        sni: form.sni
       });
       dataList.value = data?.list || [];
       pagination.total = data?.total || dataList.value.length;

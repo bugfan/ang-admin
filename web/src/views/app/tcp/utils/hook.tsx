@@ -65,7 +65,7 @@ export function useTcpProxy(t: any, tableRef: Ref) {
       }
     },
     {
-      label: t("tcp.listenAddressPort", "监听地址与端口"),
+      label: t("tcp.listenAddressPort", "监听地址 / 端口"),
       minWidth: 170,
       cellRenderer: scope => {
         const addr = scope.row.Address || scope.row.address || "0.0.0.0";

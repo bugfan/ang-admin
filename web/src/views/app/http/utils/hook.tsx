@@ -66,19 +66,22 @@ export function useHttpProxy(t: any, tableRef: Ref) {
       }
     },
     {
-      label: t("http.hostAndPort", "监听"),
+      label: t("http.hostAndPort", "Hostname / 端口"),
       minWidth: 160,
       headerRenderer: () => (
-        <span class="whitespace-nowrap">{t("http.hostAndPort", "监听")}</span>
+        <span class="whitespace-nowrap">{t("http.hostAndPort", "Hostname / 端口")}</span>
       ),
       cellRenderer: scope => {
         const host = scope.row.Hostname || scope.row.hostname || "-";
         const port = scope.row.Port || scope.row.port || "80";
         return (
-          <div class="font-mono text-xs font-normal text-(--el-text-color-secondary) py-1 inline-flex items-center gap-0.5">
-            <span>{host}</span>
-            <span>:{port}</span>
-          </div>
+          <el-tag
+            type="primary"
+            effect="light"
+            class="font-mono font-bold whitespace-nowrap"
+          >
+            {host}:{port}
+          </el-tag>
         );
       }
     },

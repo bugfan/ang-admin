@@ -458,7 +458,7 @@ const formRules = computed(() => ({
   sni: [
     {
       required: true,
-      message: t("sni.sniRequired", "请输入主 SNI (域名) 作为转发目标"),
+      message: t("sni.sniRequired", "请输入主 SNI 作为转发目标"),
       trigger: "blur"
     }
   ],
@@ -498,26 +498,6 @@ const formRules = computed(() => ({
 
       <el-row :gutter="16">
         <re-col :value="12" :xs="24">
-          <el-form-item :label="t('sni.sni', 'SNI (域名)')" prop="sni">
-            <el-input
-              v-model="newFormInline.sni"
-              clearable
-              :placeholder="t('sni.sniPlaceholder', '如 *.example.com')"
-            />
-          </el-form-item>
-        </re-col>
-        <re-col :value="12" :xs="24">
-          <el-form-item :label="t('sni.port', '端口')" prop="port">
-            <el-input
-              v-model="newFormInline.port"
-              clearable
-              :placeholder="t('sni.portPlaceholder', '如 443')"
-            />
-          </el-form-item>
-        </re-col>
-      </el-row>
-      <el-row :gutter="16">
-        <re-col :value="12" :xs="24">
           <el-form-item :label="t('sni.name', '名称')" prop="name">
             <el-input
               v-model="newFormInline.name"
@@ -532,6 +512,26 @@ const formRules = computed(() => ({
               v-model="newFormInline.remark"
               clearable
               :placeholder="t('sni.remarkPlaceholder', '请输入备注信息 (选填)')"
+            />
+          </el-form-item>
+        </re-col>
+      </el-row>
+      <el-row :gutter="16">
+        <re-col :value="12" :xs="24">
+          <el-form-item :label="t('sni.sni', 'SNI')" prop="sni">
+            <el-input
+              v-model="newFormInline.sni"
+              clearable
+              :placeholder="t('sni.sniPlaceholder', '如 *.example.com')"
+            />
+          </el-form-item>
+        </re-col>
+        <re-col :value="12" :xs="24">
+          <el-form-item :label="t('sni.port', '端口')" prop="port">
+            <el-input
+              v-model="newFormInline.port"
+              clearable
+              :placeholder="t('sni.portPlaceholder', '如 443')"
             />
           </el-form-item>
         </re-col>

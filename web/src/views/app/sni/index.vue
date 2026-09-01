@@ -173,15 +173,7 @@ async function handleSaveSubmit() {
             @keyup.enter="onSearch"
           />
         </el-form-item>
-        <el-form-item :label="t('sni.port', '端口')" prop="port">
-          <el-input
-            v-model="form.port"
-            :placeholder="t('sni.searchPortPlaceholder', '请输入端口')"
-            clearable
-            class="w-full sm:w-40!"
-            @keyup.enter="onSearch"
-          />
-        </el-form-item>
+
         <el-form-item>
           <el-button
             type="primary"
