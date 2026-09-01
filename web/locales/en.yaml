@@ -13,6 +13,8 @@ common:
   copyFailed: "Copy failed"
   saveSuccess: "Saved successfully"
   saveFailed: "Save failed"
+  addSuccess: "Added successfully"
+  dnsEmptyExists: "Default DNS (empty entry) already exists, no need to add again."
   nameRequired: "Name is required"
   portRequired: "Port is required"
   portInvalid: "Port must be a valid number (1-65535)"

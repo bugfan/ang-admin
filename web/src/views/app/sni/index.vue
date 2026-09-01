@@ -120,7 +120,7 @@ async function handleSaveSubmit() {
           if (code !== 0) {
             message(msg || t("sni.saveFailed", "保存失败"), { type: "error" });
           } else {
-            message(t("sni.saveSuccess", "保存成功"), { type: "success" });
+            message(t("common.saveSuccess", "保存成功"), { type: "success" });
             handleCancelPage();
           }
         } else {
@@ -128,7 +128,7 @@ async function handleSaveSubmit() {
           if (code !== 0) {
             message(msg || t("sni.saveFailed", "保存失败"), { type: "error" });
           } else {
-            message(t("sni.saveSuccess", "保存成功"), { type: "success" });
+            message(t("common.saveSuccess", "保存成功"), { type: "success" });
             handleCancelPage();
           }
         }

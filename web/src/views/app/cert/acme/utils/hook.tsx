@@ -153,7 +153,7 @@ export function useAcmeAccount(t: any, tableRef: Ref, emitEdit: (row: any) => vo
     const targetId = row.id || row.Id;
     const { code, message: msg } = await deleteAcmeAccount(targetId);
     if (code === 0) {
-      message(`${t("cert.delete")} ID: ${targetId} ${t("cert.success", "成功")}`, {
+      message(`${t("cert.delete")} ID: ${targetId} ${t("common.success", "成功")}`, {
         type: "success"
       });
       onSearch();
@@ -189,7 +189,7 @@ export function useAcmeAccount(t: any, tableRef: Ref, emitEdit: (row: any) => vo
     for (const item of curSelected) {
       await deleteAcmeAccount(item.id || item.Id);
     }
-    message(`${t("cert.batchDelete")} ${t("cert.success", "成功")}`, {
+    message(`${t("cert.batchDelete")} ${t("common.success", "成功")}`, {
       type: "success"
     });
     tableRef.value.getTableRef().clearSelection();

@@ -167,7 +167,7 @@ async function handleSaveSubmit() {
             message(msg, { type: "error" });
             return;
           }
-          message(t("http.addHttp") + " " + t("http.success", "成功"), {
+          message(t("http.addHttp") + " " + t("common.success", "成功"), {
             type: "success"
           });
         } else {
@@ -176,7 +176,7 @@ async function handleSaveSubmit() {
             message(msg, { type: "error" });
             return;
           }
-          message(t("http.editHttp") + " " + t("http.success", "成功"), {
+          message(t("http.editHttp") + " " + t("common.success", "成功"), {
             type: "success"
           });
         }

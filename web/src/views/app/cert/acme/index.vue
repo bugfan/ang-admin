@@ -161,7 +161,7 @@ async function handleSaveSubmit() {
         const res = await saveAcmeAccount(payload);
         if (res.code === 0) {
           message(
-            `${curData.id ? t("acmeAccount.editProvider") : t("acmeAccount.addProvider")} ${t("cert.success", "成功")}`,
+            `${curData.id ? t("acmeAccount.editProvider") : t("acmeAccount.addProvider")} ${t("common.success", "成功")}`,
             { type: "success" }
           );
           showView.value = "list";

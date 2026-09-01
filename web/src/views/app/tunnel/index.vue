@@ -100,7 +100,7 @@ async function handleSaveSubmit() {
             message(msg, { type: "error" });
             return;
           }
-          message(`${t("tunnel.addTunnel")} ${t("tunnel.success", "成功")}`, {
+          message(`${t("tunnel.addTunnel")} ${t("common.success", "成功")}`, {
             type: "success"
           });
         } else {
@@ -109,7 +109,7 @@ async function handleSaveSubmit() {
             message(msg, { type: "error" });
             return;
           }
-          message(`${t("tunnel.editTunnel")} ${t("tunnel.success", "成功")}`, {
+          message(`${t("tunnel.editTunnel")} ${t("common.success", "成功")}`, {
             type: "success"
           });
         }

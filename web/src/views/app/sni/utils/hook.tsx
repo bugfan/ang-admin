@@ -269,7 +269,7 @@ export function useSniProxy(t: any, tableRef: Ref) {
       const targetId = row.Id || row.id;
       const { code, message: msg } = await deleteSni(targetId);
       if (code === 0) {
-        message(t("sni.success", "成功"), { type: "success" });
+        message(t("common.success", "成功"), { type: "success" });
         onSearch();
       } else {
         message(msg || "删除失败", { type: "error" });
@@ -295,7 +295,7 @@ export function useSniProxy(t: any, tableRef: Ref) {
     try {
       const { code, message: msg } = await deleteSni({ ids });
       if (code === 0) {
-        message(t("sni.batchDeleteSuccess", "批量删除成功"), {
+        message(t("common.batchDeleteSuccess", "批量删除成功"), {
           type: "success"
         });
         tableRef.value?.getTableRef()?.clearSelection();

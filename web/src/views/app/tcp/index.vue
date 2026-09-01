@@ -132,14 +132,14 @@ async function handleSaveSubmit() {
             message(msg, { type: "error" });
             return;
           }
-          message(t("tcp.success", "添加成功"), { type: "success" });
+          message(t("common.success", "成功"), { type: "success" });
         } else {
           const { code, message: msg } = await updateTcp(curData);
           if (code !== 0) {
             message(msg, { type: "error" });
             return;
           }
-          message(t("tcp.success", "更新成功"), { type: "success" });
+          message(t("common.success", "成功"), { type: "success" });
         }
         showView.value = "list";
         onSearch();

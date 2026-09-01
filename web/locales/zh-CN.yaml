@@ -13,6 +13,8 @@ common:
   copyFailed: "复制失败"
   saveSuccess: "保存成功"
   saveFailed: "保存失败"
+  addSuccess: "添加成功"
+  dnsEmptyExists: "已存在默认解析(空项)，无需重复添加"
   nameRequired: "名称不能为空"
   portRequired: "端口不能为空"
   portInvalid: "端口必须为有效数字(1-65535)"

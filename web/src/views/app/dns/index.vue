@@ -203,7 +203,7 @@ async function handleSaveSubmit() {
             message(msg, { type: "error" });
             return;
           }
-          message(`${t("dns.addDns")} ${t("dns.success", "成功")}`, {
+          message(`${t("dns.addDns")} ${t("common.success", "成功")}`, {
             type: "success"
           });
         } else {
@@ -212,7 +212,7 @@ async function handleSaveSubmit() {
             message(msg, { type: "error" });
             return;
           }
-          message(`${t("dns.editDns")} ${t("dns.success", "成功")}`, {
+          message(`${t("dns.editDns")} ${t("common.success", "成功")}`, {
             type: "success"
           });
         }

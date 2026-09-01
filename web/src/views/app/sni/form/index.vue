@@ -133,7 +133,7 @@ async function fetchCustomRules() {
 
 function addDnsResolver() {
   if (dnsResolverList.value.some(item => item.value.trim() === "")) {
-    message(t("sni.dnsEmptyExists", "已存在默认解析(空项)，无需重复添加"), { type: "warning" });
+    message(t("common.dnsEmptyExists", "已存在默认解析(空项)，无需重复添加"), { type: "warning" });
     return;
   }
   dnsResolverList.value.push({

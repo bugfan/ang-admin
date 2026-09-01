@@ -206,7 +206,7 @@ export function useDnsProxy(t: any, tableRef: Ref) {
     const { code, message: msg } = await deleteDns({ id: targetId });
     if (code === 0) {
       message(
-        `${t("dns.delete")} ID: ${targetId} ${t("dns.success", "成功")}`,
+        `${t("dns.delete")} ID: ${targetId} ${t("common.success", "成功")}`,
         { type: "success" }
       );
       onSearch();
@@ -242,7 +242,7 @@ export function useDnsProxy(t: any, tableRef: Ref) {
     const ids = curSelected.map((item: any) => item.Id || item.id);
     const { code, message: msg } = await deleteDns({ ids });
     if (code === 0) {
-      message(`${t("dns.batchDelete")} ${t("dns.success", "成功")}`, {
+      message(`${t("dns.batchDelete")} ${t("common.success", "成功")}`, {
         type: "success"
       });
       tableRef.value.getTableRef().clearSelection();
@@ -328,7 +328,7 @@ export function useDnsProxy(t: any, tableRef: Ref) {
                 return;
               }
             }
-            message(`${title} ${t("dns.success", "成功")}`, {
+            message(`${title} ${t("common.success", "成功")}`, {
               type: "success"
             });
             done();

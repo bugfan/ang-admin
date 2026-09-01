@@ -113,7 +113,7 @@ async function handleSaveSubmit() {
             message(msg, { type: "error" });
             return;
           }
-          message(t("rule.addRule") + " " + t("rule.success", "成功"), {
+          message(t("rule.addRule") + " " + t("common.success", "成功"), {
             type: "success"
           });
         } else {
@@ -122,7 +122,7 @@ async function handleSaveSubmit() {
             message(msg, { type: "error" });
             return;
           }
-          message(t("rule.editRule") + " " + t("rule.success", "成功"), {
+          message(t("rule.editRule") + " " + t("common.success", "成功"), {
             type: "success"
           });
         }
