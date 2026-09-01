@@ -1,6 +1,5 @@
 <script setup lang="ts">
-import { deviceDetection } from "@pureadmin/utils";
-import { ref, reactive, onMounted, computed, watch } from "vue";
+import { ref, onMounted, computed, watch } from "vue";
 import ReCol from "@/components/ReCol";
 import { useI18n } from "vue-i18n";
 import { getTunnelList } from "@/api/tunnel";
@@ -417,7 +416,7 @@ function handleTunnelNodeChange(val: string) {
   }
 }
 
-const formRules = reactive({
+const formRules = computed(() => ({
   sni: [
     {
       required: true,
@@ -437,7 +436,7 @@ const formRules = reactive({
       trigger: "blur"
     }
   ]
-});
+}));
 </script>
 
 <template>
@@ -586,7 +585,7 @@ const formRules = reactive({
                   >
                     <div v-if="!item.disabled" class="flex items-center space-x-2 py-0.5 text-xs">
                       <el-tag size="small" :type="item.isOnline ? 'success' : 'info'" effect="light" class="font-medium">
-                        {{ item.isOnline ? "在线" : "离线" }}
+                        {{ item.isOnline ? t("tunnelClient.online", "在线") : t("tunnelClient.offline", "离线") }}
                       </el-tag>
                       <span class="font-semibold text-(--el-text-color-primary) font-mono">{{ item.cName || "Node" }}</span>
                     </div>

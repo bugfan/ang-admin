@@ -249,7 +249,7 @@ export function useSniProxy(t: any, tableRef: Ref) {
       dataList.value = data?.list || [];
       pagination.total = data?.total || dataList.value.length;
     } catch (e: any) {
-      message(e.message || "获取 SNI 列表失败", { type: "error" });
+      message(e.message || t("sni.fetchFailed", "获取 SNI 列表失败"), { type: "error" });
     } finally {
       loading.value = false;
     }
@@ -272,10 +272,10 @@ export function useSniProxy(t: any, tableRef: Ref) {
         message(t("common.success", "成功"), { type: "success" });
         onSearch();
       } else {
-        message(msg || "删除失败", { type: "error" });
+        message(msg || t("common.failed", "删除失败"), { type: "error" });
       }
     } catch (e: any) {
-      message(e.message || "删除失败", { type: "error" });
+      message(e.message || t("common.failed", "删除失败"), { type: "error" });
     }
   }
 
@@ -302,10 +302,10 @@ export function useSniProxy(t: any, tableRef: Ref) {
         selectedNum.value = 0;
         onSearch();
       } else {
-        message(msg || "批量删除失败", { type: "error" });
+        message(msg || t("common.failed", "批量删除失败"), { type: "error" });
       }
     } catch (e: any) {
-      message(e.message || "批量删除失败", { type: "error" });
+      message(e.message || t("common.failed", "批量删除失败"), { type: "error" });
     }
   }
 
