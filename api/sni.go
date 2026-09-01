@@ -21,6 +21,7 @@ type sniHandler struct {
 	Id          int64     `json:"id"`
 	Name        string    `json:"name"`
 	SNI         string    `json:"sni"`
+	ExtraSNI    string    `json:"extra_sni"` // JSON array of extra SNI patterns
 	Port        string    `json:"port"`
 	Rules       string    `json:"rules"`
 	BackendType string    `json:"backend_type"`
@@ -55,17 +56,21 @@ func (s *sniHandler) Before(g *gin.Context, x *xorm.Engine) bool {
 			return false
 		}
 
-		if s.SNI == "" {
+		if strings.TrimSpace(s.SNI) == "" {
 			g.AbortWithStatusJSON(http.StatusOK, gin.H{
 				"code":      1,
 				"error_key": "sniRequired",
-				"message":   "SNI不能为空",
+				"message":   "主 SNI 不能为空",
 			})
 			return false
 		}
 
 		if s.Name == "" {
-			s.Name = "SNI-" + s.SNI
+			sniLabel := s.SNI
+			if sniLabel == "" {
+				sniLabel = "multi"
+			}
+			s.Name = "SNI-" + sniLabel
 		}
 	}
 	return true
@@ -89,7 +94,7 @@ func (s *sniHandler) List(c *gin.Context) {
 		session.Where("port LIKE ?", "%"+port+"%")
 	}
 	if sni := c.Query("sni"); sni != "" {
-		session.Where("sni LIKE ?", "%"+sni+"%")
+		session.Where("sni LIKE ? OR extra_sni LIKE ?", "%"+sni+"%", "%"+sni+"%")
 	}
 
 	err := session.Desc("id").Find(&list)
@@ -104,6 +109,7 @@ func (s *sniHandler) List(c *gin.Context) {
 			Id:          item.Id,
 			Name:        item.Name,
 			SNI:         item.SNI,
+			ExtraSNI:    item.ExtraSNI,
 			Port:        item.Port,
 			Rules:       item.Rules,
 			BackendType: item.BackendType,

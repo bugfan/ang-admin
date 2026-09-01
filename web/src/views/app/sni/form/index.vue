@@ -16,6 +16,7 @@ const props = withDefaults(defineProps<{ formInline: any }>(), {
     id: undefined,
     name: "",
     sni: "",
+    extra_sni: "",
     port: "443",
     rules: "[]",
     tunnel_type: "quic",
@@ -54,6 +55,40 @@ const availableRules = ref<
 const selectedRules = ref<string[]>([]);
 const tunnelNodeGroups = ref<TunnelGroup[]>([]);
 const selectedTunnelNodeKey = ref<string>("");
+
+// --- ExtraSNI textarea binding ---
+// extraSniText holds the raw textarea text (one pattern per line).
+// It is kept in sync with newFormInline.value.extra_sni (JSON array string).
+const extraSniText = ref<string>("");
+
+/** Convert a JSON-encoded []string or newline list to textarea text. */
+function extraSniFromJSON(raw: string): string {
+  if (!raw) return "";
+  try {
+    const arr = JSON.parse(raw);
+    if (Array.isArray(arr)) return arr.join("\n");
+  } catch {
+    // already plain text
+  }
+  return raw;
+}
+
+/** Convert textarea text (one pattern per line) to JSON array string. */
+function extraSniToJSON(text: string): string {
+  const lines = text
+    .split("\n")
+    .map(l => l.trim())
+    .filter(l => l.length > 0);
+  return lines.length > 0 ? JSON.stringify(lines) : "";
+}
+
+function syncExtraSniToForm() {
+  newFormInline.value.extra_sni = extraSniToJSON(extraSniText.value);
+}
+
+function initExtraSniFromProps() {
+  extraSniText.value = extraSniFromJSON(newFormInline.value.extra_sni || "");
+}
 
 let nextDnsId = 1;
 interface DnsItem {
@@ -197,6 +232,7 @@ function initDnsResolverFromProps() {
 
 function getRef() {
   syncDnsResolver();
+  syncExtraSniToForm();
   return ruleFormRef.value;
 }
 
@@ -207,6 +243,7 @@ const dnsResolverGroupRef = ref();
 onMounted(() => {
   initRulesFromProps();
   initDnsResolverFromProps();
+  initExtraSniFromProps();
   fetchCustomRules();
   fetchTunnels();
   initSortableDns();
@@ -240,6 +277,7 @@ watch(
     initRulesFromProps();
     syncSelectedTunnelNodeKey();
     initDnsResolverFromProps();
+    initExtraSniFromProps();
   }
 );
 
@@ -420,7 +458,7 @@ const formRules = computed(() => ({
   sni: [
     {
       required: true,
-      message: t("sni.sniRequired", "请输入 SNI 匹配规则 (如 *.example.com)"),
+      message: t("sni.sniRequired", "请输入主 SNI (域名) 作为转发目标"),
       trigger: "blur"
     }
   ],
@@ -495,6 +533,25 @@ const formRules = computed(() => ({
               clearable
               :placeholder="t('sni.remarkPlaceholder', '请输入备注信息 (选填)')"
             />
+          </el-form-item>
+        </re-col>
+      </el-row>
+      <!-- Extra SNI patterns (one per line) -->
+      <el-row :gutter="16">
+        <re-col :value="24" :xs="24">
+          <el-form-item :label="t('sni.extraSni', '关联地址')">
+            <div class="w-full flex flex-col space-y-1">
+              <el-input
+                v-model="extraSniText"
+                type="textarea"
+                :rows="4"
+                :placeholder="t('sni.extraSniPlaceholder', '每行一个 SNI 地址，支持通配符，如:\n*.example.com\napi.example.com\n*.other.org')"
+                @input="syncExtraSniToForm"
+              />
+              <div class="text-xs text-(--el-text-color-secondary)">
+                {{ t("sni.extraSniTip", "可在此填写多个关联域名（支持精确匹配和通配符，如 *.example.com）。匹配时将优先精确匹配主 SNI，再精确匹配关联地址，最后通配匹配。") }}
+              </div>
+            </div>
           </el-form-item>
         </re-col>
       </el-row>

@@ -4,15 +4,15 @@ import { formatApiError } from "@/utils/apiError";
 export type SniProxyItem = {
   id?: number;
   name?: string;
-  address?: string;
+  sni?: string;
+  extra_sni?: string; // JSON array of extra SNI patterns
   port?: string;
   rules?: string;
   backend_type?: string;
   tunnel_type?: string;
   tunnel_id?: string;
   tunnel_token?: string;
-  upstream_method?: string;
-  upstream_servers?: string;
+  dns_resolver?: string;
   remark?: string;
   created_at?: string;
   updated_at?: string;

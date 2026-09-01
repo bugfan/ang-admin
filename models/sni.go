@@ -6,6 +6,7 @@ type SniProxy struct {
 	Id           int64     `xorm:"pk autoincr 'id'" json:"id"`
 	Name         string    `xorm:"varchar(255) 'name'" json:"name"`
 	SNI          string    `xorm:"varchar(255) 'sni'" json:"sni"`
+	ExtraSNI     string    `xorm:"text 'extra_sni'" json:"extra_sni"` // JSON array of extra SNI patterns (exact or wildcard, e.g. *.example.com)
 	Port         string    `xorm:"varchar(50) 'port'" json:"port"`
 	Rules        string    `xorm:"text 'rules'" json:"rules"`
 	BackendType  string    `xorm:"varchar(50) 'backend_type'" json:"backend_type"` // "tunnel" or "dns"

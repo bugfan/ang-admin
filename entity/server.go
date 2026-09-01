@@ -105,10 +105,11 @@ type SNIBackend struct {
 
 // SNIConfig represents a single item in SNI section
 type SNIConfig struct {
-	SNI     string      `json:"SNI"`
-	Port    string      `json:"Port"`
-	Rule    []RuleConfig `json:"Rule,omitempty"`
-	Backend *SNIBackend `json:"Backend,omitempty"`
+	SNI      string       `json:"SNI"`
+	ExtraSNI []string     `json:"ExtraSNI,omitempty"` // extra SNI patterns (exact or wildcard, e.g. *.example.com)
+	Port     string       `json:"Port"`
+	Rule     []RuleConfig `json:"Rule,omitempty"`
+	Backend  *SNIBackend  `json:"Backend,omitempty"`
 }
 
 // TCPBackend represents TCP backend config

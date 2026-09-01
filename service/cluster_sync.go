@@ -868,11 +868,18 @@ func buildSNIMap(rulesMap map[string]models.Rule) map[string]entity.SNIConfig {
 			}
 		}
 
+		// Parse ExtraSNI patterns
+		var extraSNI []string
+		if item.ExtraSNI != "" {
+			_ = json.Unmarshal([]byte(item.ExtraSNI), &extraSNI)
+		}
+
 		sniMap[keyStr] = entity.SNIConfig{
-			SNI:     item.SNI,
-			Port:    item.Port,
-			Rule:    ruleConfigs,
-			Backend: backend,
+			SNI:      item.SNI,
+			ExtraSNI: extraSNI,
+			Port:     item.Port,
+			Rule:     ruleConfigs,
+			Backend:  backend,
 		}
 	}
 	return sniMap
