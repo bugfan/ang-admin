@@ -905,7 +905,7 @@ http:
   dnsResolver: "DNS"
   dnsResolverPlaceholder: "8.8.8.8:53 (Leave empty for system default DNS)"
   dragToReorder: "Drag to reorder"
-  addDns: "Add DNS"
+  addDns: "Add"
 
 
   locationTitle: "Path Mapping & Load Balancing"
@@ -1118,7 +1118,7 @@ udp:
   searchAddressPlaceholder: "Search address"
 
 sni:
-  addDnsResolver: "Add DNS"
+  addDnsResolver: "Add"
   dnsResolver: "DNS"
   dragToReorder: "Drag to reorder"
   dnsResolverPlaceholder: "8.8.8.8:53 (leave empty for system DNS)"

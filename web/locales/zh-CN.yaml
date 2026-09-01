@@ -905,7 +905,7 @@ http:
   dnsResolver: "DNS"
   dnsResolverPlaceholder: "8.8.8.8:53 (留空使用系统默认 DNS)"
   dragToReorder: "拖动改变顺序"
-  addDns: "添加 DNS"
+  addDns: "添加"
 
 
   locationTitle: "路径映射与负载均衡"
@@ -1118,7 +1118,7 @@ udp:
   searchAddressPlaceholder: "请输入地址"
 
 sni:
-  addDnsResolver: "添加 DNS"
+  addDnsResolver: "添加"
   dnsResolver: "DNS"
   dragToReorder: "拖动改变顺序"
   dnsResolverPlaceholder: "8.8.8.8:53 (留空使用系统默认 DNS)"
