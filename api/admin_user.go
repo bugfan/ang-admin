@@ -371,31 +371,11 @@ func AsyncRoutesHandler(c *gin.Context) {
 				},
 			},
 			{
-				"path": "/dns",
-				"meta": gin.H{
-					"icon":  "ri:global-line",
-					"title": "menus.pureDns",
-					"rank":  5,
-				},
-				"children": []gin.H{
-					{
-						"path":      "/dns/index",
-						"name":      "AppDns",
-						"component": "app/dns/index",
-						"meta": gin.H{
-							"icon":  "ri:global-line",
-							"title": "menus.pureDns",
-							"roles": []string{"admin", "common"},
-						},
-					},
-				},
-			},
-			{
 				"path": "/http",
 				"meta": gin.H{
 					"icon":  "ri:links-line",
 					"title": "menus.pureHttpProxy",
-					"rank":  6,
+					"rank":  5,
 				},
 				"children": []gin.H{
 					{
@@ -411,11 +391,31 @@ func AsyncRoutesHandler(c *gin.Context) {
 				},
 			},
 			{
+				"path": "/sni",
+				"meta": gin.H{
+					"icon":  "ri:key-2-line",
+					"title": "menus.pureSni",
+					"rank":  6,
+				},
+				"children": []gin.H{
+					{
+						"path":      "/sni/index",
+						"name":      "AppSniProxy",
+						"component": "app/sni/index",
+						"meta": gin.H{
+							"icon":  "ri:key-2-line",
+							"title": "menus.pureSni",
+							"roles": []string{"admin", "common"},
+						},
+					},
+				},
+			},
+			{
 				"path": "/tcp",
 				"meta": gin.H{
-					"icon":  "ri:terminal-box-line",
+					"icon":  "ri:exchange-line",
 					"title": "menus.pureTcp",
-					"rank":  8,
+					"rank":  7,
 				},
 				"children": []gin.H{
 					{
@@ -423,8 +423,28 @@ func AsyncRoutesHandler(c *gin.Context) {
 						"name":      "AppTcpProxy",
 						"component": "app/tcp/index",
 						"meta": gin.H{
-							"icon":  "ri:terminal-box-line",
+							"icon":  "ri:exchange-line",
 							"title": "menus.pureTcp",
+							"roles": []string{"admin", "common"},
+						},
+					},
+				},
+			},
+			{
+				"path": "/dns",
+				"meta": gin.H{
+					"icon":  "ri:earth-line",
+					"title": "menus.pureDns",
+					"rank":  8,
+				},
+				"children": []gin.H{
+					{
+						"path":      "/dns/index",
+						"name":      "AppDns",
+						"component": "app/dns/index",
+						"meta": gin.H{
+							"icon":  "ri:earth-line",
+							"title": "menus.pureDns",
 							"roles": []string{"admin", "common"},
 						},
 					},
@@ -433,7 +453,7 @@ func AsyncRoutesHandler(c *gin.Context) {
 			{
 				"path": "/udp",
 				"meta": gin.H{
-					"icon":  "ri:share-forward-line",
+					"icon":  "ri:send-plane-line",
 					"title": "menus.pureUdp",
 					"rank":  9,
 				},
@@ -443,28 +463,8 @@ func AsyncRoutesHandler(c *gin.Context) {
 						"name":      "AppUdpProxy",
 						"component": "app/udp/index",
 						"meta": gin.H{
-							"icon":  "ri:share-forward-line",
+							"icon":  "ri:send-plane-line",
 							"title": "menus.pureUdp",
-							"roles": []string{"admin", "common"},
-						},
-					},
-				},
-			},
-			{
-				"path": "/sni",
-				"meta": gin.H{
-					"icon":  "ri:shield-keyhole-line",
-					"title": "menus.pureSni",
-					"rank":  7,
-				},
-				"children": []gin.H{
-					{
-						"path":      "/sni/index",
-						"name":      "AppSniProxy",
-						"component": "app/sni/index",
-						"meta": gin.H{
-							"icon":  "ri:shield-keyhole-line",
-							"title": "menus.pureSni",
 							"roles": []string{"admin", "common"},
 						},
 					},

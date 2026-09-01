@@ -119,9 +119,9 @@ const ruleRouter = {
 const dnsRouter = {
   path: "/dns",
   meta: {
-    icon: "ri:global-line",
+    icon: "ri:earth-line",
     title: "menus.pureDns",
-    rank: 5
+    rank: 8
   },
   children: [
     {
@@ -129,7 +129,7 @@ const dnsRouter = {
       name: "AppDns",
       component: "app/dns/index",
       meta: {
-        icon: "ri:global-line",
+        icon: "ri:earth-line",
         title: "menus.pureDns",
         roles: ["admin", "common"]
       }
@@ -142,7 +142,7 @@ const httpRouter = {
   meta: {
     icon: "ri:links-line",
     title: "menus.pureHttpProxy",
-    rank: 6
+    rank: 5
   },
   children: [
     {
@@ -158,20 +158,19 @@ const httpRouter = {
   ]
 };
 
-
 const sniRouter = {
   path: "/sni",
   meta: {
-    icon: "ri:shield-keyhole-line",
+    icon: "ri:key-2-line",
     title: "menus.pureSni",
-    rank: 7
+    rank: 6
   },
   children: [
     {
       path: "/sni/index",
       name: "AppSniProxy",
       meta: {
-        icon: "ri:shield-keyhole-line",
+        icon: "ri:key-2-line",
         title: "menus.pureSni",
         roles: ["admin", "common"]
       }
@@ -182,7 +181,7 @@ const sniRouter = {
 const udpRouter = {
   path: "/udp",
   meta: {
-    icon: "ri:share-forward-line",
+    icon: "ri:send-plane-line",
     title: "menus.pureUdp",
     rank: 9
   },
@@ -192,7 +191,7 @@ const udpRouter = {
       name: "AppUdpProxy",
       component: "app/udp/index",
       meta: {
-        icon: "ri:share-forward-line",
+        icon: "ri:send-plane-line",
         title: "menus.pureUdp",
         roles: ["admin", "common"]
       }
@@ -203,9 +202,9 @@ const udpRouter = {
 const tcpRouter = {
   path: "/tcp",
   meta: {
-    icon: "ri:terminal-box-line",
+    icon: "ri:exchange-line",
     title: "menus.pureTcp",
-    rank: 8
+    rank: 7
   },
   children: [
     {
@@ -213,7 +212,7 @@ const tcpRouter = {
       name: "AppTcpProxy",
       component: "app/tcp/index",
       meta: {
-        icon: "ri:terminal-box-line",
+        icon: "ri:exchange-line",
         title: "menus.pureTcp",
         roles: ["admin", "common"]
       }
