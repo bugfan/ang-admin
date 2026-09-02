@@ -58,6 +58,7 @@ const props = withDefaults(defineProps<{ formInline: any }>(), {
     compress: false,
     rules: JSON.stringify([]),
     real_ip: "",
+    root_ca: "",
     tunnel_type: "quic",
     tunnel_id: "",
     tunnel_token: "",
@@ -1070,9 +1071,9 @@ defineExpose({ getRef, syncLocationJSON });
           </div>
         </template>
         <div class="space-y-4">
-          <!-- General Backend Fields -->
+          <!-- Row 1: Tunnel (left) + Real IP (right) -->
           <el-row :gutter="16">
-            <re-col :value="24" :xs="24">
+            <re-col :value="12" :xs="24">
               <el-form-item :label="t('http.assocTunnel', 'Tunnel')">
                 <el-select
                   v-model="selectedTunnelNodeKey"
@@ -1129,6 +1130,37 @@ defineExpose({ getRef, syncLocationJSON });
               </el-form-item>
             </re-col>
 
+            <re-col :value="12" :xs="24">
+              <el-form-item :label="t('http.realIp', '真实IP')">
+                <el-input
+                  v-model="newFormInline.real_ip"
+                  :placeholder="t('http.realIpPlaceholder', '如 192.168.1.100')"
+                  clearable
+                />
+              </el-form-item>
+            </re-col>
+          </el-row>
+
+          <!-- Row 2: RootCA (full width) -->
+          <el-row :gutter="16">
+            <re-col :value="24" :xs="24">
+              <el-form-item :label="t('http.rootCA', 'RootCA')">
+                <el-input
+                  v-model="newFormInline.root_ca"
+                  type="textarea"
+                  :rows="4"
+                  :placeholder="t('http.rootCAPlaceholder', '-----BEGIN CERTIFICATE-----\n...\n-----END CERTIFICATE-----')"
+                  class="font-mono text-xs"
+                />
+                <div class="text-xs text-(--el-text-color-secondary) mt-1 leading-relaxed">
+                  {{ t('http.rootCATip', '上游 HTTPS 服务器使用自签名或私有 CA 证书时，粘贴 PEM 格式根证书。留空使用系统信任链。') }}
+                </div>
+              </el-form-item>
+            </re-col>
+          </el-row>
+
+          <!-- Row 3: DNS Resolver (full width) -->
+          <el-row :gutter="16">
             <re-col :value="24" :xs="24">
               <el-form-item :label="t('http.dnsResolver', 'DNS')">
                 <div class="w-full flex flex-col space-y-2">

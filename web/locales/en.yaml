@@ -908,6 +908,11 @@ http:
   dnsResolverPlaceholder: "8.8.8.8:53 (Leave empty for system default DNS)"
   dragToReorder: "Drag to reorder"
   addDns: "Add"
+  realIp: "Real IP"
+  realIpPlaceholder: "e.g. 192.168.1.100 (leave empty for normal DNS)"
+  rootCA: "RootCA"
+  rootCAPlaceholder: "-----BEGIN CERTIFICATE-----\n...\n-----END CERTIFICATE-----"
+  rootCATip: "Paste the PEM root certificate when upstream uses a self-signed or private CA cert. Leave empty to use the system trust store."
 
 
   locationTitle: "Path Mapping & Load Balancing"

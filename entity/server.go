@@ -162,12 +162,19 @@ type HTTPLocation struct {
 	Upstream LocationUpstream `json:"Upstream"`
 }
 
+// RootCAConfig holds a PEM-encoded root CA certificate for upstream TLS verification.
+// It mirrors backends.RootCAConfig in the ang engine.
+type RootCAConfig struct {
+	PEM string `json:"PEM"`
+}
+
 // HTTPBackend represents HTTP backend config
 type HTTPBackend struct {
-	RealIp       string         `json:"RealIp"`
-	Tunnel       *BackendTunnel `json:"Tunnel,omitempty"`
-	DNSResolver  []string       `json:"DNSResolver,omitempty"`
-	Location     []HTTPLocation `json:"Location,omitempty"`
+	RealIp      string         `json:"RealIp"`
+	RootCA      *RootCAConfig  `json:"RootCA,omitempty"`
+	Tunnel      *BackendTunnel `json:"Tunnel,omitempty"`
+	DNSResolver []string       `json:"DNSResolver,omitempty"`
+	Location    []HTTPLocation `json:"Location,omitempty"`
 }
 
 // HTTPConfig represents a single item in HTTP section

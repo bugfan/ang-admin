@@ -908,6 +908,11 @@ http:
   dnsResolverPlaceholder: "8.8.8.8:53 (留空使用系统默认 DNS)"
   dragToReorder: "拖动改变顺序"
   addDns: "添加"
+  realIp: "真实IP"
+  realIpPlaceholder: "如 192.168.1.100 (留空走正常 DNS 解析)"
+  rootCA: "RootCA"
+  rootCAPlaceholder: "-----BEGIN CERTIFICATE-----\n...\n-----END CERTIFICATE-----"
+  rootCATip: "上游 HTTPS 服务器使用自签名或私有 CA 证书时，粘贴 PEM 格式根证书。留空使用系统信任链。"
 
 
   locationTitle: "路径映射与负载均衡"

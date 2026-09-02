@@ -16,6 +16,7 @@ type HttpProxy struct {
 	Compress     bool      `xorm:"bool 'compress'" json:"compress"`
 	Rules        string    `xorm:"text 'rules'" json:"rules"`                 // JSON array e.g. ["规则1"]
 	RealIp       string    `xorm:"varchar(255) 'real_ip'" json:"real_ip"`
+	RootCA       string    `xorm:"text 'root_ca'" json:"root_ca"` // PEM-formatted root CA certificate for upstream TLS verification
 	TunnelType   string    `xorm:"varchar(50) 'tunnel_type'" json:"tunnel_type"`
 	TunnelId     string    `xorm:"varchar(100) 'tunnel_id'" json:"tunnel_id"`
 	TunnelToken  string    `xorm:"varchar(255) 'tunnel_token'" json:"tunnel_token"`

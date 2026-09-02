@@ -29,8 +29,9 @@ type httpProxyHandler struct {
 	ProxyHeaders string `json:"proxy_headers"`
 	Compress     bool   `json:"compress"`
 	Rules        string `json:"rules"`
-	RealIp       string `json:"real_ip"`
-	TunnelType   string `json:"tunnel_type"`
+	RealIp       string    `json:"real_ip"`
+	RootCA       string    `json:"root_ca"`
+	TunnelType   string    `json:"tunnel_type"`
 	TunnelId     string `json:"tunnel_id"`
 	TunnelToken  string `json:"tunnel_token"`
 	DNSResolver  string `json:"dns_resolver"`
@@ -93,6 +94,7 @@ func (h *httpProxyHandler) List(c *gin.Context) {
 			Compress:     item.Compress,
 			Rules:        item.Rules,
 			RealIp:       item.RealIp,
+			RootCA:       item.RootCA,
 			TunnelType:   item.TunnelType,
 			TunnelId:     item.TunnelId,
 			TunnelToken:  item.TunnelToken,

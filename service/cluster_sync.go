@@ -194,6 +194,17 @@ func buildDNSMap(rulesMap map[string]models.Rule) map[string]entity.DNSConfig {
 	return dnsMap
 }
 
+// buildRootCAConfig converts a PEM string to an entity.RootCAConfig pointer.
+// Returns nil when pem is blank so that "RootCA" is omitted from JSON output entirely,
+// which prevents the ang engine from replacing its system trust store with an empty pool.
+func buildRootCAConfig(pem string) *entity.RootCAConfig {
+	pem = strings.TrimSpace(pem)
+	if pem == "" {
+		return nil
+	}
+	return &entity.RootCAConfig{PEM: pem}
+}
+
 func buildHTTPMap(rulesMap map[string]models.Rule) map[string]entity.HTTPConfig {
 	engine := models.GetEngine()
 	if engine == nil {
@@ -316,6 +327,7 @@ func buildHTTPMap(rulesMap map[string]models.Rule) map[string]entity.HTTPConfig 
 			Rule: ruleConfigs,
 			Backend: entity.HTTPBackend{
 				RealIp:      item.RealIp,
+				RootCA:      buildRootCAConfig(item.RootCA),
 				Tunnel:      backendTunnel,
 				DNSResolver: dnsResolver,
 				Location:    locations,
