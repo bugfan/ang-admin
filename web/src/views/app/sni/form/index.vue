@@ -610,7 +610,7 @@ const formRules = computed(() => ({
         <div class="flex items-center space-x-2">
           <div class="w-1.5 h-4 bg-purple-500 rounded-full" />
           <span class="font-bold text-(--el-text-color-primary) text-sm sm:text-base">
-            {{ t("sni.backendSection", "后端与解析") }}
+            {{ t("sni.backendSection", "上游") }}
           </span>
         </div>
       </template>

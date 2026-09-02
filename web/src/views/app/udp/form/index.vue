@@ -539,7 +539,7 @@ watch(
           <span
             class="font-bold text-(--el-text-color-primary) text-sm sm:text-base"
           >
-            {{ t("tcp.backendSection", "上游") }}
+            {{ t("udp.backendSection", "上游") }}
           </span>
         </div>
       </template>
@@ -548,7 +548,7 @@ watch(
         <!-- 1. Tunnel Selector (Top part) -->
         <el-row :gutter="16">
           <re-col :value="24" :xs="24">
-            <el-form-item :label="t('tcp.tunnel', 'Tunnel')">
+            <el-form-item :label="t('udp.tunnel', 'Tunnel')">
               <el-select
                 v-model="selectedTunnelNodeKey"
                 clearable
@@ -556,7 +556,7 @@ watch(
                 class="w-full"
                 :placeholder="
                   t(
-                    'tcp.selectTunnelPlaceholder',
+                    'udp.selectTunnelPlaceholder',
                     '选择关联的 Tunnel 客户端节点'
                   )
                 "
@@ -604,8 +604,8 @@ watch(
               <div class="text-xs text-(--el-text-color-secondary) mt-1">
                 {{
                   t(
-                    "tcp.tunnelTip",
-                    "可选配置。若选择隧道节点，TCP 流量将通过该 Tunnel 客户端进行代理转发。"
+                    "udp.tunnelTip",
+                    "可选配置。若选择隧道节点，UDP 流量将通过该 Tunnel 客户端进行代理转发。"
                   )
                 }}
               </div>
@@ -617,7 +617,7 @@ watch(
         <div class="border-t border-(--el-border-color-lighter) pt-4">
           <el-row :gutter="16" class="mb-3">
             <re-col :value="12" :xs="24">
-              <el-form-item :label="t('tcp.upstreamMethod', '负载均衡')">
+              <el-form-item :label="t('udp.upstreamMethod', '负载均衡')">
                 <el-select
                   v-model="newFormInline.upstream_method"
                   class="w-full"
@@ -635,7 +635,7 @@ watch(
           >
             <div>
               <span class="font-bold text-sm text-(--el-text-color-primary)">
-                {{ t("tcp.upstreamServers", "目标服务器地址") }}
+                {{ t("udp.upstreamServers", "目标服务器地址") }}
               </span>
             </div>
             <el-button
