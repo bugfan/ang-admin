@@ -144,6 +144,8 @@ func (t *tunnelClientHandler) List(c *gin.Context) {
 		resList = append(resList, tunnelClientHandler{
 			Id:         item.Id,
 			Name:       item.Name,
+			Type:       item.Type,
+			TunnelId:   item.TunnelId,
 			Token:      item.Token,
 			Remark:     item.Remark,
 			IsOnline:   isOnline,

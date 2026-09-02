@@ -12,7 +12,7 @@ import Delete from "~icons/ep/delete";
 
 const props = withDefaults(defineProps<{ formInline: any }>(), {
   formInline: () => ({
-    title: "新增 TCP",
+    title: "新增 UDP",
     id: undefined,
     name: "",
     address: "",
@@ -31,7 +31,7 @@ const ruleFormRef = ref();
 const newFormInline = ref(props.formInline);
 const { t } = useI18n();
 
-// Rules multi-select & ordering (L4 rules only for TCP Proxy)
+// Rules multi-select & ordering (L4 rules only for UDP Proxy)
 const availableRules = ref<
   Array<{ label: string; value: string; desc?: string }>
 >([]);
@@ -157,16 +157,18 @@ async function fetchTunnelNodes() {
       list = res;
     }
 
+    // Filter ONLY QUIC tunnels for UDP proxy (UDP runs over QUIC tunnel)
+    list = list.filter((tItem: any) => {
+      const rawType = (tItem.Type || tItem.type || "").toLowerCase();
+      return rawType.includes("quic");
+    });
+
     const groups: TunnelGroup[] = [];
     list.forEach((tItem: any) => {
       const tidStr = String(tItem.Id || tItem.id);
       const tName = tItem.Name || tItem.name || "";
       const tPort = tItem.Port || tItem.port || "";
-      const tType = (tItem.Type || tItem.type || "TLS")
-        .toLowerCase()
-        .includes("quic")
-        ? "quic"
-        : "tls";
+      const tType = "quic";
 
       const portLabel = `${t("tunnel.port", "端口")}: ${tPort}`;
       const groupLabel = `${tName ? "[" + tName + "] " : ""}Tunnel #${tidStr} (${tType.toUpperCase()} | ${portLabel})`;
@@ -248,7 +250,7 @@ function syncSelectedTunnelNodeKey() {
       g => String(g.tunnel_id) === String(tid)
     );
     const fallbackKey = `${tid}|${token || ""}`;
-    const tType = newFormInline.value.tunnel_type || "tls";
+    const tType = "quic";
     const fallbackName = token
       ? `Node-${token.length > 6 ? token.slice(-6) : token}`
       : t("tunnelClient.nodeRef", "节点");
@@ -280,7 +282,7 @@ function handleTunnelNodeChange(val: string) {
   if (!val) {
     newFormInline.value.tunnel_id = "";
     newFormInline.value.tunnel_token = "";
-    newFormInline.value.tunnel_type = "";
+    newFormInline.value.tunnel_type = "quic";
     return;
   }
   let allOpts: TunnelGroupOption[] = [];
@@ -291,7 +293,7 @@ function handleTunnelNodeChange(val: string) {
   if (match && !match.disabled) {
     newFormInline.value.tunnel_id = match.tunnel_id;
     newFormInline.value.tunnel_token = match.tunnel_token;
-    newFormInline.value.tunnel_type = match.tunnel_type;
+    newFormInline.value.tunnel_type = "quic";
   }
 }
 

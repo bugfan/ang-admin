@@ -11,7 +11,7 @@ import {
   deleteHttpProxy,
   type HttpProxyItem
 } from "@/api/http_proxy";
-import { getTunnelList } from "@/api/tunnel";
+import { getTunnelClientList } from "@/api/tunnel-client";
 import { type Ref, h, ref, computed, toRaw, reactive, onMounted } from "vue";
 
 export function useHttpProxy(t: any, tableRef: Ref) {
@@ -33,7 +33,7 @@ export function useHttpProxy(t: any, tableRef: Ref) {
       : "total, sizes, prev, pager, next, jumper"
   });
 
-  const tunnelMap = ref<Record<string, string>>({});
+  const tunnelMap = ref<Record<string, any>>({});
 
   const columns = computed<TableColumnList>(() => [
     {
@@ -240,29 +240,34 @@ export function useHttpProxy(t: any, tableRef: Ref) {
       ),
       cellRenderer: scope => {
         const row = scope.row;
-        const tunnelId = row.TunnelId || row.tunnel_id;
-        const tunnelToken = row.TunnelToken || row.tunnel_token || "";
-        const mapKey = `${tunnelId}|${tunnelToken}`;
-        const tName = tunnelMap.value[mapKey];
-        let displayName = `${(row.TunnelType || row.tunnel_type || "TLS").toUpperCase()} ${tunnelId}`;
-        if (tName) {
-          displayName = tName;
+        const tunnelId = String(row.TunnelId ?? row.tunnel_id ?? "").trim();
+        const tunnelToken = String(row.TunnelToken ?? row.tunnel_token ?? "").trim();
+        const tunnelType = String(row.TunnelType ?? row.tunnel_type ?? "TLS").toUpperCase();
+
+        if (!tunnelId && !tunnelToken) {
+          return (
+            <div class="flex justify-center items-center h-full w-full py-1">
+              <span class="text-(--el-text-color-placeholder) text-xs">-</span>
+            </div>
+          );
         }
+
+        const mapKey = `${tunnelId}|${tunnelToken}`;
+        const tInfo = tunnelMap.value[tunnelToken] || tunnelMap.value[mapKey] || tunnelMap.value[tunnelId];
+
+        const displayName = tInfo?.name || `${tunnelType} ${tunnelId || tunnelToken}`;
+        const isOnline = Boolean(tInfo?.isOnline);
 
         return (
           <div class="flex justify-center items-center h-full w-full py-1">
-            {tunnelId ? (
-              <el-tag
-                size="small"
-                type="success"
-                effect="light"
-                class="font-mono whitespace-nowrap"
-              >
-                {displayName}
-              </el-tag>
-            ) : (
-              <span class="text-(--el-text-color-placeholder) text-xs">-</span>
-            )}
+            <span
+              class={[
+                "font-mono font-bold text-sm whitespace-nowrap",
+                isOnline ? "text-(--el-color-success)" : "text-gray-400"
+              ]}
+            >
+              {displayName}
+            </span>
           </div>
         );
       }
@@ -590,31 +595,47 @@ export function useHttpProxy(t: any, tableRef: Ref) {
     });
   }
 
-  async function fetchTunnelNames() {
+    async function fetchTunnelNames() {
     try {
-      const res = await getTunnelList();
-      let list: any[] = [];
-      if (Array.isArray(res?.data?.list)) list = res.data.list;
-      else if (Array.isArray(res?.data)) list = res.data;
-      else if (Array.isArray(res)) list = res;
+      const clientRes = await getTunnelClientList();
+      let cList: any[] = [];
+      if (Array.isArray(clientRes?.data?.list)) cList = clientRes.data.list;
+      else if (Array.isArray(clientRes?.data)) cList = clientRes.data;
+      else if (Array.isArray(clientRes?.list)) cList = clientRes.list;
+      else if (Array.isArray(clientRes)) cList = clientRes;
 
-      const map: Record<string, string> = {};
-      list.forEach((tItem: any) => {
-        const tid = String(tItem.Id || tItem.id);
-        const cNodes = tItem.client_nodes || tItem.ClientNodes || [];
-        cNodes.forEach((c: any) => {
-          const cName = c.Name || c.name || "";
-          if (cName) {
-            map[`${tid}|${c.token || c.Token}`] = cName;
+      const map: Record<string, { name: string; isOnline: boolean }> = {};
+      cList.forEach((c: any) => {
+        const tid = String(c.TunnelId ?? c.tunnel_id ?? "").trim();
+        const tkn = String(c.Token ?? c.token ?? "").trim();
+        const cName = String(c.Name ?? c.name ?? "").trim();
+        const isOnline = Boolean(c.IsOnline ?? c.is_online);
+
+        if (cName) {
+          const info = { name: cName, isOnline };
+          if (tkn) {
+            map[tkn] = info;
+            if (tid) {
+              map[`${tid}|${tkn}`] = info;
+            }
           }
-        });
+          if (tid && !map[tid]) {
+            map[tid] = info;
+          }
+        }
       });
+
       tunnelMap.value = map;
-    } catch (e) {}
+      if (Array.isArray(dataList.value)) {
+        dataList.value = [...dataList.value];
+      }
+    } catch (e) {
+      console.error("fetchTunnelNames failed:", e);
+    }
   }
 
-  onMounted(() => {
-    fetchTunnelNames();
+  onMounted(async () => {
+    await fetchTunnelNames();
     onSearch();
   });
 
