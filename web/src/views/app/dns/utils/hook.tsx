@@ -86,11 +86,6 @@ export function useDnsProxy(t: any, tableRef: Ref) {
       }
     },
     {
-      label: t("dns.hosts"),
-      minWidth: 180,
-      slot: "hosts"
-    },
-    {
       label: t("dns.rules"),
       align: "center",
       minWidth: 160,

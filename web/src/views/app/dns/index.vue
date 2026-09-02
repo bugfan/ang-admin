@@ -47,71 +47,6 @@ const {
   handleSelectionChange
 } = useDnsProxy(t, tableRef);
 
-type GroupedHost = {
-  ip: string;
-  isIPv6: boolean;
-  domains: string[];
-};
-
-function parseHostsJSON(hostsJsonStr: string) {
-  let aMap: Record<string, string> = {};
-  let aaaaMap: Record<string, string> = {};
-  try {
-    if (hostsJsonStr) {
-      const parsed = JSON.parse(hostsJsonStr);
-      if (parsed.A) aMap = parsed.A;
-      if (parsed.AAAA) aaaaMap = parsed.AAAA;
-    }
-  } catch (e) {
-    // ignore
-  }
-
-  const aGroupMap: Record<string, string[]> = {};
-  for (const [domain, ip] of Object.entries(aMap)) {
-    if (!aGroupMap[ip]) aGroupMap[ip] = [];
-    if (!aGroupMap[ip].includes(domain)) aGroupMap[ip].push(domain);
-  }
-
-  const aaaaGroupMap: Record<string, string[]> = {};
-  for (const [domain, ip] of Object.entries(aaaaMap)) {
-    if (!aaaaGroupMap[ip]) aaaaGroupMap[ip] = [];
-    if (!aaaaGroupMap[ip].includes(domain)) aaaaGroupMap[ip].push(domain);
-  }
-
-  const aList: GroupedHost[] = Object.entries(aGroupMap).map(
-    ([ip, domains]) => ({
-      ip,
-      isIPv6: false,
-      domains
-    })
-  );
-
-  const aaaaList: GroupedHost[] = Object.entries(aaaaGroupMap).map(
-    ([ip, domains]) => ({
-      ip,
-      isIPv6: true,
-      domains
-    })
-  );
-
-  return {
-    aCount: Object.keys(aMap).length,
-    aaaaCount: Object.keys(aaaaMap).length,
-    aMap,
-    aaaaMap,
-    aList,
-    aaaaList
-  };
-}
-
-function formatDomains(domains: string[]): string {
-  if (!domains || domains.length === 0) return "";
-  if (domains.length <= 2) {
-    return domains.join(" ");
-  }
-  return `${domains[0]} ${domains[1]} ...`;
-}
-
 function parseUpstreamServers(serversStr: string) {
   try {
     if (serversStr) {
@@ -346,163 +281,13 @@ async function handleSaveSubmit() {
             @page-size-change="handleSizeChange"
             @page-current-change="handleCurrentChange"
           >
-            <!-- 1. Hosts 域名映射列 -->
-            <template #hosts="{ row }">
-              <el-popover placement="top" :width="360" trigger="hover">
-                <template #reference>
-                  <div class="inline-flex items-center gap-1.5 cursor-pointer">
-                    <template
-                      v-if="
-                        parseHostsJSON(row.hosts_json || row.HostsJSON).aCount >
-                          0 ||
-                        parseHostsJSON(row.hosts_json || row.HostsJSON)
-                          .aaaaCount > 0
-                      "
-                    >
-                      <el-tag
-                        size="small"
-                        type="primary"
-                        effect="light"
-                        class="font-mono font-bold"
-                      >
-                        A:
-                        {{
-                          parseHostsJSON(row.hosts_json || row.HostsJSON).aCount
-                        }}
-                      </el-tag>
-                      <el-tag
-                        size="small"
-                        type="success"
-                        effect="light"
-                        class="font-mono font-bold"
-                      >
-                        AAAA:
-                        {{
-                          parseHostsJSON(row.hosts_json || row.HostsJSON)
-                            .aaaaCount
-                        }}
-                      </el-tag>
-                    </template>
-                    <el-tag
-                      v-else
-                      type="info"
-                      size="small"
-                      effect="plain"
-                      class="text-gray-400"
-                    >
-                      {{ t("dns.noHostsConfig") }}
-                    </el-tag>
-                  </div>
-                </template>
-
-                <!-- Popover 浮层内容 -->
-                <div class="p-1 text-xs">
-                  <div class="font-bold border-b pb-1 mb-2 flex-bc">
-                    <span class="inline-flex items-center gap-1">
-                      <IconifyIconOffline icon="ri:file-list-3-line" />
-                      {{ t("dns.hostsList") }}
-                    </span>
-                    <span class="text-gray-400 font-mono"
-                      >ID: {{ row.Id || row.id }}</span
-                    >
-                  </div>
-
-                  <div
-                    v-if="
-                      parseHostsJSON(row.hosts_json || row.HostsJSON).aCount ===
-                        0 &&
-                      parseHostsJSON(row.hosts_json || row.HostsJSON)
-                        .aaaaCount === 0
-                    "
-                    class="text-gray-400 text-center py-2"
-                  >
-                    {{ t("dns.noHostsConfig") }}
-                  </div>
-
-                  <div v-else class="space-y-2 max-h-60 overflow-auto">
-                    <!-- A 记录 (IPv4) -->
-                    <div
-                      v-if="
-                        parseHostsJSON(row.hosts_json || row.HostsJSON).aList
-                          .length > 0
-                      "
-                      class="space-y-1"
-                    >
-                      <div
-                        class="font-semibold text-blue-600 dark:text-blue-400 text-[11px]"
-                      >
-                        {{ t("dns.aRecord") }}
-                      </div>
-                      <div
-                        v-for="item in parseHostsJSON(
-                          row.hosts_json || row.HostsJSON
-                        ).aList"
-                        :key="item.ip"
-                        class="p-1.5 bg-(--el-fill-color-light) rounded font-mono flex-bc gap-2 border border-(--el-border-color-lighter) text-xs overflow-hidden"
-                      >
-                        <span
-                          class="font-semibold text-blue-600 dark:text-blue-400 shrink-0"
-                          >{{ item.ip }}</span
-                        >
-                        <span
-                          class="text-(--el-text-color-primary) font-medium truncate text-right"
-                          :title="item.domains.join(' ')"
-                        >
-                          {{ formatDomains(item.domains) }}
-                        </span>
-                      </div>
-                    </div>
-
-                    <!-- AAAA 记录 (IPv6) -->
-                    <div
-                      v-if="
-                        parseHostsJSON(row.hosts_json || row.HostsJSON).aaaaList
-                          .length > 0
-                      "
-                      class="space-y-1"
-                    >
-                      <div
-                        class="font-semibold text-emerald-600 dark:text-emerald-400 text-[11px]"
-                      >
-                        {{ t("dns.aaaaRecord") }}
-                      </div>
-                      <div
-                        v-for="item in parseHostsJSON(
-                          row.hosts_json || row.HostsJSON
-                        ).aaaaList"
-                        :key="item.ip"
-                        class="p-1.5 bg-(--el-fill-color-light) rounded font-mono flex-bc gap-2 border border-(--el-border-color-lighter) text-xs overflow-hidden"
-                      >
-                        <span
-                          class="font-semibold text-emerald-600 dark:text-emerald-400 shrink-0"
-                          >{{ item.ip }}</span
-                        >
-                        <span
-                          class="text-(--el-text-color-primary) font-medium truncate text-right"
-                          :title="item.domains.join(' ')"
-                        >
-                          {{ formatDomains(item.domains) }}
-                        </span>
-                      </div>
-                    </div>
-                  </div>
-                </div>
-              </el-popover>
-            </template>
-
-            <!-- 2. 折叠展开明细行 -->
+            <!-- 折叠展开明细行 -->
             <template #expand="{ row }">
               <div
                 class="p-3 sm:p-4 bg-(--el-fill-color-light) rounded-xl m-1 sm:my-2 sm:mx-4 border border-(--el-border-color-lighter) space-y-3 text-xs"
               >
                 <div
-                  v-if="
-                    row.hosts_text ||
-                    parseHostsJSON(row.hosts_json || row.HostsJSON).aCount >
-                      0 ||
-                    parseHostsJSON(row.hosts_json || row.HostsJSON).aaaaCount >
-                      0
-                  "
+                  v-if="row.hosts_text"
                   class="space-y-1.5"
                 >
                   <div
@@ -510,27 +295,12 @@ async function handleSaveSubmit() {
                   >
                     <span class="inline-flex items-center gap-1">
                       <IconifyIconOffline icon="ri:file-text-line" />
-                      {{ t("dns.hostsTab") }}:
-                    </span>
-                    <span class="text-gray-400 font-mono">
-                      A:
-                      {{
-                        parseHostsJSON(row.hosts_json || row.HostsJSON).aCount
-                      }}
-                      / AAAA:
-                      {{
-                        parseHostsJSON(row.hosts_json || row.HostsJSON)
-                          .aaaaCount
-                      }}
+                      {{ t("dns.hostsTab") }}
                     </span>
                   </div>
                   <pre
-                    v-if="row.hosts_text"
                     class="p-3 bg-gray-900 text-gray-100 rounded-lg text-xs/relaxed font-mono overflow-auto max-h-40"
                     >{{ row.hosts_text }}</pre>
-                  <div v-else class="text-gray-400 text-xs">
-                    {{ t("dns.noHostsConfig") }}
-                  </div>
                 </div>
 
                 <div
