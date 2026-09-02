@@ -164,9 +164,80 @@ export function useDnsProxy(t: any, tableRef: Ref) {
       }
     },
     {
-      label: t("dns.backend"),
+      label: t("dns.backend", "上游"),
       minWidth: 200,
-      slot: "backend"
+      cellRenderer: scope => {
+        const row = scope.row;
+        const serversStr = row.UpstreamServers || row.upstream_servers || "";
+        let servers: Array<{ target: string; weight: number }> = [];
+        try {
+          if (serversStr) {
+            const parsed =
+              typeof serversStr === "string"
+                ? JSON.parse(serversStr)
+                : serversStr;
+            if (Array.isArray(parsed)) {
+              servers = parsed
+                .map((item: any) => ({
+                  target: item.target || item.Target || "",
+                  weight: Number(item.weight || item.Weight || 1)
+                }))
+                .filter((item: any) => item.target);
+            }
+          }
+        } catch (e) {}
+
+        if (!servers || servers.length === 0) {
+          return (
+            <span class="text-(--el-text-color-placeholder) text-xs">-</span>
+          );
+        }
+
+        const method =
+          row.UpstreamMethod || row.upstream_method || "round_robin";
+
+        const serverChunks: any[][] = [];
+        for (let i = 0; i < servers.length; i += 2) {
+          serverChunks.push(servers.slice(i, i + 2));
+        }
+
+        return (
+          <div class="p-1.5 rounded-lg border border-(--el-border-color-lighter) bg-(--el-fill-color-light) space-y-1 py-1">
+            <div class="flex items-center gap-1.5 flex-wrap">
+              <el-tag
+                size="small"
+                type="info"
+                effect="plain"
+                class="text-[11px] font-mono font-bold"
+              >
+                {method}
+              </el-tag>
+              <span class="text-xs text-gray-400">
+                ({servers.length})
+              </span>
+            </div>
+            <div class="space-y-1 pt-0.5">
+              {serverChunks.map((chunk, cIdx) => (
+                <div key={cIdx} class="flex items-center gap-1.5 flex-wrap">
+                  {chunk.map((srv, sIdx) => (
+                    <span
+                      key={sIdx}
+                      class="inline-flex items-center gap-1 font-mono text-[11px] bg-(--el-bg-color) px-1.5 py-0.5 rounded border border-(--el-border-color-lighter) shrink-0"
+                    >
+                      <span class="font-medium text-(--el-text-color-primary)">
+                        {srv.target}
+                      </span>
+                      <span class="text-[10px] text-gray-400 font-normal">
+                        ({srv.weight})
+                      </span>
+                    </span>
+                  ))}
+                </div>
+              ))}
+            </div>
+          </div>
+        );
+      }
     },
     {
       label: t("dns.remark"),

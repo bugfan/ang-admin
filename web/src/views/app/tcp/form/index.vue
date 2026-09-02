@@ -132,9 +132,9 @@ interface TunnelGroupOption {
   tunnel_id: string;
   tunnel_token: string;
   tunnel_type: string;
-  cName: string;
-  isOnline: boolean;
-  disabled: boolean;
+  cName?: string;
+  isOnline?: boolean;
+  disabled?: boolean;
 }
 
 interface TunnelGroup {
@@ -324,12 +324,22 @@ const upstreamError = ref("");
 
 function syncUpstreamToForm() {
   newFormInline.value.upstream_servers = JSON.stringify(upstreamList.value);
+  const targets = upstreamList.value.map(s => (s.target || "").trim()).filter(Boolean);
+  const duplicates = targets.filter((item, index) => targets.indexOf(item) !== index);
+  if (duplicates.length > 0) {
+    upstreamError.value = t("common.upstreamTargetDuplicate", { target: duplicates[0] }, `上游列表中存在重复的目标服务器地址 [${duplicates[0]}]`);
+    return;
+  }
   if (!upstreamList.value.some(s => !s.target || s.target.trim() === "")) {
     upstreamError.value = "";
   }
 }
 
 function addUpstreamRow() {
+  if (upstreamList.value.some(s => !s.target || s.target.trim() === "")) {
+    message(t("common.targetEmptyExists", "已存在未填写的目标服务器项，请先填写完整"), { type: "warning" });
+    return;
+  }
   upstreamList.value.push({ target: "", weight: 1 });
   syncUpstreamToForm();
 }
@@ -370,15 +380,22 @@ function getRef() {
         const hasEmptyTarget = upstreamList.value.some(s => !s.target || s.target.trim() === "");
         if (hasEmptyTarget) {
           upstreamError.value = t("tcp.targetRequired", "请输入目标地址");
-        } else {
-          upstreamError.value = "";
-        }
-        
-        if (!valid || hasEmptyTarget) {
           callback(false);
           return;
         }
-        callback(true);
+
+        const targets = upstreamList.value.map(s => (s.target || "").trim()).filter(Boolean);
+        const duplicates = targets.filter((item, index) => targets.indexOf(item) !== index);
+        if (duplicates.length > 0) {
+          const errMsg = t("common.upstreamTargetDuplicate", { target: duplicates[0] }, `上游列表中存在重复的目标服务器地址 [${duplicates[0]}]`);
+          upstreamError.value = errMsg;
+          message(errMsg, { type: "warning" });
+          callback(false);
+          return;
+        }
+
+        upstreamError.value = "";
+        callback(valid);
       });
     }
   };
@@ -681,6 +698,7 @@ watch(
                         '如 127.0.0.1:9999 或 10.0.0.5:3306'
                       )
                     "
+                    @input="syncUpstreamToForm"
                     @change="syncUpstreamToForm"
                   />
                 </template>

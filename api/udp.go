@@ -1,6 +1,8 @@
 package api
 
 import (
+	"encoding/json"
+	"fmt"
 	"net/http"
 	"strconv"
 	"strings"
@@ -76,6 +78,31 @@ func (t *udpHandler) Before(g *gin.Context, x *xorm.Engine) bool {
 				"message":   "该监听端口已被其他 UDP 代理占用",
 			})
 			return false
+		}
+
+		// Check upstream servers duplicate targets
+		if t.UpstreamServers != "" {
+			var servers []struct {
+				Target string `json:"target"`
+				Weight int    `json:"weight"`
+			}
+			if err := json.Unmarshal([]byte(t.UpstreamServers), &servers); err == nil {
+				seen := make(map[string]bool)
+				for _, s := range servers {
+					tgt := strings.TrimSpace(s.Target)
+					if tgt != "" {
+						if seen[tgt] {
+							g.AbortWithStatusJSON(http.StatusOK, gin.H{
+								"code":      1,
+								"error_key": "targetDuplicate",
+								"message":   fmt.Sprintf("上游列表中存在重复的目标服务器地址 [%s]", tgt),
+							})
+							return false
+						}
+						seen[tgt] = true
+					}
+				}
+			}
 		}
 
 		if t.Name == "" {

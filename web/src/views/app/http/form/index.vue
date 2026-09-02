@@ -11,6 +11,7 @@ import AddFill from "~icons/ri/add-line";
 import Delete from "~icons/ep/delete";
 import Rank from "~icons/ep/rank";
 import WarningIcon from "~icons/ep/warning";
+import { message } from "@/utils/message";
 import Sortable from "sortablejs";
 
 export interface LocationItem {
@@ -167,9 +168,12 @@ function removeDnsResolver(idx: number) {
   syncDnsResolver();
 }
 
+const dnsError = ref("");
+
 function syncDnsResolver() {
   let hasEmpty = false;
   const activeList = [];
+  const nonEmpties: string[] = [];
   for (const item of dnsResolverList.value) {
     const val = item.value.trim();
     if (val === "") {
@@ -179,9 +183,21 @@ function syncDnsResolver() {
       }
     } else {
       activeList.push(val);
+      nonEmpties.push(val);
     }
   }
   newFormInline.value.dns_resolver = JSON.stringify(activeList);
+
+  const duplicates = nonEmpties.filter((item, idx) => nonEmpties.indexOf(item) !== idx);
+  if (duplicates.length > 0) {
+    dnsError.value = t(
+      "common.upstreamTargetDuplicate",
+      { target: duplicates[0] },
+      `上游列表中存在重复的目标服务器地址 [${duplicates[0]}]`
+    );
+  } else {
+    dnsError.value = "";
+  }
 }
 
 onMounted(() => {
@@ -664,8 +680,12 @@ function addUpstreamServer(locIdx: number) {
   if (!loc || loc.Upstream.Type !== "proxy_pass") return;
   if (!loc.Upstream.Data) loc.Upstream.Data = {};
   if (!Array.isArray(loc.Upstream.Data.Servers)) loc.Upstream.Data.Servers = [];
+  if (loc.Upstream.Data.Servers.some((s: any) => !s.Target || s.Target.trim() === "")) {
+    message(t("common.targetEmptyExists", "已存在未填写的目标服务器项，请先填写完整"), { type: "warning" });
+    return;
+  }
   loc.Upstream.Data.Servers.push({
-    Target: "http://127.0.0.1:8081",
+    Target: "",
     Weight: 1
   });
   syncLocationJSON();
@@ -713,13 +733,22 @@ function syncLocationJSON() {
     };
   });
   
-  // clear errors for locations that are now valid
+  // Validate servers in each proxy_pass location
+  locationErrors.value = {};
   for (let i = 0; i < locationList.value.length; i++) {
     const loc = locationList.value[i];
-    if (loc.Upstream?.Type === "proxy_pass" && locationErrors.value[i]) {
+    if (loc.Upstream?.Type === "proxy_pass") {
       const servers = loc.Upstream.Data?.Servers || [];
-      if (!servers.some((s: any) => !s.Target || s.Target.trim() === "")) {
-        locationErrors.value[i] = false;
+      const targets = servers.map((s: any) => (s.Target || "").trim()).filter(Boolean);
+      const duplicates = targets.filter((item: string, index: number) => targets.indexOf(item) !== index);
+      if (duplicates.length > 0) {
+        locationErrors.value[i] = t(
+          "common.upstreamTargetDuplicate",
+          { target: duplicates[0] },
+          `上游列表中存在重复的目标服务器地址 [${duplicates[0]}]`
+        );
+      } else if (servers.some((s: any) => !s.Target || s.Target.trim() === "")) {
+        locationErrors.value[i] = t("tcp.targetRequired", "请输入目标地址");
       }
     }
   }
@@ -764,28 +793,55 @@ const formRules = reactive({
   certificate: [{ validator: validateCertificate, trigger: ["change", "blur"] }]
 });
 
-const locationErrors = ref<Record<number, boolean>>({});
+const locationErrors = ref<Record<number, string>>({});
 
 function getRef() {
   syncLocationJSON();
+  syncDnsResolver();
   return {
     validate: (callback: (valid: boolean) => void) => {
       httpFormRef.value.validate((valid: boolean) => {
-        let hasEmptyTarget = false;
-        locationErrors.value = {}; // reset
+        let hasError = false;
         
         for (let i = 0; i < locationList.value.length; i++) {
           const loc = locationList.value[i];
           if (loc.Upstream?.Type === "proxy_pass") {
-             const servers = loc.Upstream.Data?.Servers || [];
-             if (servers.some((s: any) => !s.Target || s.Target.trim() === "")) {
-               locationErrors.value[i] = true;
-               hasEmptyTarget = true;
-             }
+            const servers = loc.Upstream.Data?.Servers || [];
+            const targets = servers.map((s: any) => (s.Target || "").trim()).filter(Boolean);
+            const duplicates = targets.filter((item: string, index: number) => targets.indexOf(item) !== index);
+            if (duplicates.length > 0) {
+              const errMsg = t(
+                "common.upstreamTargetDuplicate",
+                { target: duplicates[0] },
+                `上游列表中存在重复的目标服务器地址 [${duplicates[0]}]`
+              );
+              locationErrors.value[i] = errMsg;
+              message(errMsg, { type: "warning" });
+              hasError = true;
+              break;
+            } else if (servers.some((s: any) => !s.Target || s.Target.trim() === "")) {
+              locationErrors.value[i] = t("tcp.targetRequired", "请输入目标地址");
+              hasError = true;
+            }
           }
         }
+
+        const dnsVals = dnsResolverList.value.map(d => d.value.trim()).filter(Boolean);
+        const dupDns = dnsVals.filter((item, idx) => dnsVals.indexOf(item) !== idx);
+        if (dupDns.length > 0) {
+          const errMsg = t(
+            "common.upstreamTargetDuplicate",
+            { target: dupDns[0] },
+            `上游列表中存在重复的目标服务器地址 [${dupDns[0]}]`
+          );
+          dnsError.value = errMsg;
+          message(errMsg, { type: "warning" });
+          hasError = true;
+        } else {
+          dnsError.value = "";
+        }
         
-        if (!valid || hasEmptyTarget) {
+        if (!valid || hasError) {
           callback(false);
           return;
         }
@@ -1141,25 +1197,7 @@ defineExpose({ getRef, syncLocationJSON });
             </re-col>
           </el-row>
 
-          <!-- Row 2: RootCA (full width) -->
-          <el-row :gutter="16">
-            <re-col :value="24" :xs="24">
-              <el-form-item :label="t('http.rootCA', 'RootCA')">
-                <el-input
-                  v-model="newFormInline.root_ca"
-                  type="textarea"
-                  :rows="4"
-                  :placeholder="t('http.rootCAPlaceholder', '-----BEGIN CERTIFICATE-----\n...\n-----END CERTIFICATE-----')"
-                  class="font-mono text-xs"
-                />
-                <div class="text-xs text-(--el-text-color-secondary) mt-1 leading-relaxed">
-                  {{ t('http.rootCATip', '上游 HTTPS 服务器使用自签名或私有 CA 证书时，粘贴 PEM 格式根证书。留空使用系统信任链。') }}
-                </div>
-              </el-form-item>
-            </re-col>
-          </el-row>
-
-          <!-- Row 3: DNS Resolver (full width) -->
+          <!-- Row 2: DNS Resolver (full width) -->
           <el-row :gutter="16">
             <re-col :value="24" :xs="24">
               <el-form-item :label="t('http.dnsResolver', 'DNS')">
@@ -1175,7 +1213,7 @@ defineExpose({ getRef, syncLocationJSON });
                         :placeholder="
                           t(
                             'http.dnsResolverPlaceholder',
-                            '8.8.8.8:53 (留空使用系统默认 DNS)'
+                            '支持标准 DNS 与 DoH，如 8.8.8.8:53 或 https://dns.google/dns-query (留空使用系统默认 DNS)'
                           )
                         "
                         clearable
@@ -1200,16 +1238,39 @@ defineExpose({ getRef, syncLocationJSON });
                       </el-tooltip>
                     </div>
                   </div>
-                  <el-button
-                    type="primary"
-                    plain
-                    size="small"
-                    class="self-start"
-                    :icon="useRenderIcon(AddFill)"
-                    @click="addDnsResolver"
-                  >
-                    {{ t("http.addDns", "添加 DNS") }}
-                  </el-button>
+                  <div class="flex items-center justify-between w-full">
+                    <el-button
+                      type="primary"
+                      plain
+                      size="small"
+                      class="self-start"
+                      :icon="useRenderIcon(AddFill)"
+                      @click="addDnsResolver"
+                    >
+                      {{ t("http.addDns", "添加 DNS") }}
+                    </el-button>
+                  </div>
+                  <div v-if="dnsError" class="text-xs text-red-500 mt-1 ml-0.5">
+                    {{ dnsError }}
+                  </div>
+                </div>
+              </el-form-item>
+            </re-col>
+          </el-row>
+
+          <!-- Row 3: RootCA (full width) -->
+          <el-row :gutter="16">
+            <re-col :value="24" :xs="24">
+              <el-form-item :label="t('http.rootCA', 'RootCA')">
+                <el-input
+                  v-model="newFormInline.root_ca"
+                  type="textarea"
+                  :rows="4"
+                  :placeholder="t('http.rootCAPlaceholder', '-----BEGIN CERTIFICATE-----\n...\n-----END CERTIFICATE-----')"
+                  class="font-mono text-xs"
+                />
+                <div class="text-xs text-(--el-text-color-secondary) mt-1 leading-relaxed">
+                  {{ t('http.rootCATip', '上游 HTTPS 服务器使用自签名或私有 CA 证书时，粘贴 PEM 格式根证书。留空使用系统信任链。') }}
                 </div>
               </el-form-item>
             </re-col>
@@ -1437,7 +1498,7 @@ defineExpose({ getRef, syncLocationJSON });
                     </el-table>
                   </div>
                   <div v-if="locationErrors[lIdx]" class="text-xs text-red-500 mt-1.5 ml-1">
-                    {{ t("tcp.targetRequired", "请输入目标地址") }}
+                    {{ locationErrors[lIdx] }}
                   </div>
                 </div>
 

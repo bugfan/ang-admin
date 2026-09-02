@@ -1,6 +1,8 @@
 package api
 
 import (
+	"encoding/json"
+	"fmt"
 	"net/http"
 	"strconv"
 	"strings"
@@ -63,6 +65,28 @@ func (s *sniHandler) Before(g *gin.Context, x *xorm.Engine) bool {
 				"message":   "主 SNI 不能为空",
 			})
 			return false
+		}
+
+		// Check duplicate DNS resolvers
+		if s.DNSResolver != "" {
+			var resolvers []string
+			if err := json.Unmarshal([]byte(s.DNSResolver), &resolvers); err == nil {
+				seen := make(map[string]bool)
+				for _, r := range resolvers {
+					rTrim := strings.TrimSpace(r)
+					if rTrim != "" {
+						if seen[rTrim] {
+							g.AbortWithStatusJSON(http.StatusOK, gin.H{
+								"code":      1,
+								"error_key": "targetDuplicate",
+								"message":   fmt.Sprintf("上游列表中存在重复的目标服务器地址 [%s]", rTrim),
+							})
+							return false
+						}
+						seen[rTrim] = true
+					}
+				}
+			}
 		}
 
 		if s.Name == "" {

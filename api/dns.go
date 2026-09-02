@@ -144,6 +144,31 @@ func (d *dnsHandler) Before(g *gin.Context, x *xorm.Engine) bool {
 		}
 		b, _ := json.Marshal(sh)
 		d.HostsJSON = string(b)
+
+		// Check upstream servers duplicate targets
+		if d.UpstreamServers != "" {
+			var servers []struct {
+				Target string `json:"target"`
+				Weight int    `json:"weight"`
+			}
+			if err := json.Unmarshal([]byte(d.UpstreamServers), &servers); err == nil {
+				seen := make(map[string]bool)
+				for _, s := range servers {
+					tgt := strings.TrimSpace(s.Target)
+					if tgt != "" {
+						if seen[tgt] {
+							g.AbortWithStatusJSON(http.StatusOK, gin.H{
+								"code":      1,
+								"error_key": "targetDuplicate",
+								"message":   fmt.Sprintf("上游列表中存在重复的目标服务器地址 [%s]", tgt),
+							})
+							return false
+						}
+						seen[tgt] = true
+					}
+				}
+			}
+		}
 	}
 	return true
 }

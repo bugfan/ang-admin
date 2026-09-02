@@ -18,6 +18,8 @@ common:
   nameRequired: "名称不能为空"
   portRequired: "端口不能为空"
   portInvalid: "端口必须为有效数字(1-65535)"
+  targetDuplicate: "目标服务器 [{target}] 已存在，如需分配更多流量请直接调整对应权重"
+  upstreamTargetDuplicate: "上游列表中存在重复的目标服务器地址 [{target}]"
 
 buttons:
   pureAdd: 添加
@@ -905,7 +907,7 @@ http:
   tunnelNode: "Tunnel"
   tunnelNodePlaceholder: "选择关联的 Tunnel 客户端节点"
   dnsResolver: "DNS"
-  dnsResolverPlaceholder: "8.8.8.8:53 (留空使用系统默认 DNS)"
+  dnsResolverPlaceholder: "支持标准 DNS 与 DoH，如 8.8.8.8:53 或 https://dns.google/dns-query (留空使用系统默认 DNS)"
   dragToReorder: "拖动改变顺序"
   addDns: "添加"
   realIp: "真实IP"
@@ -1136,8 +1138,8 @@ sni:
   addDnsResolver: "添加"
   dnsResolver: "DNS"
   dragToReorder: "拖动改变顺序"
-  dnsResolverPlaceholder: "8.8.8.8:53 (留空使用系统默认 DNS)"
-  dnsResolverTip: "当流量未走 Tunnel 隧道转发时，系统将使用以上配置的 DNS 服务器轮询解析 SNI 目标域名。"
+  dnsResolverPlaceholder: "支持标准 DNS 与 DoH，如 8.8.8.8:53 或 https://dns.google/dns-query (留空使用系统默认 DNS)"
+  dnsResolverTip: "当流量未走 Tunnel 隧道转发时，系统将按顺序优先使用上方的 DNS 服务器解析 SNI 目标域名，仅在当前服务器解析失败或异常时自动向下尝试（类似于 /etc/resolv.conf 故障转移机制）。"
   headerDesc: "配置 SNI 代理监听端口、传输层中间件规则 (Rule) 与后端 Tunnel/DNS"
   cancel: "取消"
   save: "保存"

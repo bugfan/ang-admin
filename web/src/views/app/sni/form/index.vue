@@ -182,9 +182,12 @@ function removeDnsResolver(idx: number) {
   syncDnsResolver();
 }
 
+const dnsError = ref("");
+
 function syncDnsResolver() {
   let hasEmpty = false;
   const activeList = [];
+  const nonEmpties: string[] = [];
   for (const item of dnsResolverList.value) {
     const val = item.value.trim();
     if (val === "") {
@@ -194,9 +197,21 @@ function syncDnsResolver() {
       }
     } else {
       activeList.push(val);
+      nonEmpties.push(val);
     }
   }
   newFormInline.value.dns_resolver = JSON.stringify(activeList);
+
+  const duplicates = nonEmpties.filter((item, idx) => nonEmpties.indexOf(item) !== idx);
+  if (duplicates.length > 0) {
+    dnsError.value = t(
+      "common.upstreamTargetDuplicate",
+      { target: duplicates[0] },
+      `上游列表中存在重复的目标服务器地址 [${duplicates[0]}]`
+    );
+  } else {
+    dnsError.value = "";
+  }
 }
 
 function initDnsResolverFromProps() {
@@ -233,7 +248,27 @@ function initDnsResolverFromProps() {
 function getRef() {
   syncDnsResolver();
   syncExtraSniToForm();
-  return ruleFormRef.value;
+  return {
+    validate: (callback: (valid: boolean) => void) => {
+      ruleFormRef.value.validate((valid: boolean) => {
+        const dnsVals = dnsResolverList.value.map(d => d.value.trim()).filter(Boolean);
+        const dupDns = dnsVals.filter((item, idx) => dnsVals.indexOf(item) !== idx);
+        if (dupDns.length > 0) {
+          const errMsg = t(
+            "common.upstreamTargetDuplicate",
+            { target: dupDns[0] },
+            `上游列表中存在重复的目标服务器地址 [${dupDns[0]}]`
+          );
+          dnsError.value = errMsg;
+          message(errMsg, { type: "warning" });
+          callback(false);
+          return;
+        }
+        dnsError.value = "";
+        callback(valid);
+      });
+    }
+  };
 }
 
 defineExpose({ getRef });
@@ -672,7 +707,7 @@ const formRules = computed(() => ({
                   >
                     <el-input
                       v-model="dns.value"
-                      :placeholder="t('sni.dnsResolverPlaceholder', '8.8.8.8:53 (留空使用系统默认 DNS)')"
+                      :placeholder="t('sni.dnsResolverPlaceholder', '支持标准 DNS 与 DoH，如 8.8.8.8:53 或 https://dns.google/dns-query (留空使用系统默认 DNS)')"
                       clearable
                       @input="syncDnsResolver"
                     />
@@ -704,8 +739,11 @@ const formRules = computed(() => ({
                     {{ t("sni.addDnsResolver", "添加 DNS") }}
                   </el-button>
                 </div>
+                <div v-if="dnsError" class="text-xs text-red-500 mt-1 ml-0.5">
+                  {{ dnsError }}
+                </div>
                 <div class="text-xs text-(--el-text-color-secondary) mt-1">
-                  {{ t("sni.dnsResolverTip", "当流量未走 Tunnel 隧道转发时，系统将使用以上配置的 DNS 服务器轮询解析 SNI 目标域名。") }}
+                  {{ t("sni.dnsResolverTip", "当流量未走 Tunnel 隧道转发时，系统将按顺序优先使用上方的 DNS 服务器解析 SNI 目标域名，仅在当前服务器解析失败或异常时自动向下尝试（类似于 /etc/resolv.conf 故障转移机制）。") }}
                 </div>
               </div>
             </el-form-item>

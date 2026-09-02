@@ -18,6 +18,8 @@ common:
   nameRequired: "Name is required"
   portRequired: "Port is required"
   portInvalid: "Port must be a valid number (1-65535)"
+  targetDuplicate: "Target server [{target}] already exists. Adjust its weight if more traffic is needed."
+  upstreamTargetDuplicate: "Duplicate target server address [{target}] in upstream list."
 
 buttons:
   pureAdd: Add
@@ -905,7 +907,7 @@ http:
   tunnelNode: "Tunnel"
   tunnelNodePlaceholder: "Select associated Tunnel client node"
   dnsResolver: "DNS"
-  dnsResolverPlaceholder: "8.8.8.8:53 (Leave empty for system default DNS)"
+  dnsResolverPlaceholder: "Supports standard DNS & DoH, e.g. 8.8.8.8:53 or https://dns.google/dns-query (leave empty for system DNS)"
   dragToReorder: "Drag to reorder"
   addDns: "Add"
   realIp: "Real IP"
@@ -1136,8 +1138,8 @@ sni:
   addDnsResolver: "Add"
   dnsResolver: "DNS"
   dragToReorder: "Drag to reorder"
-  dnsResolverPlaceholder: "8.8.8.8:53 (leave empty for system DNS)"
-  dnsResolverTip: "When traffic is not forwarded via a Tunnel, the system will query the configured DNS servers to resolve the SNI domain."
+  dnsResolverPlaceholder: "Supports standard DNS & DoH, e.g. 8.8.8.8:53 or https://dns.google/dns-query (leave empty for system DNS)"
+  dnsResolverTip: "When traffic is not forwarded via a Tunnel, the system queries the configured DNS servers sequentially from top to bottom (similar to /etc/resolv.conf), automatically failing over to the next server if the previous one fails."
   headerDesc: "Configure SNI proxy listen port, L4 rules, and Tunnel/DNS routing"
   cancel: "Cancel"
   save: "Save"

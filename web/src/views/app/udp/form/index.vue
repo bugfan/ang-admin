@@ -132,9 +132,9 @@ interface TunnelGroupOption {
   tunnel_id: string;
   tunnel_token: string;
   tunnel_type: string;
-  cName: string;
-  isOnline: boolean;
-  disabled: boolean;
+  cName?: string;
+  isOnline?: boolean;
+  disabled?: boolean;
 }
 
 interface TunnelGroup {
@@ -326,12 +326,22 @@ const upstreamError = ref("");
 
 function syncUpstreamToForm() {
   newFormInline.value.upstream_servers = JSON.stringify(upstreamList.value);
+  const targets = upstreamList.value.map(s => (s.target || "").trim()).filter(Boolean);
+  const duplicates = targets.filter((item, index) => targets.indexOf(item) !== index);
+  if (duplicates.length > 0) {
+    upstreamError.value = t("common.upstreamTargetDuplicate", { target: duplicates[0] }, `上游列表中存在重复的目标服务器地址 [${duplicates[0]}]`);
+    return;
+  }
   if (!upstreamList.value.some(s => !s.target || s.target.trim() === "")) {
     upstreamError.value = "";
   }
 }
 
 function addUpstreamRow() {
+  if (upstreamList.value.some(s => !s.target || s.target.trim() === "")) {
+    message(t("common.targetEmptyExists", "已存在未填写的目标服务器项，请先填写完整"), { type: "warning" });
+    return;
+  }
   upstreamList.value.push({ target: "", weight: 1 });
   syncUpstreamToForm();
 }
@@ -347,12 +357,12 @@ const rules = reactive({
       required: true,
       validator: (rule: any, value: string, callback: any) => {
         if (!value || value.trim() === "") {
-          callback(new Error(t("tcp.portRequired", "请输入监听端口")));
+          callback(new Error(t("udp.portRequired", "请输入监听端口")));
         } else {
           const num = Number(value);
           if (isNaN(num) || num < 1 || num > 65535) {
             callback(
-              new Error(t("tcp.portFormatError", "端口必须为有效数字(1-65535)"))
+              new Error(t("udp.portFormatError", "端口必须为有效数字(1-65535)"))
             );
           } else {
             callback();
@@ -371,16 +381,23 @@ function getRef() {
       ruleFormRef.value.validate((valid: boolean) => {
         const hasEmptyTarget = upstreamList.value.some(s => !s.target || s.target.trim() === "");
         if (hasEmptyTarget) {
-          upstreamError.value = t("tcp.targetRequired", "请输入目标地址");
-        } else {
-          upstreamError.value = "";
-        }
-        
-        if (!valid || hasEmptyTarget) {
+          upstreamError.value = t("udp.targetRequired", "请输入目标地址");
           callback(false);
           return;
         }
-        callback(true);
+
+        const targets = upstreamList.value.map(s => (s.target || "").trim()).filter(Boolean);
+        const duplicates = targets.filter((item, index) => targets.indexOf(item) !== index);
+        if (duplicates.length > 0) {
+          const errMsg = t("common.upstreamTargetDuplicate", { target: duplicates[0] }, `上游列表中存在重复的目标服务器地址 [${duplicates[0]}]`);
+          upstreamError.value = errMsg;
+          message(errMsg, { type: "warning" });
+          callback(false);
+          return;
+        }
+
+        upstreamError.value = "";
+        callback(valid);
       });
     }
   };
@@ -670,7 +687,7 @@ watch(
                 align="center"
               />
               <el-table-column
-                :label="t('tcp.target', '目标地址 (Host:Port)')"
+                :label="t('udp.target', '目标地址 (Host:Port)')"
                 min-width="220"
               >
                 <template #default="{ row }">
@@ -679,16 +696,17 @@ watch(
                     size="small"
                     :placeholder="
                       t(
-                        'tcp.targetPlaceholder',
-                        '如 127.0.0.1:9999 或 10.0.0.5:3306'
+                        'udp.targetPlaceholder',
+                        '如 127.0.0.1:9999 或 10.0.0.5:53'
                       )
                     "
+                    @input="syncUpstreamToForm"
                     @change="syncUpstreamToForm"
                   />
                 </template>
               </el-table-column>
               <el-table-column
-                :label="t('tcp.weight', '权重')"
+                :label="t('udp.weight', '权重')"
                 width="140"
                 align="center"
               >
@@ -704,7 +722,7 @@ watch(
                 </template>
               </el-table-column>
               <el-table-column
-                :label="t('tcp.operation', '操作')"
+                :label="t('udp.operation', '操作')"
                 width="80"
                 align="center"
               >

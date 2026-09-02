@@ -337,7 +337,11 @@ function handleMethodChange(val: string) {
 }
 
 function addUpstreamRow() {
-  upstreamList.value.push({ target: "8.8.8.8:53", weight: 1 });
+  if (upstreamList.value.some(s => !s.target || s.target.trim() === "")) {
+    message(t("common.targetEmptyExists", "已存在未填写的目标服务器项，请先填写完整"), { type: "warning" });
+    return;
+  }
+  upstreamList.value.push({ target: "", weight: 1 });
   syncUpstreamJSON();
 }
 
@@ -350,6 +354,12 @@ const upstreamError = ref("");
 
 function syncUpstreamJSON() {
   newFormInline.value.upstream_servers = JSON.stringify(upstreamList.value);
+  const targets = upstreamList.value.map(s => (s.target || "").trim()).filter(Boolean);
+  const duplicates = targets.filter((item, index) => targets.indexOf(item) !== index);
+  if (duplicates.length > 0) {
+    upstreamError.value = t("common.upstreamTargetDuplicate", { target: duplicates[0] }, `上游列表中存在重复的目标服务器地址 [${duplicates[0]}]`);
+    return;
+  }
   if (!upstreamList.value.some(s => !s.target || s.target.trim() === "")) {
     upstreamError.value = "";
   }
@@ -419,21 +429,29 @@ onMounted(() => {
 });
 
 function getRef() {
+  syncUpstreamJSON();
   return {
     validate: (callback: (valid: boolean) => void) => {
       ruleFormRef.value.validate((valid: boolean) => {
         const hasEmptyTarget = upstreamList.value.some(s => !s.target || s.target.trim() === "");
         if (hasEmptyTarget) {
           upstreamError.value = t("dns.targetRequired", "请输入目标地址");
-        } else {
-          upstreamError.value = "";
-        }
-        
-        if (!valid || hasEmptyTarget) {
           callback(false);
           return;
         }
-        callback(true);
+
+        const targets = upstreamList.value.map(s => (s.target || "").trim()).filter(Boolean);
+        const duplicates = targets.filter((item, index) => targets.indexOf(item) !== index);
+        if (duplicates.length > 0) {
+          const errMsg = t("common.upstreamTargetDuplicate", { target: duplicates[0] }, `上游列表中存在重复的目标服务器地址 [${duplicates[0]}]`);
+          upstreamError.value = errMsg;
+          message(errMsg, { type: "warning" });
+          callback(false);
+          return;
+        }
+
+        upstreamError.value = "";
+        callback(valid);
       });
     }
   };
@@ -746,6 +764,7 @@ defineExpose({ getRef });
                     placeholder="8.8.8.8:53"
                     size="small"
                     class="font-mono"
+                    @input="syncUpstreamJSON"
                   />
                 </template>
               </el-table-column>

@@ -1,8 +1,11 @@
 package api
 
 import (
+	"encoding/json"
+	"fmt"
 	"log"
 	"net/http"
+	"strings"
 	"time"
 
 	"github.com/bugfan/ang-admin/models"
@@ -49,6 +52,43 @@ func (h *httpProxyHandler) Before(g *gin.Context, x *xorm.Engine) bool {
 		}
 		if h.Port == "" {
 			h.Port = "80"
+		}
+
+		// Check upstream servers duplicate targets in each proxy_pass location
+		if h.LocationJSON != "" {
+			var locations []struct {
+				Path     string `json:"Path"`
+				Upstream struct {
+					Type string `json:"Type"`
+					Data struct {
+						Servers []struct {
+							Target string `json:"Target"`
+							Weight int    `json:"Weight"`
+						} `json:"Servers"`
+					} `json:"Data"`
+				} `json:"Upstream"`
+			}
+			if err := json.Unmarshal([]byte(h.LocationJSON), &locations); err == nil {
+				for _, loc := range locations {
+					if loc.Upstream.Type == "proxy_pass" {
+						seen := make(map[string]bool)
+						for _, s := range loc.Upstream.Data.Servers {
+							tgt := strings.TrimSpace(s.Target)
+							if tgt != "" {
+								if seen[tgt] {
+									g.AbortWithStatusJSON(http.StatusOK, gin.H{
+										"code":      1,
+										"error_key": "targetDuplicate",
+										"message":   fmt.Sprintf("路径 [%s] 的上游列表中存在重复的目标服务器地址 [%s]", loc.Path, tgt),
+									})
+									return false
+								}
+								seen[tgt] = true
+							}
+						}
+					}
+				}
+			}
 		}
 	}
 	return true
