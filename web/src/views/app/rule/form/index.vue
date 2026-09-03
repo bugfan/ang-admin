@@ -66,6 +66,7 @@ interface RuleItemConfig {
   authPortalTokenName: string;
   authPortalTokenExpire: number;
   authPortalCookieDomain: string;
+  authPortalStrictExpire: boolean;
   // Auth Guard
   authGuardPortalURL: string;
 }
@@ -290,6 +291,7 @@ const itemForm = reactive<RuleItemConfig>({
   authPortalTokenName: "_angt",
   authPortalTokenExpire: 86400,
   authPortalCookieDomain: "",
+  authPortalStrictExpire: false,
   authGuardPortalURL: ""
 });
 
@@ -381,6 +383,7 @@ function createDefaultItem(): RuleItemConfig {
     authPortalTokenName: "_angt",
     authPortalTokenExpire: 86400,
     authPortalCookieDomain: "",
+    authPortalStrictExpire: false,
     authGuardPortalURL: ""
   };
 }
@@ -448,6 +451,7 @@ function parseItemFromJSON(item: any): RuleItemConfig {
     base.authPortalTokenName = aCfg.token_name || aCfg.TokenName || "_angt";
     base.authPortalTokenExpire = aCfg.token_expire || aCfg.TokenExpire || 86400;
     base.authPortalCookieDomain = aCfg.cookie_domain || aCfg.CookieDomain || "";
+    base.authPortalStrictExpire = Boolean(aCfg.strict_expire ?? aCfg.StrictExpire ?? false);
   }
   if (aName === "auth_guard_action") {
     base.authGuardPortalURL = aCfg.portal_url || aCfg.PortalURL || "";
@@ -610,7 +614,8 @@ function itemToJSON(item: RuleItemConfig): any {
           title: item.authPortalTitle || "统一身份认证",
           token_name: item.authPortalTokenName || "_angt",
           token_expire: Number(item.authPortalTokenExpire) || 86400,
-          cookie_domain: item.authPortalCookieDomain || ""
+          cookie_domain: item.authPortalCookieDomain || "",
+          strict_expire: Boolean(item.authPortalStrictExpire)
         }
       };
       break;
@@ -874,6 +879,7 @@ function saveItemFromEditor() {
     authPortalTokenName: itemForm.authPortalTokenName,
     authPortalTokenExpire: itemForm.authPortalTokenExpire,
     authPortalCookieDomain: itemForm.authPortalCookieDomain,
+    authPortalStrictExpire: itemForm.authPortalStrictExpire,
     authGuardPortalURL: itemForm.authGuardPortalURL
   };
 
@@ -2119,6 +2125,18 @@ defineExpose({ getRef });
                         :step="3600"
                         class="w-full"
                       />
+                    </div>
+                  </div>
+                  <div class="field-row">
+                    <label class="field-label">{{ t("rule.portalStrictExpire") }}</label>
+                    <div class="flex-1 w-full">
+                      <el-switch
+                        v-model="itemForm.authPortalStrictExpire"
+                        :active-text="t('rule.portalStrictExpireActive')"
+                        :inactive-text="t('rule.portalStrictExpireInactive')"
+                        inline-prompt
+                      />
+                      <p class="field-hint">{{ t("rule.portalStrictExpireTip") }}</p>
                     </div>
                   </div>
                   <div class="field-row">
