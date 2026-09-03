@@ -49,11 +49,48 @@ func InitDB(dsn string) {
 		}
 	}
 
+	// Migrate legacy tables if exists
+	if isExist, _ := engine.IsTableExist("access_group"); isExist {
+		_, _ = engine.Exec("ALTER TABLE access_group RENAME TO user_group")
+	}
+	if isExist, _ := engine.IsTableExist("access_user"); isExist {
+		_, _ = engine.Exec("ALTER TABLE access_user RENAME TO user")
+	}
+	if isExist, _ := engine.IsTableExist("auth_source"); isExist {
+		_, _ = engine.Exec("ALTER TABLE auth_source RENAME TO auth_method")
+	}
+
 	// Automatically sync database schemas if necessary
-	err = engine.Sync2(new(AdminUser), new(Tunnel), new(Certificate), new(TunnelClient), new(DnsProxy), new(TcpProxy), new(UdpProxy), new(SniProxy), new(Rule), new(HttpProxy), new(ClusterNode), new(AcmeAccount))
+	err = engine.Sync2(
+		new(AdminUser), new(Tunnel), new(Certificate), new(TunnelClient),
+		new(DnsProxy), new(TcpProxy), new(UdpProxy), new(SniProxy),
+		new(Rule), new(HttpProxy), new(ClusterNode), new(AcmeAccount),
+		new(UserGroup), new(User), new(AuthMethod), new(Auth),
+	)
 
 	if err != nil {
 		log.Fatalf("Failed to sync database: %v", err)
+	}
+
+	// Ensure default UserGroup exists
+	if count, err := engine.Count(new(UserGroup)); err == nil && count == 0 {
+		_, _ = engine.Insert(&UserGroup{
+			Name:        "默认用户组",
+			Description: "系统默认用户组",
+			IsDefault:   true,
+		})
+	}
+
+	// Ensure default Local AuthMethod exists
+	if count, err := engine.Count(new(AuthMethod)); err == nil && count == 0 {
+		_, _ = engine.Insert(&AuthMethod{
+			Name:       "本地账号认证",
+			Type:       "local",
+			Enabled:    true,
+			Priority:   1,
+			ConfigJSON: `{"allow_self_register":false,"password_min_len":6}`,
+			Remark:     "系统默认本地用户名密码认证",
+		})
 	}
 
 	// Backfill certificate parsed metadata for all certificates
@@ -99,3 +136,4 @@ func InitDB(dsn string) {
 func GetEngine() *xorm.Engine {
 	return engine
 }
+

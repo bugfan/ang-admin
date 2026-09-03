@@ -22,6 +22,8 @@ type HttpProxy struct {
 	TunnelToken  string    `xorm:"varchar(255) 'tunnel_token'" json:"tunnel_token"`
 	DNSResolver  string    `xorm:"varchar(255) 'dns_resolver'" json:"dns_resolver"`
 	LocationJSON string    `xorm:"text 'location_json'" json:"location_json"` // JSON array of Locations
+	
+
 	Remark       string    `xorm:"varchar(255) 'remark'" json:"remark"`
 	CreatedAt    time.Time `xorm:"created" json:"created_at"`
 	UpdatedAt    time.Time `xorm:"updated" json:"updated_at"`

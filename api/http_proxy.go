@@ -38,9 +38,9 @@ type httpProxyHandler struct {
 	TunnelId     string `json:"tunnel_id"`
 	TunnelToken  string `json:"tunnel_token"`
 	DNSResolver  string `json:"dns_resolver"`
-	LocationJSON string    `json:"location_json"`
-	Remark       string    `json:"remark"`
-	CreatedAt    time.Time `json:"created_at"`
+	LocationJSON  string    `json:"location_json"`
+	Remark        string    `json:"remark"`
+	CreatedAt     time.Time `json:"created_at"`
 	UpdatedAt    time.Time `json:"updated_at"`
 }
 

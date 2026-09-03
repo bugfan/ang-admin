@@ -101,3 +101,87 @@ export const getMineLogs = (data?: object) => {
 export const getCaptcha = () => {
   return http.request<any>("get", "/captcha");
 };
+
+// ================= 业务用户管理 (User CRUD) =================
+
+import { formatApiError } from "@/utils/apiError";
+
+export type UserItem = {
+  id?: number;
+  username?: string;
+  password?: string;
+  full_name?: string;
+  email?: string;
+  mobile?: string;
+  source_type?: string;
+  source_id?: number;
+  group_ids?: string; // JSON array string e.g. [1, 2]
+  status?: number; // 1: 启用, 0: 禁用
+  expire_at?: string;
+  remark?: string;
+  created_at?: string;
+  updated_at?: string;
+};
+
+export const getUserList = async (params?: object) => {
+  try {
+    const res = await http.request<any>("get", "/api/user", { params });
+    const list = Array.isArray(res) ? res : (res?.data || res?.list || []);
+    return {
+      code: 0,
+      message: "success",
+      data: {
+        list,
+        total: list.length,
+        pageSize: 10,
+        currentPage: 1
+      }
+    };
+  } catch (err: any) {
+    return {
+      code: 1,
+      message: formatApiError(err, "user", "获取用户列表失败"),
+      data: { list: [], total: 0, pageSize: 10, currentPage: 1 }
+    };
+  }
+};
+
+export const createUser = async (data?: object) => {
+  try {
+    const res = await http.request<any>("post", "/api/user", { data });
+    if (res && typeof res.code === 'number' && res.code !== 0) return res;
+    return { code: 0, message: "success", data: res };
+  } catch (err: any) {
+    return {
+      code: 1,
+      message: formatApiError(err, "user", "创建用户失败")
+    };
+  }
+};
+
+export const updateUser = async (id: number, data?: object) => {
+  try {
+    const res = await http.request<any>("put", `/api/user/${id}`, { data });
+    if (res && typeof res.code === 'number' && res.code !== 0) return res;
+    return { code: 0, message: "success", data: res };
+  } catch (err: any) {
+    return {
+      code: 1,
+      message: formatApiError(err, "user", "更新用户失败")
+    };
+  }
+};
+
+export const deleteUser = async (id: number) => {
+  try {
+    const res = await http.request<any>("delete", `/api/user/${id}`);
+    if (res && typeof res.code === 'number' && res.code !== 0) return res;
+    return { code: 0, message: "success", data: res };
+  } catch (err: any) {
+    return {
+      code: 1,
+      message: formatApiError(err, "user", "删除用户失败")
+    };
+  }
+};
+

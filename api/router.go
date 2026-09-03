@@ -51,6 +51,7 @@ func SetupRouter() *gin.Engine {
 		authorized.POST("/api/cluster-node/:id/sync", SyncClusterNodeHandler)
 		authorized.POST("/api/cluster-node/sync-all", SyncAllClusterNodesHandler)
 		authorized.GET("/api/cluster-node/:id/tunnel", GetClusterNodeTunnelHandler)
+		authorized.POST("/api/auth-method/test", TestAuthMethodHandler)
 	}
 
 

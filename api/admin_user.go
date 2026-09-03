@@ -471,11 +471,75 @@ func AsyncRoutesHandler(c *gin.Context) {
 				},
 			},
 			{
+				"path": "/user",
+				"name": "AppUserParent",
+				"meta": gin.H{
+					"icon":  "ri:user-shared-line",
+					"title": "menus.pureUserParent",
+					"rank":  10,
+					"roles": []string{"admin", "common"},
+				},
+				"children": []gin.H{
+					{
+						"path":      "/user/index",
+						"name":      "AppUser",
+						"component": "user/user/index",
+						"meta": gin.H{
+							"icon":  "ri:user-3-line",
+							"title": "menus.pureUser",
+							"roles": []string{"admin", "common"},
+						},
+					},
+					{
+						"path":      "/user/group",
+						"name":      "AppUserGroup",
+						"component": "user/group/index",
+						"meta": gin.H{
+							"icon":  "ri:team-line",
+							"title": "menus.pureUserGroup",
+							"roles": []string{"admin", "common"},
+						},
+					},
+				},
+			},
+			{
+				"path": "/auth",
+				"name": "AppAuthParent",
+				"meta": gin.H{
+					"icon":  "ri:shield-keyhole-line",
+					"title": "menus.pureAuthParent",
+					"rank":  11,
+					"roles": []string{"admin", "common"},
+				},
+				"children": []gin.H{
+					{
+						"path":      "/auth/index",
+						"name":      "AppAuth",
+						"component": "auth/auth/index",
+						"meta": gin.H{
+							"icon":  "ri:shield-user-line",
+							"title": "menus.pureAuth",
+							"roles": []string{"admin", "common"},
+						},
+					},
+					{
+						"path":      "/auth/method",
+						"name":      "AppAuthMethod",
+						"component": "auth/method/index",
+						"meta": gin.H{
+							"icon":  "ri:key-2-line",
+							"title": "menus.pureAuthMethod",
+							"roles": []string{"admin", "common"},
+						},
+					},
+				},
+			},
+			{
 				"path": "/cluster",
 				"meta": gin.H{
 					"icon":  "ri:server-line",
 					"title": "menus.pureCluster",
-					"rank":  10,
+					"rank":  12,
 				},
 				"children": []gin.H{
 					{
@@ -495,7 +559,7 @@ func AsyncRoutesHandler(c *gin.Context) {
 				"meta": gin.H{
 					"icon":  "ri:admin-line",
 					"title": "menus.pureAdminManagement",
-					"rank":  11,
+					"rank":  13,
 				},
 				"children": []gin.H{
 					{
