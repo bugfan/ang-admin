@@ -766,6 +766,8 @@ rule:
   actionResponseText: "直接响应文本 (response_text_action)"
   actionInsertData: "插入内容 (insert_data_action)"
   actionSubdomainWebvpn: "子域 WebVPN (subdomain_webvpn_action)"
+  actionAuthPortal: "认证中心 (auth_portal_action)"
+  actionAuthGuard: "认证守卫 (auth_guard_action)"
 
   matcherType: "匹配器类型"
   actionType: "动作类型"
@@ -853,6 +855,19 @@ rule:
   valWebvpnSitesRequired: "请至少添加一个 VPN 站点配置"
   valWebvpnSiteKeyRequired: "站点 Key 不能为空"
   valWebvpnSiteHostsRequired: "站点代理域名列表不能为空"
+
+  actionAuthPortalAlert: "当请求匹配该规则时，网关将作为统一认证门户运行，提供内置登录页面、换票 API 及登出功能。"
+  actionAuthGuardAlert: "当请求匹配该规则时，网关将拦截未登录访问并自动 302 重定向至认证中心；已登录用户直接放行并向上游透传用户身份。"
+  portalTitle: "门户标题"
+  portalTokenExpire: "票据有效期 (秒)"
+  portalCookieDomain: "Cookie 根域名"
+  portalCookieDomainTip: "留空表示仅当前主机有效；若跨子域名 SSO，填写如 .example.com"
+  guardPortalUrl: "认证中心地址 (Portal URL)"
+  guardPortalUrlPlaceholder: "例如：https://auth.local.i443.cn"
+  guardPortalUrlTip: "必须是认证站点的完整 URL（以 http:// 或 https:// 开头），未登录用户将被重定向至该地址进行认证"
+  valAuthGuardPortalUrlRequired: "认证中心地址不能为空"
+  valAuthGuardPortalUrlInvalid: "认证中心地址必须包含协议头（例如 https://auth.local.i443.cn），不能填写相对路径 /login"
+
 
 http:
   title: "HTTP"

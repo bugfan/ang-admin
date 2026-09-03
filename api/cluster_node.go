@@ -196,10 +196,7 @@ func SyncClusterNodeHandler(c *gin.Context) {
 
 // Handler: Sync Config to All Online Nodes
 func SyncAllClusterNodesHandler(c *gin.Context) {
-	serverCfg := service.BuildFullServerConfig()
-	tunnelCfg := service.BuildFullTunnelConfig()
-	certCfg := service.BuildFullCertificateConfig()
-	service.PushServerConfigToNodes(serverCfg, tunnelCfg, certCfg)
+	service.SyncAllToCluster()
 	log.Printf("[cluster_sync] Manual trigger sync config to all nodes executed")
 	c.JSON(http.StatusOK, gin.H{"code": 0, "message": "全集群配置下发任务已触发"})
 }

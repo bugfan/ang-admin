@@ -206,3 +206,33 @@ type ServerConfig struct {
 	DNSResolver map[string]DNSResolverConfig `json:"DNSResolver,omitempty"`
 	HTTP        map[string]HTTPConfig        `json:"HTTP,omitempty"`
 }
+
+// GroupConfig represents a user group definition in group.json
+type GroupConfig struct {
+	Id          int64  `json:"id"`
+	Name        string `json:"name"`
+	Description string `json:"description,omitempty"`
+	IsDefault   bool   `json:"is_default"`
+}
+
+// GroupFileConfig represents group.json content (keyed by group ID string)
+type GroupFileConfig map[string]GroupConfig
+
+// UserConfig represents a user definition in user.json
+type UserConfig struct {
+	Id         int64   `json:"id"`
+	Username   string  `json:"username"`
+	Password   string  `json:"password,omitempty"` // bcrypt hash
+	FullName   string  `json:"full_name,omitempty"`
+	Email      string  `json:"email,omitempty"`
+	Mobile     string  `json:"mobile,omitempty"`
+	SourceType string  `json:"source_type"` // local, cas, radius
+	SourceId   int64   `json:"source_id,omitempty"`
+	GroupIds   []int64 `json:"group_ids"`
+	Status     int     `json:"status"` // 1: active, 0: disabled
+	ExpireAt   string  `json:"expire_at,omitempty"`
+}
+
+// UserFileConfig represents user.json content (keyed by username)
+type UserFileConfig map[string]UserConfig
+

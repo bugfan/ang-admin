@@ -475,13 +475,74 @@ func BuildFullServerConfig() entity.ServerConfig {
 	}
 }
 
+// BuildFullGroupConfig builds the full GroupFileConfig from DB
+func BuildFullGroupConfig() entity.GroupFileConfig {
+	res := make(entity.GroupFileConfig)
+	engine := models.GetEngine()
+	if engine == nil {
+		return res
+	}
+	var groups []models.UserGroup
+	if err := engine.Find(&groups); err != nil {
+		log.Printf("BuildFullGroupConfig error: %v\n", err)
+		return res
+	}
+	for _, g := range groups {
+		res[strconv.FormatInt(g.Id, 10)] = entity.GroupConfig{
+			Id:          g.Id,
+			Name:        g.Name,
+			Description: g.Description,
+			IsDefault:   g.IsDefault,
+		}
+	}
+	return res
+}
+
+// BuildFullUserConfig builds the full UserFileConfig from DB
+func BuildFullUserConfig() entity.UserFileConfig {
+	res := make(entity.UserFileConfig)
+	engine := models.GetEngine()
+	if engine == nil {
+		return res
+	}
+	var users []models.User
+	if err := engine.Find(&users); err != nil {
+		log.Printf("BuildFullUserConfig error: %v\n", err)
+		return res
+	}
+	for _, u := range users {
+		var gids []int64
+		if u.GroupIds != "" {
+			_ = json.Unmarshal([]byte(u.GroupIds), &gids)
+		}
+		if gids == nil {
+			gids = []int64{}
+		}
+		res[u.Username] = entity.UserConfig{
+			Id:         u.Id,
+			Username:   u.Username,
+			Password:   u.Password,
+			FullName:   u.FullName,
+			Email:      u.Email,
+			Mobile:     u.Mobile,
+			SourceType: u.SourceType,
+			SourceId:   u.SourceId,
+			GroupIds:   gids,
+			Status:     u.Status,
+			ExpireAt:   u.ExpireAt,
+		}
+	}
+	return res
+}
+
 // PushPartialConfigToNodes pushes only the changed sections to all ang engine nodes.
 // serverSections: map of top-level server.json keys to include (e.g. {"TCP": tcpMap}).
-//
-//	Pass nil to skip pushing server_config.
+// Pass nil to skip pushing server_config.
 //
 // tunnelCfg: pass non-nil to include tunnel_config in the push.
 // certCfg:   pass non-nil to include certificate_config in the push.
+// userCfg:   pass non-nil to include user_config in the push.
+// groupCfg:  pass non-nil to include group_config in the push.
 //
 // The ang engine's /api/config/sync endpoint applies a merge-patch — only the keys
 // present in the payload are updated; everything else is left untouched on the node.
@@ -489,6 +550,8 @@ func PushPartialConfigToNodes(
 	serverSections map[string]interface{},
 	tunnelCfg *entity.TunnelFileConfig,
 	certCfg *entity.CertificateFileConfig,
+	userCfg *entity.UserFileConfig,
+	groupCfg *entity.GroupFileConfig,
 ) {
 	engine := models.GetEngine()
 	if engine == nil {
@@ -508,6 +571,12 @@ func PushPartialConfigToNodes(
 	}
 	if certCfg != nil {
 		payload["certificate_config"] = certCfg
+	}
+	if userCfg != nil {
+		payload["user_config"] = userCfg
+	}
+	if groupCfg != nil {
+		payload["group_config"] = groupCfg
 	}
 	if len(payload) == 0 {
 		return
@@ -551,9 +620,15 @@ func PushPartialConfigToNodes(
 	}
 }
 
-// PushServerConfigToNodes pushes the full server.json, tunnel.json, and certificate.json
-// to all registered ang engine nodes. Used by SyncAllToCluster for full syncs.
-func PushServerConfigToNodes(serverCfg entity.ServerConfig, tunnelCfg entity.TunnelFileConfig, certCfg entity.CertificateFileConfig) {
+// PushServerConfigToNodes pushes the full server.json, tunnel.json, certificate.json,
+// user.json, and group.json to all registered ang engine nodes. Used by SyncAllToCluster.
+func PushServerConfigToNodes(
+	serverCfg entity.ServerConfig,
+	tunnelCfg entity.TunnelFileConfig,
+	certCfg entity.CertificateFileConfig,
+	userCfg entity.UserFileConfig,
+	groupCfg entity.GroupFileConfig,
+) {
 	engine := models.GetEngine()
 	if engine == nil {
 		return
@@ -567,6 +642,8 @@ func PushServerConfigToNodes(serverCfg entity.ServerConfig, tunnelCfg entity.Tun
 		"server_config":      serverCfg,
 		"tunnel_config":      tunnelCfg,
 		"certificate_config": certCfg,
+		"user_config":        userCfg,
+		"group_config":       groupCfg,
 	}
 	data, err := json.Marshal(payload)
 	if err != nil {
@@ -618,7 +695,7 @@ func SyncCertificateToCluster() {
 	certCfg := BuildFullCertificateConfig()
 	cluster.Put("Certificate", certCfg)
 	cluster.PrintFullCertificateConfig(certCfg)
-	go PushPartialConfigToNodes(nil, nil, &certCfg)
+	go PushPartialConfigToNodes(nil, nil, &certCfg, nil, nil)
 }
 
 // SyncTunnelToCluster syncs tunnel changes. Only tunnel_config is pushed.
@@ -626,7 +703,7 @@ func SyncTunnelToCluster() {
 	tunnelCfg := BuildFullTunnelConfig()
 	cluster.Put("TUNNEL", tunnelCfg)
 	cluster.PrintFullTunnelConfig(tunnelCfg)
-	go PushPartialConfigToNodes(nil, &tunnelCfg, nil)
+	go PushPartialConfigToNodes(nil, &tunnelCfg, nil, nil, nil)
 }
 
 // SyncDNSToCluster syncs DNS proxy changes. Only the DNS section of server_config is pushed.
@@ -637,7 +714,7 @@ func SyncDNSToCluster() {
 	cluster.PrintFullServerConfig(BuildFullServerConfig())
 	go PushPartialConfigToNodes(
 		map[string]interface{}{"DNS": dnsMap},
-		nil, nil,
+		nil, nil, nil, nil,
 	)
 }
 
@@ -654,7 +731,7 @@ func SyncRuleToCluster() {
 			"TCP":  serverCfg.TCP,
 			"DNS":  serverCfg.DNS,
 		},
-		nil, nil,
+		nil, nil, nil, nil,
 	)
 }
 
@@ -666,7 +743,7 @@ func SyncHTTPToCluster() {
 	cluster.PrintFullServerConfig(BuildFullServerConfig())
 	go PushPartialConfigToNodes(
 		map[string]interface{}{"HTTP": httpMap},
-		nil, nil,
+		nil, nil, nil, nil,
 	)
 }
 
@@ -678,8 +755,35 @@ func SyncTCPToCluster() {
 	cluster.PrintFullServerConfig(BuildFullServerConfig())
 	go PushPartialConfigToNodes(
 		map[string]interface{}{"TCP": tcpMap},
-		nil, nil,
+		nil, nil, nil, nil,
 	)
+}
+
+// SyncUserToCluster syncs user changes. Only user_config is pushed.
+func SyncUserToCluster() {
+	userCfg := BuildFullUserConfig()
+	cluster.Put("USER", userCfg)
+	cluster.PrintFullUserConfig(userCfg)
+	go PushPartialConfigToNodes(nil, nil, nil, &userCfg, nil)
+}
+
+// SyncGroupToCluster syncs user group changes. Only group_config is pushed.
+func SyncGroupToCluster() {
+	groupCfg := BuildFullGroupConfig()
+	cluster.Put("GROUP", groupCfg)
+	cluster.PrintFullGroupConfig(groupCfg)
+	go PushPartialConfigToNodes(nil, nil, nil, nil, &groupCfg)
+}
+
+// SyncUserAndGroupToCluster syncs both users and user groups.
+func SyncUserAndGroupToCluster() {
+	userCfg := BuildFullUserConfig()
+	groupCfg := BuildFullGroupConfig()
+	cluster.Put("USER", userCfg)
+	cluster.Put("GROUP", groupCfg)
+	cluster.PrintFullUserConfig(userCfg)
+	cluster.PrintFullGroupConfig(groupCfg)
+	go PushPartialConfigToNodes(nil, nil, nil, &userCfg, &groupCfg)
 }
 
 // SyncAllToCluster syncs everything to the cluster. Sends the full config payload.
@@ -687,14 +791,20 @@ func SyncAllToCluster() {
 	certCfg := BuildFullCertificateConfig()
 	tunnelCfg := BuildFullTunnelConfig()
 	serverCfg := BuildFullServerConfig()
+	userCfg := BuildFullUserConfig()
+	groupCfg := BuildFullGroupConfig()
 
 	cluster.Put("Certificate", certCfg)
 	cluster.Put("TUNNEL", tunnelCfg)
+	cluster.Put("USER", userCfg)
+	cluster.Put("GROUP", groupCfg)
 	cluster.PrintFullCertificateConfig(certCfg)
 	cluster.PrintFullTunnelConfig(tunnelCfg)
 	cluster.PrintFullServerConfig(serverCfg)
+	cluster.PrintFullUserConfig(userCfg)
+	cluster.PrintFullGroupConfig(groupCfg)
 
-	go PushServerConfigToNodes(serverCfg, tunnelCfg, certCfg)
+	go PushServerConfigToNodes(serverCfg, tunnelCfg, certCfg, userCfg, groupCfg)
 }
 
 func VerifyNode(addr, secret string) (bool, string) {
@@ -809,7 +919,7 @@ func SyncUDPToCluster() {
 	cluster.PrintFullServerConfig(BuildFullServerConfig())
 	go PushPartialConfigToNodes(
 		map[string]interface{}{"UDP": udpMap},
-		nil, nil,
+		nil, nil, nil, nil,
 	)
 }
 
@@ -905,6 +1015,6 @@ func SyncSNIToCluster() {
 	cluster.PrintFullServerConfig(BuildFullServerConfig())
 	go PushPartialConfigToNodes(
 		map[string]interface{}{"SNI": sniMap},
-		nil, nil,
+		nil, nil, nil, nil,
 	)
 }

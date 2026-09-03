@@ -2,12 +2,14 @@ package api
 
 import (
 	"fmt"
+	"log"
 	"net/http"
 	"strconv"
 	"strings"
 	"time"
 
 	"github.com/bugfan/ang-admin/models"
+	"github.com/bugfan/ang-admin/service"
 	"github.com/bugfan/rest"
 	"github.com/gin-gonic/gin"
 	"github.com/go-xorm/xorm"
@@ -152,6 +154,14 @@ func (h *userHandler) Before(g *gin.Context, x *xorm.Engine) bool {
 		}
 	}
 	return true
+}
+
+func (h *userHandler) After(g *gin.Context, x *xorm.Engine, args ...interface{}) {
+	method := g.Request.Method
+	if method == http.MethodPost || method == http.MethodPut || method == http.MethodPatch || method == http.MethodDelete {
+		log.Printf("[User Change Event] Method: %s, ID: %d, Username: %s\n", method, h.Id, h.Username)
+		service.SyncUserToCluster()
+	}
 }
 
 func (h *userHandler) List(c *gin.Context) {

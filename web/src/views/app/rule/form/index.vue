@@ -61,6 +61,13 @@ interface RuleItemConfig {
   insertRegexp: string;
   webvpnLoginURL: string;
   webvpnSites: WebvpnSiteEntry[];
+  // Auth Portal
+  authPortalTitle: string;
+  authPortalTokenName: string;
+  authPortalTokenExpire: number;
+  authPortalCookieDomain: string;
+  // Auth Guard
+  authGuardPortalURL: string;
 }
 
 // ─── Props ───────────────────────────────────────────────────────────────────
@@ -181,6 +188,18 @@ const actionOptions = computed(() => [
     value: "subdomain_webvpn_action",
     tag: "HTTP",
     tagType: "info"
+  },
+  {
+    label: t("rule.actionAuthPortal"),
+    value: "auth_portal_action",
+    tag: "HTTP",
+    tagType: "success"
+  },
+  {
+    label: t("rule.actionAuthGuard"),
+    value: "auth_guard_action",
+    tag: "HTTP",
+    tagType: "success"
   }
 ]);
 
@@ -266,7 +285,12 @@ const itemForm = reactive<RuleItemConfig>({
   insertPosition: "before",
   insertRegexp: "</body>",
   webvpnLoginURL: "",
-  webvpnSites: []
+  webvpnSites: [],
+  authPortalTitle: "统一身份认证",
+  authPortalTokenName: "_angt",
+  authPortalTokenExpire: 86400,
+  authPortalCookieDomain: "",
+  authGuardPortalURL: ""
 });
 
 // ─── Init & Conversion Helpers ─────────────────────────────────────────────
@@ -352,7 +376,12 @@ function createDefaultItem(): RuleItemConfig {
     insertPosition: "before",
     insertRegexp: "</body>",
     webvpnLoginURL: "",
-    webvpnSites: []
+    webvpnSites: [],
+    authPortalTitle: "统一身份认证",
+    authPortalTokenName: "_angt",
+    authPortalTokenExpire: 86400,
+    authPortalCookieDomain: "",
+    authGuardPortalURL: ""
   };
 }
 
@@ -413,6 +442,15 @@ function parseItemFromJSON(item: any): RuleItemConfig {
   if (aName === "subdomain_webvpn_action") {
     base.webvpnLoginURL = aCfg.LoginURL || "";
     base.webvpnSites = parseSites(aCfg.Sites);
+  }
+  if (aName === "auth_portal_action") {
+    base.authPortalTitle = aCfg.title || aCfg.Title || "统一身份认证";
+    base.authPortalTokenName = aCfg.token_name || aCfg.TokenName || "_angt";
+    base.authPortalTokenExpire = aCfg.token_expire || aCfg.TokenExpire || 86400;
+    base.authPortalCookieDomain = aCfg.cookie_domain || aCfg.CookieDomain || "";
+  }
+  if (aName === "auth_guard_action") {
+    base.authGuardPortalURL = aCfg.portal_url || aCfg.PortalURL || "";
   }
 
   return base;
@@ -562,6 +600,25 @@ function itemToJSON(item: RuleItemConfig): any {
         Config: {
           LoginURL: item.webvpnLoginURL,
           Sites: sitesToRaw(item.webvpnSites)
+        }
+      };
+      break;
+    case "auth_portal_action":
+      actionObj = {
+        Name: "auth_portal_action",
+        Config: {
+          title: item.authPortalTitle || "统一身份认证",
+          token_name: item.authPortalTokenName || "_angt",
+          token_expire: Number(item.authPortalTokenExpire) || 86400,
+          cookie_domain: item.authPortalCookieDomain || ""
+        }
+      };
+      break;
+    case "auth_guard_action":
+      actionObj = {
+        Name: "auth_guard_action",
+        Config: {
+          portal_url: item.authGuardPortalURL || ""
         }
       };
       break;
@@ -767,6 +824,16 @@ function validateItemForm(): boolean {
         return false;
       }
     }
+  } else if (itemForm.actionName === "auth_guard_action") {
+    if (!itemForm.authGuardPortalURL || !itemForm.authGuardPortalURL.trim()) {
+      message(t("rule.valAuthGuardPortalUrlRequired"), { type: "warning" });
+      return false;
+    }
+    const pUrl = itemForm.authGuardPortalURL.trim();
+    if (!pUrl.startsWith("http://") && !pUrl.startsWith("https://")) {
+      message(t("rule.valAuthGuardPortalUrlInvalid"), { type: "warning" });
+      return false;
+    }
   }
 
   return true;
@@ -802,7 +869,12 @@ function saveItemFromEditor() {
     webvpnSites: itemForm.webvpnSites.map(s => ({
       ...s,
       replace: s.replace.map(p => ({ ...p }))
-    }))
+    })),
+    authPortalTitle: itemForm.authPortalTitle,
+    authPortalTokenName: itemForm.authPortalTokenName,
+    authPortalTokenExpire: itemForm.authPortalTokenExpire,
+    authPortalCookieDomain: itemForm.authPortalCookieDomain,
+    authGuardPortalURL: itemForm.authGuardPortalURL
   };
 
   if (editingIndex.value !== null && editingIndex.value >= 0) {
@@ -919,6 +991,12 @@ function getActionSummary(item: RuleItemConfig) {
       break;
     case "subdomain_webvpn_action":
       summary = `WebVPN (${item.webvpnSites.length})`;
+      break;
+    case "auth_portal_action":
+      summary = item.authPortalTitle || "统一身份认证";
+      break;
+    case "auth_guard_action":
+      summary = `Portal: ${item.authGuardPortalURL || "/login"}`;
       break;
     default:
       summary = item.actionName;
@@ -2007,6 +2085,74 @@ defineExpose({ getRef });
                           </p>
                         </div>
                       </div>
+                    </div>
+                  </div>
+                </div>
+
+                <!-- auth_portal_action -->
+                <div
+                  v-if="itemForm.actionName === 'auth_portal_action'"
+                  class="action-config-body space-y-4"
+                >
+                  <el-alert
+                    :title="t('rule.actionAuthPortalAlert')"
+                    type="success"
+                    :closable="false"
+                    show-icon
+                    class="mb-3"
+                  />
+                  <div class="field-row">
+                    <label class="field-label">{{ t("rule.portalTitle") }}</label>
+                    <div class="flex-1 w-full">
+                      <el-input
+                        v-model="itemForm.authPortalTitle"
+                        placeholder="统一身份认证"
+                      />
+                    </div>
+                  </div>
+                  <div class="field-row">
+                    <label class="field-label">{{ t("rule.portalTokenExpire") }}</label>
+                    <div class="flex-1 w-full">
+                      <el-input-number
+                        v-model="itemForm.authPortalTokenExpire"
+                        :min="60"
+                        :step="3600"
+                        class="w-full"
+                      />
+                    </div>
+                  </div>
+                  <div class="field-row">
+                    <label class="field-label">{{ t("rule.portalCookieDomain") }}</label>
+                    <div class="flex-1 w-full">
+                      <el-input
+                        v-model="itemForm.authPortalCookieDomain"
+                        placeholder="例如 .example.com (留空为当前域名)"
+                      />
+                      <p class="field-hint">{{ t("rule.portalCookieDomainTip") }}</p>
+                    </div>
+                  </div>
+                </div>
+
+                <!-- auth_guard_action -->
+                <div
+                  v-if="itemForm.actionName === 'auth_guard_action'"
+                  class="action-config-body space-y-4"
+                >
+                  <el-alert
+                    :title="t('rule.actionAuthGuardAlert')"
+                    type="info"
+                    :closable="false"
+                    show-icon
+                    class="mb-3"
+                  />
+                  <div class="field-row">
+                    <label class="field-label required">{{ t("rule.guardPortalUrl") }}</label>
+                    <div class="flex-1 w-full">
+                      <el-input
+                        v-model="itemForm.authGuardPortalURL"
+                        :placeholder="t('rule.guardPortalUrlPlaceholder')"
+                      />
+                      <p class="field-hint">{{ t("rule.guardPortalUrlTip") }}</p>
                     </div>
                   </div>
                 </div>

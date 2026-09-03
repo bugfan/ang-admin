@@ -766,6 +766,8 @@ rule:
   actionResponseText: "Direct Response Text (response_text_action)"
   actionInsertData: "Insert Data (insert_data_action)"
   actionSubdomainWebvpn: "Subdomain WebVPN (subdomain_webvpn_action)"
+  actionAuthPortal: "Auth Portal (auth_portal_action)"
+  actionAuthGuard: "Auth Guard (auth_guard_action)"
 
   matcherType: "Matcher Type"
   actionType: "Action Type"
@@ -853,6 +855,19 @@ rule:
   valWebvpnSitesRequired: "Please add at least one VPN site configuration"
   valWebvpnSiteKeyRequired: "Site Key cannot be empty"
   valWebvpnSiteHostsRequired: "Site host list cannot be empty"
+
+  actionAuthPortalAlert: "When matched, the gateway acts as a unified authentication portal, serving the login UI, ticket API, and logout."
+  actionAuthGuardAlert: "When matched, the gateway intercepts unauthenticated requests and redirects to Auth Portal; authenticated users are directly passed and user identity is forwarded upstream."
+  portalTitle: "Portal Title"
+  portalTokenExpire: "Ticket Validity (Seconds)"
+  portalCookieDomain: "Cookie Root Domain"
+  portalCookieDomainTip: "Leave empty for current host; set e.g. .example.com for cross-subdomain SSO"
+  guardPortalUrl: "Auth Portal URL"
+  guardPortalUrlPlaceholder: "e.g. https://auth.local.i443.cn"
+  guardPortalUrlTip: "Must be a full URL (starting with http:// or https://), unauthenticated requests are redirected here"
+  valAuthGuardPortalUrlRequired: "Auth Portal URL cannot be empty"
+  valAuthGuardPortalUrlInvalid: "Auth Portal URL must include scheme (e.g. https://auth.local.i443.cn), cannot be relative path /login"
+
 
 http:
   title: "HTTP"

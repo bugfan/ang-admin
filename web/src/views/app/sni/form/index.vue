@@ -127,7 +127,9 @@ function isL4Rule(r: any): boolean {
           "replace_request_header_action",
           "replace_response_header_action",
           "insert_data_action",
-          "subdomain_webvpn_action"
+          "subdomain_webvpn_action",
+          "auth_portal_action",
+          "auth_guard_action"
         ].includes(aName)
       ) {
         return false;

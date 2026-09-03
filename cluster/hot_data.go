@@ -42,3 +42,26 @@ func PrintFullCertificateConfig(cfg interface{}) {
 	fmt.Println(string(data))
 	fmt.Println("===========================================================================\n")
 }
+
+func PrintFullUserConfig(cfg interface{}) {
+	data, err := json.MarshalIndent(cfg, "", "  ")
+	if err != nil {
+		fmt.Printf("=== Overall user.json Error: %v ===\n", err)
+		return
+	}
+	fmt.Println("\n=================== OVERALL ANG USER.JSON CONFIG ===================")
+	fmt.Println(string(data))
+	fmt.Println("====================================================================\n")
+}
+
+func PrintFullGroupConfig(cfg interface{}) {
+	data, err := json.MarshalIndent(cfg, "", "  ")
+	if err != nil {
+		fmt.Printf("=== Overall group.json Error: %v ===\n", err)
+		return
+	}
+	fmt.Println("\n=================== OVERALL ANG GROUP.JSON CONFIG ===================")
+	fmt.Println(string(data))
+	fmt.Println("=====================================================================\n")
+}
+
