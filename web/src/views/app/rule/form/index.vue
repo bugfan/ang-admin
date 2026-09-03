@@ -46,7 +46,6 @@ interface RuleItemConfig {
   // Action
   actionName: string;
   resetContent: string;
-  authGuardLoginUrl: string;
   modifyStatusCode: number;
   replaceReqBodyScheme: string;
   replaceReqBodyMap: KVPair[];
@@ -132,18 +131,6 @@ const actionOptions = computed(() => [
   {
     label: t("rule.actionHideVersion"),
     value: "hide_version_action",
-    tag: "HTTP",
-    tagType: "warning"
-  },
-  {
-    label: t("rule.actionAuthGuard"),
-    value: "auth_guard_action",
-    tag: "HTTP",
-    tagType: "warning"
-  },
-  {
-    label: t("rule.actionAuthPortal"),
-    value: "auth_portal_action",
     tag: "HTTP",
     tagType: "warning"
   },
@@ -265,7 +252,6 @@ const itemForm = reactive<RuleItemConfig>({
   jsScript: "return true;",
   actionName: "reset_conn_action",
   resetContent: "Connection reset by rule",
-  authGuardLoginUrl: "/login",
   modifyStatusCode: 403,
   replaceReqBodyScheme: "ALL",
   replaceReqBodyMap: [],
@@ -352,7 +338,6 @@ function createDefaultItem(): RuleItemConfig {
     jsScript: "return true;",
     actionName: "reset_conn_action",
     resetContent: "Connection reset by rule",
-    authGuardLoginUrl: "/login",
     modifyStatusCode: 403,
     replaceReqBodyScheme: "ALL",
     replaceReqBodyMap: [],
@@ -399,8 +384,6 @@ function parseItemFromJSON(item: any): RuleItemConfig {
   // Action fields
   base.actionName = aName;
   if (aName === "reset_conn_action") base.resetContent = aCfg.Content || "";
-  if (aName === "auth_guard_action")
-    base.authGuardLoginUrl = aCfg.LoginURL || "/login";
   if (aName === "modify_status_action")
     base.modifyStatusCode = aCfg.Code || 403;
   if (aName === "replace_request_body_action") {
@@ -510,15 +493,6 @@ function itemToJSON(item: RuleItemConfig): any {
   switch (item.actionName) {
     case "hide_version_action":
       actionObj = { Name: "hide_version_action", Config: {} };
-      break;
-    case "auth_portal_action":
-      actionObj = { Name: "auth_portal_action", Config: {} };
-      break;
-    case "auth_guard_action":
-      actionObj = {
-        Name: "auth_guard_action",
-        Config: { LoginURL: item.authGuardLoginUrl }
-      };
       break;
     case "modify_status_action":
       actionObj = {
@@ -732,12 +706,7 @@ function validateItemForm(): boolean {
   }
 
   // 2. Validate Action
-  if (itemForm.actionName === "auth_guard_action") {
-    if (!itemForm.authGuardLoginUrl || !itemForm.authGuardLoginUrl.trim()) {
-      message(t("rule.valAuthGuardUrlRequired"), { type: "warning" });
-      return false;
-    }
-  } else if (itemForm.actionName === "modify_status_action") {
+  if (itemForm.actionName === "modify_status_action") {
     const code = Number(itemForm.modifyStatusCode);
     if (isNaN(code) || code < 100 || code > 599) {
       message(t("rule.valModifyStatusInvalid"), { type: "warning" });
@@ -816,7 +785,6 @@ function saveItemFromEditor() {
     jsScript: itemForm.jsScript,
     actionName: itemForm.actionName,
     resetContent: itemForm.resetContent,
-    authGuardLoginUrl: itemForm.authGuardLoginUrl,
     modifyStatusCode: itemForm.modifyStatusCode,
     replaceReqBodyScheme: itemForm.replaceReqBodyScheme,
     replaceReqBodyMap: itemForm.replaceReqBodyMap.map(p => ({ ...p })),
@@ -927,12 +895,6 @@ function getActionSummary(item: RuleItemConfig) {
       break;
     case "hide_version_action":
       summary = t("rule.hideServerHeader");
-      break;
-    case "auth_guard_action":
-      summary = `→ ${item.authGuardLoginUrl}`;
-      break;
-    case "auth_portal_action":
-      summary = t("rule.ssoPortal");
       break;
     case "modify_status_action":
       summary = `HTTP ${item.modifyStatusCode}`;
@@ -1479,40 +1441,6 @@ defineExpose({ getRef });
                 >
                   <el-alert
                     :title="t('rule.actionHideVersionAlert')"
-                    type="info"
-                    :closable="false"
-                    show-icon
-                  />
-                </div>
-
-                <!-- auth_guard_action -->
-                <div
-                  v-if="itemForm.actionName === 'auth_guard_action'"
-                  class="action-config-body"
-                >
-                  <div class="field-row">
-                    <label class="field-label required"
-                      >{{ t("rule.loginUrl") }} <code>LoginURL</code></label
-                    >
-                    <div class="flex-1 w-full">
-                      <el-input
-                        v-model="itemForm.authGuardLoginUrl"
-                        placeholder="/login"
-                      />
-                      <p class="field-hint">
-                        {{ t("rule.actionAuthGuardTip") }}
-                      </p>
-                    </div>
-                  </div>
-                </div>
-
-                <!-- auth_portal_action -->
-                <div
-                  v-if="itemForm.actionName === 'auth_portal_action'"
-                  class="action-config-body"
-                >
-                  <el-alert
-                    :title="t('rule.actionAuthPortalAlert')"
                     type="info"
                     :closable="false"
                     show-icon

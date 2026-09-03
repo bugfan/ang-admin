@@ -758,8 +758,6 @@ rule:
 
   actionResetConn: "TCP Reset Connection (reset_conn_action)"
   actionHideVersion: "Hide Server Version (hide_version_action)"
-  actionAuthGuard: "Auth Guard (auth_guard_action)"
-  actionAuthPortal: "SSO Auth Portal (auth_portal_action)"
   actionModifyStatus: "Modify Status Code (modify_status_action)"
   actionReplaceReqBody: "Replace Request Body (replace_request_body_action)"
   actionReplaceRespBody: "Replace Response Body (replace_response_body_action)"
@@ -790,8 +788,6 @@ rule:
   resetContentTip: "Text message sent to client when TCP connection is reset (optional)"
   actionHideVersionAlert: "Automatically replaces Server / X-Powered-By response headers with *** without extra config"
   loginUrl: "Login Redirect URL"
-  actionAuthGuardTip: "Redirect unauthenticated users to this URL. Works together with auth_portal_action"
-  actionAuthPortalAlert: "Built-in SSO login portal handling /login, /api/login, /api/logout routes"
   modifyStatusCode: "HTTP Status Code"
   modifyStatusTip: "Overrides HTTP response status code (range 100-599)"
 
@@ -839,7 +835,6 @@ rule:
   unconfiguredIp: "Unconfigured IP"
   tcpReset: "TCP Reset"
   hideServerHeader: "Hide Server Header"
-  ssoPortal: "SSO Portal"
 
   valNameRequired: "Please enter rule group name"
   valIpRequired: "Please enter at least one valid IP address/network"
@@ -847,7 +842,6 @@ rule:
   valHttpIpRequired: "Please enter at least one valid HTTP client IP"
   valUrlPathRequired: "Please enter a valid URL path"
   valJsScriptRequired: "Please enter JS script content"
-  valAuthGuardUrlRequired: "Please enter login redirect URL"
   valModifyStatusInvalid: "Please enter a valid HTTP status code (100 - 599)"
   valReplaceReqBodyRequired: "Please add at least one valid request body replace rule (Key cannot be empty)"
   valReplaceRespBodyRequired: "Please add at least one valid response body replace rule (Key cannot be empty)"

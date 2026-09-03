@@ -61,14 +61,12 @@ function isL4Rule(r: any): boolean {
       if (
         [
           "hide_version_action",
-          "auth_portal_action",
           "response_text_action",
           "modify_status_action",
           "replace_request_body_action",
           "replace_response_body_action",
           "replace_request_header_action",
           "replace_response_header_action",
-          "auth_guard_action",
           "insert_data_action",
           "subdomain_webvpn_action"
         ].includes(aName)
