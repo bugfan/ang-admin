@@ -14,7 +14,6 @@ import EditPen from "~icons/ep/edit-pen";
 import AddFill from "~icons/ri/add-circle-line";
 import CheckIcon from "~icons/ep/check";
 import CloseIcon from "~icons/ep/close";
-import ExternalLink from "~icons/ri/external-link-line";
 
 defineOptions({
   name: "AppWebvpn"
@@ -182,16 +181,16 @@ async function handleSaveSubmit() {
         :model="form"
         class="search-form bg-bg_color w-full px-3 sm:px-6 pt-3 pb-1 overflow-auto mb-3 rounded-xl border border-(--el-border-color-lighter) shadow-2xs"
       >
-        <el-form-item :label="t('webvpn.name', '应用名称')" prop="name">
+        <el-form-item :label="t('webvpn.name', '名称')" prop="name">
           <el-input
             v-model="form.name"
-            :placeholder="t('webvpn.name', '应用名称')"
+            :placeholder="t('webvpn.name', '名称')"
             clearable
             class="w-full sm:w-50!"
             @keyup.enter="onSearch"
           />
         </el-form-item>
-        <el-form-item :label="t('webvpn.boundSite', '所属泛域名站点')" prop="http_proxy_id">
+        <el-form-item :label="t('webvpn.boundSite', '泛域名')" prop="http_proxy_id">
           <el-select
             v-model="form.http_proxy_id"
             clearable
@@ -253,19 +252,6 @@ async function handleSaveSubmit() {
             @page-current-change="onSearch"
           >
             <template #operation="{ row }">
-              <el-button
-                v-if="row.full_access_url"
-                class="reset-margin"
-                link
-                type="primary"
-                :size="size"
-                :icon="useRenderIcon(ExternalLink)"
-                tag="a"
-                :href="row.full_access_url"
-                target="_blank"
-              >
-                {{ t("webvpn.visit", "访问") }}
-              </el-button>
               <el-button
                 class="reset-margin"
                 link

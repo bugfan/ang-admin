@@ -1,5 +1,6 @@
 import { reactive, ref, onMounted } from "vue";
 import type { PaginationProps } from "@pureadmin/table";
+import dayjs from "dayjs";
 import { message } from "@/utils/message";
 import {
   getWebvpnList,
@@ -57,12 +58,12 @@ export function useWebvpn(t: Function, tableRef: any) {
       formatter: row => row.Id || row.id
     },
     {
-      label: t("webvpn.name", "应用名称"),
+      label: t("webvpn.name", "名称"),
       align: "center",
       prop: "Name",
       minWidth: 140,
       headerRenderer: () => (
-        <span class="whitespace-nowrap">{t("webvpn.name", "应用名称")}</span>
+        <span class="whitespace-nowrap">{t("webvpn.name", "名称")}</span>
       ),
       cellRenderer: scope => {
         const row = scope.row;
@@ -74,96 +75,43 @@ export function useWebvpn(t: Function, tableRef: any) {
       }
     },
     {
-      label: t("webvpn.targetUrl", "目标真实地址"),
+      label: t("webvpn.targetUrl", "站点地址"),
       align: "center",
       prop: "TargetURL",
       minWidth: 200,
       headerRenderer: () => (
-        <span class="whitespace-nowrap">{t("webvpn.targetUrl", "目标真实地址")}</span>
+        <span class="whitespace-nowrap">{t("webvpn.targetUrl", "站点地址")}</span>
       ),
       cellRenderer: scope => {
         const row = scope.row;
-        const url = row.TargetURL || row.target_url;
-        return (
-          <span class="font-mono text-xs text-(--el-text-color-regular) bg-gray-100 dark:bg-gray-800 px-2 py-0.5 rounded">
-            {url}
-          </span>
-        );
-      }
-    },
-    {
-      label: t("webvpn.accessUrl", "实际访问地址"),
-      align: "center",
-      prop: "full_access_url",
-      minWidth: 240,
-      headerRenderer: () => (
-        <span class="whitespace-nowrap">{t("webvpn.accessUrl", "实际访问地址")}</span>
-      ),
-      cellRenderer: scope => {
-        const row = scope.row;
+        const targetUrl = row.TargetURL || row.target_url || "-";
         const fullUrl = row.full_access_url || "";
-        if (!fullUrl) {
-          return <span class="text-gray-400 text-xs">-</span>;
-        }
-        return (
-          <div class="flex items-center justify-center gap-1">
+        if (fullUrl) {
+          return (
             <a
               href={fullUrl}
               target="_blank"
               rel="noopener noreferrer"
-              class="text-blue-500 hover:text-blue-600 hover:underline font-mono text-xs"
+              class="inline-block transition-opacity hover:opacity-80"
+              title={fullUrl}
             >
-              {fullUrl}
+              <el-tag
+                type="primary"
+                effect="light"
+                class="font-mono font-bold whitespace-nowrap cursor-pointer"
+              >
+                {targetUrl}
+              </el-tag>
             </a>
-          </div>
-        );
-      }
-    },
-    {
-      label: t("webvpn.boundSite", "所属泛域名站点"),
-      align: "center",
-      prop: "http_proxy_name",
-      minWidth: 160,
-      headerRenderer: () => (
-        <span class="whitespace-nowrap">{t("webvpn.boundSite", "所属泛域名站点")}</span>
-      ),
-      cellRenderer: scope => {
-        const row = scope.row;
-        const siteName = row.http_proxy_name || row.HttpProxyName;
-        const hostName = row.http_proxy_hostname || row.HttpProxyHostname;
-        if (!siteName && !hostName) {
-          return <span class="text-gray-400 text-xs">{t("webvpn.unknownSite", "未知站点")}</span>;
+          );
         }
         return (
-          <div class="flex flex-col items-center">
-            <span class="text-xs font-medium">{siteName || hostName}</span>
-            {hostName && (
-              <span class="text-[11px] text-gray-400 font-mono">{hostName}</span>
-            )}
-          </div>
-        );
-      }
-    },
-    {
-      label: t("webvpn.accessMode", "访问模式"),
-      align: "center",
-      prop: "is_protected",
-      minWidth: 130,
-      headerRenderer: () => (
-        <span class="whitespace-nowrap">{t("webvpn.accessMode", "访问模式")}</span>
-      ),
-      cellRenderer: scope => {
-        const row = scope.row;
-        const isProt = (row.IsProtected ?? row.is_protected ?? 1) === 1;
-        return (
           <el-tag
-            size="small"
-            type={isProt ? "primary" : "success"}
-            effect="plain"
+            type="primary"
+            effect="light"
+            class="font-mono font-bold whitespace-nowrap"
           >
-            {isProt
-              ? t("webvpn.modeProtected", "受保护 (需登录)")
-              : t("webvpn.modePublic", "公开应用 (免登录)")}
+            {targetUrl}
           </el-tag>
         );
       }
@@ -215,12 +163,61 @@ export function useWebvpn(t: Function, tableRef: any) {
       }
     },
     {
-      label: t("webvpn.status", "状态"),
+      label: t("webvpn.boundSite", "泛域名"),
+      align: "center",
+      prop: "http_proxy_name",
+      minWidth: 160,
+      headerRenderer: () => (
+        <span class="whitespace-nowrap">{t("webvpn.boundSite", "泛域名")}</span>
+      ),
+      cellRenderer: scope => {
+        const row = scope.row;
+        const siteName = row.http_proxy_name || row.HttpProxyName;
+        const hostName = row.http_proxy_hostname || row.HttpProxyHostname;
+        if (!siteName && !hostName) {
+          return <span class="text-gray-400 text-xs">{t("webvpn.unknownSite", "未知站点")}</span>;
+        }
+        return (
+          <div class="flex flex-col items-center">
+            <span class="text-xs font-medium">{siteName || hostName}</span>
+            {hostName && (
+              <span class="text-[11px] text-gray-400 font-mono">{hostName}</span>
+            )}
+          </div>
+        );
+      }
+    },
+    {
+      label: t("webvpn.accessMode", "公开访问"),
+      align: "center",
+      prop: "is_protected",
+      minWidth: 130,
+      headerRenderer: () => (
+        <span class="whitespace-nowrap">{t("webvpn.accessMode", "公开访问")}</span>
+      ),
+      cellRenderer: scope => {
+        const row = scope.row;
+        const isProt = (row.IsProtected ?? row.is_protected ?? 1) === 1;
+        return (
+          <el-tag
+            size="small"
+            type={isProt ? "info" : "success"}
+            effect="plain"
+          >
+            {isProt
+              ? t("webvpn.modeProtected", "不公开")
+              : t("webvpn.modePublic", "公开")}
+          </el-tag>
+        );
+      }
+    },
+    {
+      label: t("webvpn.status", "启用"),
       align: "center",
       prop: "Status",
       width: 90,
       headerRenderer: () => (
-        <span class="whitespace-nowrap">{t("webvpn.status", "状态")}</span>
+        <span class="whitespace-nowrap">{t("webvpn.status", "启用")}</span>
       ),
       cellRenderer: scope => {
         const row = scope.row;
@@ -237,9 +234,46 @@ export function useWebvpn(t: Function, tableRef: any) {
       }
     },
     {
+      label: t("common.remark", "备注"),
+      prop: "Remark",
+      minWidth: 110,
+      align: "center",
+      headerRenderer: () => (
+        <span class="whitespace-nowrap">{t("common.remark", "备注")}</span>
+      ),
+      cellRenderer: scope => {
+        const remark = scope.row.Remark || scope.row.remark || "-";
+        if (!remark || remark === "-") {
+          return (
+            <span class="text-xs text-(--el-text-color-placeholder)">-</span>
+          );
+        }
+        return (
+          <span class="text-xs/snug text-(--el-text-color-regular) wrap-break-word inline-block py-1">
+            {remark}
+          </span>
+        );
+      }
+    },
+    {
+      label: t("common.createTime", "创建时间"),
+      minWidth: 160,
+      prop: "created_at",
+      align: "center",
+      headerRenderer: () => (
+        <span class="whitespace-nowrap">{t("common.createTime", "创建时间")}</span>
+      ),
+      formatter: row => {
+        const timeVal = row.created_at || row.CreatedAt;
+        return timeVal && dayjs(timeVal).isValid() && dayjs(timeVal).year() > 1
+          ? dayjs(timeVal).format("YYYY-MM-DD HH:mm:ss")
+          : "-";
+      }
+    },
+    {
       label: t("common.operations", "操作"),
       fixed: "right",
-      width: 170,
+      width: 140,
       align: "center",
       headerRenderer: () => (
         <span class="whitespace-nowrap">{t("common.operations", "操作")}</span>
