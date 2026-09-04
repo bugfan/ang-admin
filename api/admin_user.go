@@ -371,11 +371,13 @@ func AsyncRoutesHandler(c *gin.Context) {
 				},
 			},
 			{
-				"path": "/http",
+				"path":     "/http",
+				"redirect": "/http/index",
 				"meta": gin.H{
-					"icon":  "ri:links-line",
-					"title": "menus.pureHttpProxy",
-					"rank":  5,
+					"icon":    "ri:global-line",
+					"title":   "menus.pureWeb",
+					"isGroup": true,
+					"rank":    5,
 				},
 				"children": []gin.H{
 					{
@@ -385,6 +387,16 @@ func AsyncRoutesHandler(c *gin.Context) {
 						"meta": gin.H{
 							"icon":  "ri:links-line",
 							"title": "menus.pureHttpProxy",
+							"roles": []string{"admin", "common"},
+						},
+					},
+					{
+						"path":      "/http/webvpn",
+						"name":      "AppWebvpn",
+						"component": "app/webvpn/index",
+						"meta": gin.H{
+							"icon":  "ri:shield-user-line",
+							"title": "menus.pureWebvpn",
 							"roles": []string{"admin", "common"},
 						},
 					},

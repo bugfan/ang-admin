@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"log"
 	"net/http"
+	"net/url"
 	"strconv"
 	"strings"
 	"time"
@@ -217,6 +218,14 @@ func buildHTTPMap(rulesMap map[string]models.Rule) map[string]entity.HTTPConfig 
 		return nil
 	}
 
+	var wildcardRootDomain string
+	for _, p := range httpList {
+		if strings.HasPrefix(p.Hostname, "*.") {
+			wildcardRootDomain = strings.TrimPrefix(p.Hostname, "*.")
+			break
+		}
+	}
+
 	httpMap := make(map[string]entity.HTTPConfig)
 	for _, item := range httpList {
 		keyStr := strconv.FormatInt(item.Id, 10)
@@ -238,10 +247,160 @@ func buildHTTPMap(rulesMap map[string]models.Rule) map[string]entity.HTTPConfig 
 					if dbRule.Items != "" {
 						var items []entity.RuleConfig
 						if err := json.Unmarshal([]byte(dbRule.Items), &items); err == nil {
+							for i := range items {
+								if items[i].Action.Name == "auth_portal_action" {
+									if cfgMap, ok := items[i].Action.Config.(map[string]interface{}); ok {
+										if cd, _ := cfgMap["cookie_domain"].(string); cd == "" && wildcardRootDomain != "" {
+											if strings.HasSuffix(item.Hostname, wildcardRootDomain) {
+												cfgMap["cookie_domain"] = "." + wildcardRootDomain
+											}
+										}
+									}
+								}
+							}
 							ruleConfigs = append(ruleConfigs, items...)
 						}
 					}
 				}
+			}
+		}
+
+		// Automatically synthesize and append subdomain_webvpn_action rule if active WebVPN sites exist
+		var vpnSites []models.WebvpnSite
+		_ = engine.Where("http_proxy_id = ? AND status = 1", item.Id).Find(&vpnSites)
+		if len(vpnSites) > 0 {
+			rootDomain := strings.TrimPrefix(item.Hostname, "*.")
+			vpnActionSites := make(map[string]interface{})
+			for _, vs := range vpnSites {
+				u, err := url.Parse(vs.TargetURL)
+				if err != nil {
+					continue
+				}
+				targetHost := u.Hostname()
+				targetPort := u.Port()
+				schemePrefix := "s-"
+				if u.Scheme == "http" {
+					schemePrefix = "c-"
+					if targetPort == "" {
+						targetPort = "80"
+					}
+				} else {
+					if targetPort == "" {
+						targetPort = "443"
+					}
+				}
+
+				hostMap := make(map[string]string)
+				wildcardMap := make(map[string]string)
+
+				// 1. Primary target host
+				dashedTarget := strings.ReplaceAll(strings.ReplaceAll(targetHost, "-", "--"), ".", "-")
+				mainVpnHost := fmt.Sprintf("%s%s-%s.%s", schemePrefix, dashedTarget, targetPort, rootDomain)
+				hostMap[u.Host] = mainVpnHost
+				if u.Port() != "" {
+					hostMap[targetHost] = mainVpnHost
+				}
+
+				// 2. Related domain names from vs.Hosts
+				for _, line := range strings.Split(vs.Hosts, "\n") {
+					domain := strings.TrimSpace(line)
+					if domain == "" {
+						continue
+					}
+					if strings.Contains(domain, "*") {
+						wildcardMap[domain] = ""
+					} else {
+						dashed := strings.ReplaceAll(strings.ReplaceAll(domain, "-", "--"), ".", "-")
+						relVpnHost := fmt.Sprintf("%s%s-%s.%s", schemePrefix, dashed, targetPort, rootDomain)
+						hostMap[domain] = relVpnHost
+					}
+				}
+
+				isProt := vs.IsProtected == 1
+				var groupIds []int64
+				if isProt && vs.AllowedGroupIds != "" {
+					_ = json.Unmarshal([]byte(vs.AllowedGroupIds), &groupIds)
+				}
+
+				replaceMap := make(map[string]string)
+				if vs.Replace != "" {
+					_ = json.Unmarshal([]byte(vs.Replace), &replaceMap)
+				}
+
+				vpnActionSites[vs.Prefix] = map[string]interface{}{
+					"name":              vs.Name,
+					"protected":         isProt,
+					"allowed_group_ids": groupIds,
+					"host":              hostMap,
+					"wildcard":          wildcardMap,
+					"replace":           replaceMap,
+				}
+			}
+
+			if len(vpnActionSites) > 0 {
+				// Discover LoginURL from existing auth portal or auth guard rules
+				loginURL := ""
+				for _, p := range httpList {
+					if p.Rules != "" {
+						var rNames []string
+						_ = json.Unmarshal([]byte(p.Rules), &rNames)
+						for _, rn := range rNames {
+							if r, ok := rulesMap[rn]; ok && strings.Contains(r.Items, "auth_portal_action") {
+								scheme := "http://"
+								if p.TLS || p.H2 {
+									scheme = "https://"
+								}
+								portPart := ""
+								if p.Port != "80" && p.Port != "443" && p.Port != "" {
+									portPart = ":" + p.Port
+								}
+								loginURL = scheme + p.Hostname + portPart
+								break
+							}
+						}
+					}
+					if loginURL != "" {
+						break
+					}
+				}
+
+				if loginURL == "" {
+					for _, r := range rulesMap {
+						if strings.Contains(r.Items, "auth_guard_action") {
+							var items []entity.RuleConfig
+							if err := json.Unmarshal([]byte(r.Items), &items); err == nil {
+								for _, it := range items {
+									if it.Action.Name == "auth_guard_action" {
+										if cfgMap, ok := it.Action.Config.(map[string]interface{}); ok {
+											if pu, ok := cfgMap["portal_url"].(string); ok && pu != "" {
+												loginURL = pu
+												break
+											}
+										}
+									}
+								}
+							}
+						}
+						if loginURL != "" {
+							break
+						}
+					}
+				}
+
+				ruleConfigs = append(ruleConfigs, entity.RuleConfig{
+					Matcher: entity.MatcherConfig{
+						Name:   "always_true_matcher",
+						Config: map[string]interface{}{},
+					},
+					Action: entity.ActionConfig{
+						Name: "subdomain_webvpn_action",
+						Config: map[string]interface{}{
+							"Sites":        vpnActionSites,
+							"LoginURL":     loginURL,
+							"CookieDomain": "." + rootDomain,
+						},
+					},
+				})
 			}
 		}
 

@@ -139,9 +139,11 @@ const dnsRouter = {
 
 const httpRouter = {
   path: "/http",
+  redirect: "/http/index",
   meta: {
-    icon: "ri:links-line",
-    title: "menus.pureHttpProxy",
+    icon: "ri:global-line",
+    title: "menus.pureWeb",
+    isGroup: true,
     rank: 5
   },
   children: [
@@ -152,6 +154,16 @@ const httpRouter = {
       meta: {
         icon: "ri:links-line",
         title: "menus.pureHttpProxy",
+        roles: ["admin", "common"]
+      }
+    },
+    {
+      path: "/http/webvpn",
+      name: "AppWebvpn",
+      component: "app/webvpn/index",
+      meta: {
+        icon: "ri:shield-user-line",
+        title: "menus.pureWebvpn",
         roles: ["admin", "common"]
       }
     }

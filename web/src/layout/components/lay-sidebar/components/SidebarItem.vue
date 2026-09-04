@@ -180,6 +180,24 @@ function resolvePath(routePath) {
       </template>
     </el-menu-item>
   </SidebarLinkItem>
+  <el-menu-item-group
+    v-else-if="item.meta?.isGroup && !isCollapse"
+    class="sidebar-menu-group"
+  >
+    <template #title>
+      <div class="sidebar-group-title">
+        <span class="sidebar-group-text">{{ transformI18n(item.meta.title) }}</span>
+      </div>
+    </template>
+    <sidebar-item
+      v-for="child in item.children"
+      :key="child.path"
+      :is-nest="true"
+      :item="child"
+      :base-path="resolvePath(child.path)"
+      class="nest-menu sidebar-group-child"
+    />
+  </el-menu-item-group>
   <el-sub-menu
     v-else
     ref="subMenu"
@@ -227,3 +245,19 @@ function resolvePath(routePath) {
     />
   </el-sub-menu>
 </template>
+
+<style scoped>
+:deep(.el-menu-item-group__title) {
+  padding: 14px 16px 4px 18px !important;
+  font-size: 11px !important;
+  font-weight: 700 !important;
+  letter-spacing: 0.1em !important;
+  text-transform: uppercase !important;
+  color: var(--el-text-color-placeholder, #94a3b8) !important;
+  line-height: normal !important;
+  user-select: none;
+}
+:deep(.sidebar-group-child .el-menu-item) {
+  padding-left: 24px !important;
+}
+</style>

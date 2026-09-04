@@ -185,12 +185,6 @@ const actionOptions = computed(() => [
     tagType: "info"
   },
   {
-    label: t("rule.actionSubdomainWebvpn"),
-    value: "subdomain_webvpn_action",
-    tag: "HTTP",
-    tagType: "info"
-  },
-  {
     label: t("rule.actionAuthPortal"),
     value: "auth_portal_action",
     tag: "HTTP",

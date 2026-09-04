@@ -66,6 +66,7 @@ func InitDB(dsn string) {
 		new(DnsProxy), new(TcpProxy), new(UdpProxy), new(SniProxy),
 		new(Rule), new(HttpProxy), new(ClusterNode), new(AcmeAccount),
 		new(UserGroup), new(User), new(AuthMethod), new(Auth),
+		new(WebvpnSite),
 	)
 
 	if err != nil {
