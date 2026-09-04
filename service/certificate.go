@@ -14,7 +14,11 @@ import (
 // GenerateSelfSignedCert creates a leaf RSA certificate signed by a generated Root CA, returning private key, cert and CA/intermediate cert
 func GenerateSelfSignedCert(commonName string, dnsNames []string, validDays int) (string, string, string, error) {
 	if commonName == "" {
-		commonName = "local.i443.cn"
+		if len(dnsNames) > 0 {
+			commonName = dnsNames[0]
+		} else {
+			commonName = "example.com"
+		}
 	}
 	if validDays <= 0 {
 		validDays = 365

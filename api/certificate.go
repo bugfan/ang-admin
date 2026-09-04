@@ -170,7 +170,11 @@ func GenerateCertHandler(c *gin.Context) {
 	_ = c.ShouldBindJSON(&req)
 
 	if req.CommonName == "" {
-		req.CommonName = "local.i443.cn"
+		if len(req.DNSNames) > 0 {
+			req.CommonName = req.DNSNames[0]
+		} else {
+			req.CommonName = "example.com"
+		}
 	}
 	if req.ValidDays <= 0 {
 		req.ValidDays = 365

@@ -545,7 +545,7 @@ acme:
   domains: "Domains"
   domainsPlaceholder: "Enter target domains (separated by commas or newlines)"
   certId: "Certificate ID / Name"
-  certIdPlaceholder: "Auto-generated if empty (e.g. acme-local.i443.cn)"
+  certIdPlaceholder: "Auto-generated if empty (e.g. acme-example.com)"
   disableCname: "Direct Domain Management"
   disableCnameTip: "Disable CNAME alias follow (directly write TXT record to current DNS zone)"
   autoRenew: "Auto Renew"
@@ -879,10 +879,10 @@ rule:
   portalCookieDomain: "Cookie Root Domain"
   portalCookieDomainTip: "Leave empty for current host; set e.g. .example.com for cross-subdomain SSO"
   guardPortalUrl: "Auth Portal URL"
-  guardPortalUrlPlaceholder: "e.g. https://auth.local.i443.cn"
+  guardPortalUrlPlaceholder: "e.g. https://auth.example.com"
   guardPortalUrlTip: "Must be a full URL (starting with http:// or https://), unauthenticated requests are redirected here"
   valAuthGuardPortalUrlRequired: "Auth Portal URL cannot be empty"
-  valAuthGuardPortalUrlInvalid: "Auth Portal URL must include scheme (e.g. https://auth.local.i443.cn), cannot be relative path /login"
+  valAuthGuardPortalUrlInvalid: "Auth Portal URL must include scheme (e.g. https://auth.example.com), cannot be relative path /login"
 
 
 http:

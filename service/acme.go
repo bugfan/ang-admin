@@ -34,7 +34,7 @@ func (s *safeDnsProviderWrapper) Present(domain, token, keyAuth string) error {
 
 func (s *safeDnsProviderWrapper) CleanUp(domain, token, keyAuth string) error {
 	// 暂缓单条记录的立即清理，收集到全量证书签发完成后统一清理
-	// 防止主域名与泛域名 (如 local.i443.cn 与 *.local.i443.cn) 共享相同 _acme-challenge 域名时在第一阶段被误删！
+	// 防止主域名与泛域名 (如 example.com 与 *.example.com) 共享相同 _acme-challenge 域名时在第一阶段被误删！
 	s.recordsToClean = append(s.recordsToClean, func() error {
 		return s.inner.CleanUp(domain, token, keyAuth)
 	})

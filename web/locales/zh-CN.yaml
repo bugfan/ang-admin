@@ -546,7 +546,7 @@ acme:
   domains: "签发域名"
   domainsPlaceholder: "请输入需要签发的域名 (多域名或泛域名以逗号/换行分隔)"
   certId: "证书名称 / ID"
-  certIdPlaceholder: "留空自动生成 (例如: acme-local.i443.cn)"
+  certIdPlaceholder: "留空自动生成 (例如: acme-example.com)"
   disableCname: "直接管理本域记录"
   disableCnameTip: "禁用 CNAME 别名跳转 (直接在当前账号域名下添加 TXT 记录，防止跨域报错)"
   autoRenew: "自动续签"
@@ -879,10 +879,10 @@ rule:
   portalCookieDomain: "Cookie 根域名"
   portalCookieDomainTip: "留空表示仅当前主机有效；若跨子域名 SSO，填写如 .example.com"
   guardPortalUrl: "认证中心地址 (Portal URL)"
-  guardPortalUrlPlaceholder: "例如：https://auth.local.i443.cn"
+  guardPortalUrlPlaceholder: "例如：https://auth.example.com"
   guardPortalUrlTip: "必须是认证站点的完整 URL（以 http:// 或 https:// 开头），未登录用户将被重定向至该地址进行认证"
   valAuthGuardPortalUrlRequired: "认证中心地址不能为空"
-  valAuthGuardPortalUrlInvalid: "认证中心地址必须包含协议头（例如 https://auth.local.i443.cn），不能填写相对路径 /login"
+  valAuthGuardPortalUrlInvalid: "认证中心地址必须包含协议头（例如 https://auth.example.com），不能填写相对路径 /login"
 
 
 http:
