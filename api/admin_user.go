@@ -401,12 +401,12 @@ func AsyncRoutesHandler(c *gin.Context) {
 				},
 				"children": []gin.H{
 					{
-						"path":      "/webvpn/service",
-						"name":      "AppWebvpnService",
-						"component": "app/webvpn/service/index",
+						"path":      "/webvpn/domain",
+						"name":      "AppWebvpnDomain",
+						"component": "app/webvpn/domain/index",
 						"meta": gin.H{
 							"icon":  "ri:base-station-line",
-							"title": "menus.pureWebvpnService",
+							"title": "menus.pureWebvpnDomain",
 							"roles": []string{"admin", "common"},
 						},
 					},

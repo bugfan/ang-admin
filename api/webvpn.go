@@ -16,15 +16,15 @@ import (
 )
 
 func init() {
-	rest.Register(&models.WebvpnService{}, &webvpnServiceHandler{}, rest.RouteTypeALL, nil, "webvpn-service")
+	rest.Register(&models.WebvpnDomain{}, &webvpnDomainHandler{}, rest.RouteTypeALL, nil, "webvpn-domain")
 	rest.Register(&models.WebvpnSite{}, &webvpnSiteHandler{}, rest.RouteTypeALL, nil, "webvpn-site")
 }
 
 // -------------------------------------------------------------
-// 1. WebVPN 服务 (WebvpnService) Handler
+// 1. WebVPN 服务 (WebvpnDomain) Handler
 // -------------------------------------------------------------
 
-type webvpnServiceHandler struct {
+type webvpnDomainHandler struct {
 	Id          int64     `json:"id"`
 	Name        string    `json:"name"`
 	Hostname    string    `json:"hostname"`
@@ -40,20 +40,20 @@ type webvpnServiceHandler struct {
 	UpdatedAt   time.Time `json:"updated_at"`
 }
 
-func (h *webvpnServiceHandler) Before(g *gin.Context, x *xorm.Engine) bool {
+func (h *webvpnDomainHandler) Before(g *gin.Context, x *xorm.Engine) bool {
 	method := g.Request.Method
 	if method == http.MethodPost || method == http.MethodPut || method == http.MethodPatch {
 		h.Name = strings.TrimSpace(h.Name)
-		if h.Name == "" {
+		if h.Name == "" && method == http.MethodPost {
 			g.AbortWithStatusJSON(http.StatusOK, gin.H{
 				"code":    1,
-				"message": "服务名称不能为空",
+				"message": "基础域名称不能为空",
 			})
 			return false
 		}
 
 		h.Hostname = strings.TrimSpace(h.Hostname)
-		if h.Hostname == "" {
+		if h.Hostname == "" && method == http.MethodPost {
 			g.AbortWithStatusJSON(http.StatusOK, gin.H{
 				"code":    1,
 				"message": "泛域名不能为空",
@@ -61,7 +61,7 @@ func (h *webvpnServiceHandler) Before(g *gin.Context, x *xorm.Engine) bool {
 			return false
 		}
 		// 规范化通配符域名格式，如用户输入 example.com 或 webvpn.example.com，确保以 *. 开头
-		if !strings.HasPrefix(h.Hostname, "*.") {
+		if h.Hostname != "" && !strings.HasPrefix(h.Hostname, "*.") {
 			if strings.HasPrefix(h.Hostname, "*") {
 				h.Hostname = "*." + strings.TrimPrefix(h.Hostname, "*")
 			} else {
@@ -69,28 +69,26 @@ func (h *webvpnServiceHandler) Before(g *gin.Context, x *xorm.Engine) bool {
 			}
 		}
 
-		h.Port = strings.TrimSpace(h.Port)
-		if h.Port == "" {
+		if h.Port == "" && method == http.MethodPost {
 			h.Port = "443"
 		}
 
-		h.Fallback = strings.TrimSpace(h.Fallback)
-		if h.Fallback == "" {
+		if h.Fallback == "" && method == http.MethodPost {
 			h.Fallback = "404"
 		}
 	}
 	return true
 }
 
-func (h *webvpnServiceHandler) After(g *gin.Context, x *xorm.Engine, args ...interface{}) {
+func (h *webvpnDomainHandler) After(g *gin.Context, x *xorm.Engine, args ...interface{}) {
 	method := g.Request.Method
 	if method == http.MethodPost || method == http.MethodPut || method == http.MethodPatch || method == http.MethodDelete {
 		service.SyncHTTPToCluster()
 	}
 }
 
-func (h *webvpnServiceHandler) List(c *gin.Context) {
-	var list []models.WebvpnService
+func (h *webvpnDomainHandler) List(c *gin.Context) {
+	var list []models.WebvpnDomain
 	session := models.GetEngine().NewSession()
 	defer session.Close()
 
@@ -111,18 +109,18 @@ func (h *webvpnServiceHandler) List(c *gin.Context) {
 	}
 
 	// 统计关联的站点数量
-	type WebvpnServiceVO struct {
-		models.WebvpnService
+	type WebvpnDomainVO struct {
+		models.WebvpnDomain
 		RootDomain string `json:"root_domain"`
 		SiteCount  int64  `json:"site_count"`
 	}
 
-	resList := make([]WebvpnServiceVO, len(list))
-	for i, svc := range list {
-		count, _ := models.GetEngine().Where("service_id = ?", svc.Id).Count(new(models.WebvpnSite))
-		resList[i] = WebvpnServiceVO{
-			WebvpnService: svc,
-			RootDomain:    strings.TrimPrefix(svc.Hostname, "*."),
+	resList := make([]WebvpnDomainVO, len(list))
+	for i, dom := range list {
+		count, _ := models.GetEngine().Where("domain_id = ?", dom.Id).Count(new(models.WebvpnSite))
+		resList[i] = WebvpnDomainVO{
+			WebvpnDomain: dom,
+			RootDomain:    strings.TrimPrefix(dom.Hostname, "*."),
 			SiteCount:     count,
 		}
 	}
@@ -141,7 +139,7 @@ func (h *webvpnServiceHandler) List(c *gin.Context) {
 type webvpnSiteHandler struct {
 	Id              int64     `json:"id"`
 	Name            string    `json:"name"`
-	ServiceId       int64     `json:"service_id"`
+	DomainId       int64     `json:"domain_id"`
 	HttpProxyId     int64     `json:"http_proxy_id"`
 	TargetURL       string    `json:"target_url"`
 	Prefix          string    `json:"prefix"`
@@ -159,7 +157,7 @@ func (h *webvpnSiteHandler) Before(g *gin.Context, x *xorm.Engine) bool {
 	method := g.Request.Method
 	if method == http.MethodPost || method == http.MethodPut || method == http.MethodPatch {
 		h.Name = strings.TrimSpace(h.Name)
-		if h.Name == "" {
+		if h.Name == "" && method == http.MethodPost {
 			g.AbortWithStatusJSON(http.StatusOK, gin.H{
 				"code":    1,
 				"message": "应用名称不能为空",
@@ -167,20 +165,27 @@ func (h *webvpnSiteHandler) Before(g *gin.Context, x *xorm.Engine) bool {
 			return false
 		}
 
-		// 兼容 service_id 与旧版 http_proxy_id
-		if h.ServiceId <= 0 && h.HttpProxyId > 0 {
-			h.ServiceId = h.HttpProxyId
+		// 兼容 domain_id 与旧版 http_proxy_id
+		if h.DomainId <= 0 && h.HttpProxyId > 0 {
+			h.DomainId = h.HttpProxyId
 		}
-		if h.ServiceId <= 0 {
+		if h.DomainId <= 0 && method == http.MethodPost {
 			g.AbortWithStatusJSON(http.StatusOK, gin.H{
 				"code":    1,
-				"message": "必须选择所属的 WebVPN 服务",
+				"message": "必须选择所属的基础域",
 			})
 			return false
 		}
 
 		h.TargetURL = strings.TrimSpace(h.TargetURL)
-		if h.TargetURL == "" || (!strings.HasPrefix(h.TargetURL, "http://") && !strings.HasPrefix(h.TargetURL, "https://")) {
+		if h.TargetURL == "" && method == http.MethodPost {
+			g.AbortWithStatusJSON(http.StatusOK, gin.H{
+				"code":    1,
+				"message": "目标地址不能为空",
+			})
+			return false
+		}
+		if h.TargetURL != "" && (!strings.HasPrefix(h.TargetURL, "http://") && !strings.HasPrefix(h.TargetURL, "https://")) {
 			g.AbortWithStatusJSON(http.StatusOK, gin.H{
 				"code":    1,
 				"message": "目标地址必须是以 http:// 或 https:// 开头的合法 URL",
@@ -189,29 +194,31 @@ func (h *webvpnSiteHandler) Before(g *gin.Context, x *xorm.Engine) bool {
 		}
 
 		// 标准 WebVPN 子域名前缀推导: s-<dashed-host>-<port> (http为 c-)
-		u, err := url.Parse(h.TargetURL)
-		if err == nil {
-			targetHost := u.Hostname()
-			targetPort := u.Port()
-			schemePrefix := "s-"
-			if u.Scheme == "http" {
-				schemePrefix = "c-"
-				if targetPort == "" {
-					targetPort = "80"
+		if h.TargetURL != "" {
+			u, err := url.Parse(h.TargetURL)
+			if err == nil {
+				targetHost := u.Hostname()
+				targetPort := u.Port()
+				schemePrefix := "s-"
+				if u.Scheme == "http" {
+					schemePrefix = "c-"
+					if targetPort == "" {
+						targetPort = "80"
+					}
+				} else {
+					if targetPort == "" {
+						targetPort = "443"
+					}
 				}
-			} else {
-				if targetPort == "" {
-					targetPort = "443"
-				}
+				dashed := strings.ReplaceAll(strings.ReplaceAll(targetHost, "-", "--"), ".", "-")
+				h.Prefix = fmt.Sprintf("%s%s-%s", schemePrefix, dashed, targetPort)
 			}
-			dashed := strings.ReplaceAll(strings.ReplaceAll(targetHost, "-", "--"), ".", "-")
-			h.Prefix = fmt.Sprintf("%s%s-%s", schemePrefix, dashed, targetPort)
 		}
 
-		if h.AllowedGroupIds == "" {
+		if h.AllowedGroupIds == "" && method == http.MethodPost {
 			h.AllowedGroupIds = "[]"
 		}
-		if h.Replace == "" {
+		if h.Replace == "" && method == http.MethodPost {
 			h.Replace = "{}"
 		}
 	}
@@ -233,13 +240,13 @@ func (h *webvpnSiteHandler) List(c *gin.Context) {
 	if name := strings.TrimSpace(c.Query("name")); name != "" {
 		session.Where("name LIKE ?", "%"+name+"%")
 	}
-	if serviceIdStr := strings.TrimSpace(c.Query("service_id")); serviceIdStr != "" {
-		if sid, err := strconv.ParseInt(serviceIdStr, 10, 64); err == nil && sid > 0 {
-			session.Where("service_id = ?", sid)
+	if domainIdStr := strings.TrimSpace(c.Query("domain_id")); domainIdStr != "" {
+		if sid, err := strconv.ParseInt(domainIdStr, 10, 64); err == nil && sid > 0 {
+			session.Where("domain_id = ?", sid)
 		}
 	} else if proxyIdStr := strings.TrimSpace(c.Query("http_proxy_id")); proxyIdStr != "" {
 		if pid, err := strconv.ParseInt(proxyIdStr, 10, 64); err == nil && pid > 0 {
-			session.Where("service_id = ? OR http_proxy_id = ?", pid, pid)
+			session.Where("domain_id = ? OR http_proxy_id = ?", pid, pid)
 		}
 	}
 
@@ -252,12 +259,12 @@ func (h *webvpnSiteHandler) List(c *gin.Context) {
 		return
 	}
 
-	// 预加载 WebvpnService 映射
-	var services []models.WebvpnService
-	_ = models.GetEngine().Find(&services)
-	serviceMap := make(map[int64]models.WebvpnService)
-	for _, s := range services {
-		serviceMap[s.Id] = s
+	// 预加载 WebvpnDomain 映射
+	var domains []models.WebvpnDomain
+	_ = models.GetEngine().Find(&domains)
+	domainMap := make(map[int64]models.WebvpnDomain)
+	for _, s := range domains {
+		domainMap[s.Id] = s
 	}
 
 	// 兼容旧版 HttpProxy 映射
@@ -270,8 +277,8 @@ func (h *webvpnSiteHandler) List(c *gin.Context) {
 
 	type WebvpnSiteItemVO struct {
 		models.WebvpnSite
-		ServiceName     string `json:"service_name"`
-		ServiceHostname string `json:"service_hostname"`
+		DomainName     string `json:"domain_name"`
+		DomainHostname string `json:"domain_hostname"`
 		FullAccessURL   string `json:"full_access_url"`
 	}
 
@@ -279,25 +286,25 @@ func (h *webvpnSiteHandler) List(c *gin.Context) {
 	for i, item := range list {
 		vo := WebvpnSiteItemVO{WebvpnSite: item}
 
-		// 优先从 WebvpnService 关联
-		if svc, ok := serviceMap[item.ServiceId]; ok {
-			vo.ServiceName = svc.Name
-			vo.ServiceHostname = svc.Hostname
+		// 优先从 WebvpnDomain 关联
+		if dom, ok := domainMap[item.DomainId]; ok {
+			vo.DomainName = dom.Name
+			vo.DomainHostname = dom.Hostname
 
-			rootDomain := strings.TrimPrefix(svc.Hostname, "*.")
+			rootDomain := strings.TrimPrefix(dom.Hostname, "*.")
 			scheme := "http://"
-			if svc.TLS || svc.H2 {
+			if dom.TLS || dom.H2 {
 				scheme = "https://"
 			}
 			portSuffix := ""
-			if svc.Port != "80" && svc.Port != "443" && svc.Port != "" {
-				portSuffix = ":" + svc.Port
+			if dom.Port != "80" && dom.Port != "443" && dom.Port != "" {
+				portSuffix = ":" + dom.Port
 			}
 			vo.FullAccessURL = fmt.Sprintf("%s%s.%s%s", scheme, item.Prefix, rootDomain, portSuffix)
 		} else if p, ok := proxyMap[item.HttpProxyId]; ok {
 			// 兼容回退 HttpProxy
-			vo.ServiceName = p.Name
-			vo.ServiceHostname = p.Hostname
+			vo.DomainName = p.Name
+			vo.DomainHostname = p.Hostname
 
 			rootDomain := strings.TrimPrefix(p.Hostname, "*.")
 			scheme := "http://"

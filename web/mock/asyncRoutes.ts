@@ -169,12 +169,12 @@ const webvpnRouter = {
   },
   children: [
     {
-      path: "/webvpn/service",
-      name: "AppWebvpnService",
-      component: "app/webvpn/service/index",
+      path: "/webvpn/domain",
+      name: "AppWebvpnDomain",
+      component: "app/webvpn/domain/index",
       meta: {
         icon: "ri:base-station-line",
-        title: "menus.pureWebvpnService",
+        title: "menus.pureWebvpnDomain",
         roles: ["admin", "common"]
       }
     },

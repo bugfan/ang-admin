@@ -37,9 +37,9 @@ const {
   columns,
   dataList,
   pagination,
-  serviceList,
+  domainList,
   groupList,
-  fetchServices,
+  fetchDomains,
   fetchGroups,
   onSearch,
   resetForm,
@@ -51,9 +51,9 @@ function getDefaultFormInline() {
     title: t("webvpn.addTitle", "添加 WebVPN 站点"),
     id: undefined,
     name: "",
-    service_id:
-      serviceList.value[0]?.Id ||
-      serviceList.value[0]?.id ||
+    domain_id:
+      domainList.value[0]?.Id ||
+      domainList.value[0]?.id ||
       undefined,
     target_url: "",
     hosts: "",
@@ -87,12 +87,12 @@ function getFormInlineFromRow(row: any) {
     title: `${t("webvpn.editTitle", "编辑 WebVPN 站点")} (${row.Name || row.name})`,
     id: row?.Id || row?.id,
     name: row?.Name || row?.name || "",
-    service_id:
-      row?.ServiceId ||
-      row?.service_id ||
+    domain_id:
+      row?.DomainId ||
+      row?.domain_id ||
       row?.HttpProxyId ||
       row?.http_proxy_id ||
-      (serviceList.value[0]?.Id || serviceList.value[0]?.id),
+      (domainList.value[0]?.Id || domainList.value[0]?.id),
     target_url: row?.TargetURL || row?.target_url || "",
     hosts: row?.Hosts || row?.hosts || "",
     replaceList: initialReplaceList,
@@ -104,13 +104,13 @@ function getFormInlineFromRow(row: any) {
 }
 
 async function handleAddPage() {
-  await Promise.all([fetchServices(), fetchGroups()]);
+  await Promise.all([fetchDomains(), fetchGroups()]);
   formInline.value = getDefaultFormInline();
   showView.value = "new";
 }
 
 async function handleEditPage(row: any) {
-  await Promise.all([fetchServices(), fetchGroups()]);
+  await Promise.all([fetchDomains(), fetchGroups()]);
   formInline.value = getFormInlineFromRow(row);
   showView.value = "edit";
 }
@@ -143,7 +143,7 @@ async function handleSaveSubmit() {
 
         const payload = {
           name: formData.name,
-          service_id: formData.service_id,
+          domain_id: formData.domain_id,
           target_url: formData.target_url,
           hosts: formData.hosts,
           replace: JSON.stringify(replaceMap),
@@ -212,15 +212,15 @@ async function handleSaveSubmit() {
           />
         </el-form-item>
 
-        <el-form-item :label="t('webvpn.service', '所属基础域')" prop="service_id">
+        <el-form-item :label="t('webvpn.domain', '所属基础域')" prop="domain_id">
           <el-select
-            v-model="form.service_id"
-            :placeholder="t('webvpn.servicePlaceholder', '选择所属基础域')"
+            v-model="form.domain_id"
+            :placeholder="t('webvpn.domainPlaceholder', '选择所属基础域')"
             clearable
             class="w-full sm:w-56!"
           >
             <el-option
-              v-for="s in serviceList"
+              v-for="s in domainList"
               :key="s.Id || s.id"
               :label="`${s.Name || s.name} (${s.Hostname || s.hostname})`"
               :value="s.Id || s.id"
@@ -344,7 +344,7 @@ async function handleSaveSubmit() {
         ref="createEditFormRef"
         :formInline="formInline"
         :groupList="groupList"
-        :serviceList="serviceList"
+        :domainList="domainList"
       />
 
       <!-- Bottom Action Bar -->

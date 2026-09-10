@@ -6,21 +6,21 @@ import {
   createWebvpn,
   updateWebvpn,
   deleteWebvpn,
-  getWebvpnServiceList,
+  getWebvpnDomainList,
   type WebvpnSiteItem,
-  type WebvpnServiceItem
+  type WebvpnDomainItem
 } from "@/api/webvpn";
 import { getUserGroupList, type UserGroupItem } from "@/api/user-group";
 
 export function useWebvpnSite(t: Function, tableRef: any) {
   const form = reactive({
     name: "",
-    service_id: ""
+    domain_id: ""
   });
   const dataList = ref<WebvpnSiteItem[]>([]);
   const groupList = ref<UserGroupItem[]>([]);
   const groupMap = ref<Record<number, string>>({});
-  const serviceList = ref<WebvpnServiceItem[]>([]);
+  const domainList = ref<WebvpnDomainItem[]>([]);
   const loading = ref(true);
 
   const pagination = reactive<PaginationProps>({
@@ -43,10 +43,10 @@ export function useWebvpnSite(t: Function, tableRef: any) {
     } catch (e) {}
   }
 
-  async function fetchServices() {
+  async function fetchDomains() {
     try {
-      const res = await getWebvpnServiceList();
-      serviceList.value = res.data.list || [];
+      const res = await getWebvpnDomainList();
+      domainList.value = res.data.list || [];
     } catch (e) {}
   }
 
@@ -127,16 +127,16 @@ export function useWebvpnSite(t: Function, tableRef: any) {
       }
     },
     {
-      label: t("webvpn.service", "所属基础域"),
+      label: t("webvpn.domain", "所属基础域"),
       align: "center",
       minWidth: 160,
       headerRenderer: () => (
-        <span class="whitespace-nowrap">{t("webvpn.service", "所属基础域")}</span>
+        <span class="whitespace-nowrap">{t("webvpn.domain", "所属基础域")}</span>
       ),
       cellRenderer: scope => {
         const row = scope.row;
-        const sName = row.service_name || row.http_proxy_name || "-";
-        const sHost = row.service_hostname || row.http_proxy_hostname || "";
+        const sName = row.domain_name || row.http_proxy_name || "-";
+        const sHost = row.domain_hostname || row.http_proxy_hostname || "";
         return (
           <div class="flex flex-col items-center">
             <span class="text-xs font-medium text-(--el-text-color-primary)">{sName}</span>
@@ -228,7 +228,7 @@ export function useWebvpnSite(t: Function, tableRef: any) {
             modelValue={isEnabled}
             active-value={true}
             inactive-value={false}
-            onChange={(val: boolean) => handleStatusChange(id, val ? 1 : 0)}
+            onChange={(val: boolean) => handleStatusChange(row, val ? 1 : 0)}
           />
         );
       }
@@ -260,7 +260,7 @@ export function useWebvpnSite(t: Function, tableRef: any) {
     try {
       const res = await getWebvpnList({
         name: form.name,
-        service_id: form.service_id
+        domain_id: form.domain_id
       });
       dataList.value = res.data.list;
       pagination.total = res.data.total;
@@ -276,9 +276,10 @@ export function useWebvpnSite(t: Function, tableRef: any) {
     onSearch();
   }
 
-  async function handleStatusChange(id: number, status: number) {
+  async function handleStatusChange(row: any, status: number) {
+    const id = row.Id || row.id;
     try {
-      const res = await updateWebvpn(id, { status });
+      const res = await updateWebvpn(id, { ...row, status });
       if (res.code === 0) {
         message(t("common.updateSuccess", "状态更新成功"), { type: "success" });
         onSearch();
@@ -306,7 +307,7 @@ export function useWebvpnSite(t: Function, tableRef: any) {
   }
 
   onMounted(() => {
-    fetchServices();
+    fetchDomains();
     fetchGroups();
     onSearch();
   });
@@ -317,9 +318,9 @@ export function useWebvpnSite(t: Function, tableRef: any) {
     columns,
     dataList,
     pagination,
-    serviceList,
+    domainList,
     groupList,
-    fetchServices,
+    fetchDomains,
     fetchGroups,
     onSearch,
     resetForm,

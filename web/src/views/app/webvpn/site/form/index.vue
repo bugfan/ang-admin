@@ -9,10 +9,10 @@ import { useRenderIcon } from "@/components/ReIcon/src/hooks";
 import type { FormProps } from "../utils/types";
 
 const props = withDefaults(
-  defineProps<FormProps & { groupList?: any[]; serviceList?: any[] }>(),
+  defineProps<FormProps & { groupList?: any[]; domainList?: any[] }>(),
   {
     groupList: () => [],
-    serviceList: () => []
+    domainList: () => []
   }
 );
 
@@ -66,12 +66,12 @@ const rules: FormRules = {
       trigger: "blur"
     }
   ],
-  service_id: [
+  domain_id: [
     {
       required: true,
       validator: (rule, value, callback) => {
         if (!value || value <= 0) {
-          callback(new Error(t("webvpn.valServiceRequired", "必须选择所属 WebVPN 基础域")));
+          callback(new Error(t("webvpn.valDomainRequired", "必须选择所属 WebVPN 基础域")));
         } else {
           callback();
         }
@@ -96,11 +96,11 @@ const rules: FormRules = {
   ]
 };
 
-// Selected WebVPN Service details
-const selectedService = computed(() => {
-  const sid = newFormInline.value.service_id || newFormInline.value.http_proxy_id;
-  if (!sid || !props.serviceList) return null;
-  return props.serviceList.find(
+// Selected WebVPN Domain details
+const selectedDomain = computed(() => {
+  const sid = newFormInline.value.domain_id || newFormInline.value.http_proxy_id;
+  if (!sid || !props.domainList) return null;
+  return props.domainList.find(
     (s: any) => (s.Id || s.id) === sid
   );
 });
@@ -108,7 +108,7 @@ const selectedService = computed(() => {
 // Auto-derive WebVPN Prefix and Full Access Address in real-time
 const derivedInfo = computed(() => {
   const target = (newFormInline.value.target_url || "").trim();
-  const service = selectedService.value;
+  const domain = selectedDomain.value;
   if (!target) {
     return { prefix: "", fullUrl: "" };
   }
@@ -128,19 +128,19 @@ const derivedInfo = computed(() => {
     const dashed = escaped.replace(/\./g, "-");
     const prefix = `${schemePrefix}${dashed}-${targetPort}`;
 
-    if (!service) {
+    if (!domain) {
       return { prefix, fullUrl: "" };
     }
 
-    const serviceHostname = service.Hostname || service.hostname || "";
-    const rootDomain = serviceHostname.replace(/^\*\./, "");
+    const domainHostname = domain.Hostname || domain.hostname || "";
+    const rootDomain = domainHostname.replace(/^\*\./, "");
     if (!rootDomain) {
       return { prefix, fullUrl: "" };
     }
 
-    const isTLS = service.TLS ?? service.tls ?? service.H2 ?? service.h2 ?? true;
+    const isTLS = domain.TLS ?? domain.tls ?? domain.H2 ?? domain.h2 ?? true;
     const scheme = isTLS ? "https://" : "http://";
-    const port = service.Port || service.port || "443";
+    const port = domain.Port || domain.port || "443";
     const portSuffix =
       port !== "80" && port !== "443" && port !== ""
         ? `:${port}`
@@ -187,15 +187,15 @@ const derivedInfo = computed(() => {
 
         <!-- 2. 所属基础域 -->
         <re-col :value="24">
-          <el-form-item :label="t('webvpn.service', '所属基础域')" prop="service_id">
+          <el-form-item :label="t('webvpn.domain', '所属基础域')" prop="domain_id">
             <el-select
-              v-model="newFormInline.service_id"
-              :placeholder="t('webvpn.servicePlaceholder', '选择已配置的 WebVPN 基础域网关')"
+              v-model="newFormInline.domain_id"
+              :placeholder="t('webvpn.domainPlaceholder', '选择已配置的 WebVPN 基础域网关')"
               class="w-full"
               filterable
             >
               <el-option
-                v-for="item in serviceList"
+                v-for="item in domainList"
                 :key="item.Id || item.id"
                 :label="`${item.Name || item.name} (${item.Hostname || item.hostname})`"
                 :value="item.Id || item.id"

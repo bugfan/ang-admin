@@ -266,13 +266,13 @@ func buildHTTPMap(rulesMap map[string]models.Rule) map[string]entity.HTTPConfig 
 		}
 
 		// Automatically synthesize and append subdomain_webvpn_action rule if active WebVPN sites exist on legacy HttpProxy
-		var svcCount int64
+		var domCount int64
 		if engine != nil {
-			svcCount, _ = engine.Count(new(models.WebvpnService))
+			domCount, _ = engine.Count(new(models.WebvpnDomain))
 		}
-		if svcCount == 0 {
+		if domCount == 0 {
 			var vpnSites []models.WebvpnSite
-			_ = engine.Where("http_proxy_id = ? AND status = 1", item.Id).Find(&vpnSites)
+			_ = engine.Where("http_proxy_id = ?", item.Id).Find(&vpnSites)
 			if len(vpnSites) > 0 {
 				rootDomain := strings.TrimPrefix(item.Hostname, "*.")
 				vpnActionSites := make(map[string]interface{})
@@ -339,6 +339,7 @@ func buildHTTPMap(rulesMap map[string]models.Rule) map[string]entity.HTTPConfig 
 						"host":              hostMap,
 						"wildcard":          wildcardMap,
 						"replace":           replaceMap,
+						"disabled":          vs.Status != 1,
 					}
 				}
 
@@ -454,15 +455,15 @@ func buildHTTPMap(rulesMap map[string]models.Rule) map[string]entity.HTTPConfig 
 		}
 	}
 
-	// Build dedicated WebVPN Gateway services
-	var webvpnServices []models.WebvpnService
-	_ = engine.Where("status = 1").Find(&webvpnServices)
-	for _, svc := range webvpnServices {
-		svcKeyStr := "webvpn_" + strconv.FormatInt(svc.Id, 10)
-		rootDomain := strings.TrimPrefix(svc.Hostname, "*.")
+	// Build dedicated WebVPN Gateway domains
+	var webvpnDomains []models.WebvpnDomain
+	_ = engine.Where("status = 1").Find(&webvpnDomains)
+	for _, dom := range webvpnDomains {
+		domKeyStr := "webvpn_" + strconv.FormatInt(dom.Id, 10)
+		rootDomain := strings.TrimPrefix(dom.Hostname, "*.")
 
 		var vpnSites []models.WebvpnSite
-		_ = engine.Where("(service_id = ? OR (service_id = 0 AND http_proxy_id = ?)) AND status = 1", svc.Id, svc.Id).Find(&vpnSites)
+		_ = engine.Where("(domain_id = ? OR (domain_id = 0 AND http_proxy_id = ?))", dom.Id, dom.Id).Find(&vpnSites)
 
 		vpnActionSites := make(map[string]interface{})
 		for _, vs := range vpnSites {
@@ -528,15 +529,16 @@ func buildHTTPMap(rulesMap map[string]models.Rule) map[string]entity.HTTPConfig 
 				"host":              hostMap,
 				"wildcard":          wildcardMap,
 				"replace":           replaceMap,
+						"disabled":          vs.Status != 1,
 			}
 		}
 
-		loginURL := svc.LoginURL
+		loginURL := dom.LoginURL
 		if loginURL == "" {
 			loginURL = discoverAuthLoginURL(httpList, rulesMap)
 		}
 
-		fallbackPolicy := svc.Fallback
+		fallbackPolicy := dom.Fallback
 		if fallbackPolicy == "" {
 			fallbackPolicy = "404"
 		}
@@ -559,14 +561,14 @@ func buildHTTPMap(rulesMap map[string]models.Rule) map[string]entity.HTTPConfig 
 			},
 		}
 
-		httpMap[svcKeyStr] = entity.HTTPConfig{
+		httpMap[domKeyStr] = entity.HTTPConfig{
 			Front: entity.HTTPFront{
-				Port:         svc.Port,
-				Hostname:     svc.Hostname,
+				Port:         dom.Port,
+				Hostname:     dom.Hostname,
 				HTTP:         true,
-				TLS:          svc.TLS,
-				H2:           svc.H2,
-				Certificate:  svc.Certificate,
+				TLS:          dom.TLS,
+				H2:           dom.H2,
+				Certificate:  dom.Certificate,
 				ProxyHeaders: []string{},
 			},
 			Feature: entity.HTTPFeature{

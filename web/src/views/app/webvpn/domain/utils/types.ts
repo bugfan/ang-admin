@@ -1,4 +1,4 @@
-export interface ServiceFormItemProps {
+export interface DomainFormItemProps {
   id?: number;
   name: string;
   hostname: string;
@@ -12,6 +12,6 @@ export interface ServiceFormItemProps {
   remark: string;
 }
 
-export interface ServiceFormProps {
-  formInline: ServiceFormItemProps;
+export interface DomainFormProps {
+  formInline: DomainFormItemProps;
 }
