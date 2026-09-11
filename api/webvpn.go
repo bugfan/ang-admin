@@ -213,6 +213,32 @@ func (h *webvpnSiteHandler) Before(g *gin.Context, x *xorm.Engine) bool {
 			}
 		}
 
+		// 清洗关联域名列表 (Hosts)
+		if h.Hosts != "" {
+			var cleaned []string
+			for _, line := range strings.Split(h.Hosts, "\n") {
+				line = strings.TrimSpace(line)
+				if line == "" {
+					continue
+				}
+				if strings.Contains(line, "://") {
+					if u, err := url.Parse(line); err == nil && u.Host != "" {
+						// Keep scheme and host:port, but strip path
+						line = u.Scheme + "://" + u.Host
+					}
+				} else {
+					if idx := strings.Index(line, "/"); idx != -1 {
+						line = line[:idx]
+					}
+					// (不再强行剥离端口，保留用户可能输入的非标准端口)
+				}
+				if line != "" {
+					cleaned = append(cleaned, line)
+				}
+			}
+			h.Hosts = strings.Join(cleaned, "\n")
+		}
+
 		if h.AllowedGroupIds == "" && method == http.MethodPost {
 			h.AllowedGroupIds = "[]"
 		}

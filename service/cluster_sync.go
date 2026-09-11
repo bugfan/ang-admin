@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"log"
+	"net"
 	"net/http"
 	"net/url"
 	"strconv"
@@ -265,7 +266,6 @@ func buildHTTPMap(rulesMap map[string]models.Rule) map[string]entity.HTTPConfig 
 			}
 		}
 
-
 		// Parse Backend Locations
 		var rawLocations []entity.HTTPLocation
 		var locations []entity.HTTPLocation
@@ -406,8 +406,41 @@ func buildHTTPMap(rulesMap map[string]models.Rule) map[string]entity.HTTPConfig 
 				if strings.Contains(domain, "*") {
 					wildcardMap[domain] = ""
 				} else {
-					dashed := strings.ReplaceAll(strings.ReplaceAll(domain, "-", "--"), ".", "-")
-					relVpnHost := fmt.Sprintf("%s%s-%s.%s", schemePrefix, dashed, targetPort, rootDomain)
+					lineSchemePrefix := schemePrefix
+					lineTargetPort := targetPort
+					cleanHostname := domain
+
+					if strings.Contains(domain, "://") {
+						if u2, err := url.Parse(domain); err == nil && u2.Host != "" {
+							// domain 已经被 webvpn.go 强力清洗过，这里不再画蛇添足重建字符串
+							cleanHostname = u2.Hostname()
+							if u2.Scheme == "http" {
+								lineSchemePrefix = "c-"
+								if u2.Port() != "" {
+									lineTargetPort = u2.Port()
+								} else {
+									lineTargetPort = "80"
+								}
+							} else {
+								lineSchemePrefix = "s-"
+								if u2.Port() != "" {
+									lineTargetPort = u2.Port()
+								} else {
+									lineTargetPort = "443"
+								}
+							}
+						}
+					} else {
+						if strings.Contains(domain, ":") {
+							if h, p, err := net.SplitHostPort(domain); err == nil {
+								cleanHostname = h
+								lineTargetPort = p
+							}
+						}
+					}
+
+					dashed := strings.ReplaceAll(strings.ReplaceAll(cleanHostname, "-", "--"), ".", "-")
+					relVpnHost := fmt.Sprintf("%s%s-%s.%s", lineSchemePrefix, dashed, lineTargetPort, rootDomain)
 					hostMap[domain] = relVpnHost
 				}
 			}
@@ -418,24 +451,23 @@ func buildHTTPMap(rulesMap map[string]models.Rule) map[string]entity.HTTPConfig 
 				_ = json.Unmarshal([]byte(vs.AllowedGroupIds), &groupIds)
 			}
 
-		replaceMap := make(map[string]string)
-		if vs.Replace != "" {
-		_ = json.Unmarshal([]byte(vs.Replace), &replaceMap)
-		}
+			replaceMap := make(map[string]string)
+			if vs.Replace != "" {
+				_ = json.Unmarshal([]byte(vs.Replace), &replaceMap)
+			}
 
-		var tunnelConfig map[string]string
-		if vs.TunnelId > 0 {
-		tType := vs.TunnelType
-		if tType == "" {
-		tType = "tls"
-		}
-		tunnelConfig = map[string]string{
-		"type":  tType,
-		"id":    strconv.FormatInt(vs.TunnelId, 10),
-		"token": vs.TunnelToken,
-		}
-		}
-
+			var tunnelConfig map[string]string
+			if vs.TunnelId > 0 {
+				tType := vs.TunnelType
+				if tType == "" {
+					tType = "tls"
+				}
+				tunnelConfig = map[string]string{
+					"type":  tType,
+					"id":    strconv.FormatInt(vs.TunnelId, 10),
+					"token": vs.TunnelToken,
+				}
+			}
 
 			vpnActionSites[vs.Prefix] = map[string]interface{}{
 				"name":              vs.Name,
