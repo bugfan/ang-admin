@@ -22,7 +22,36 @@ const props = withDefaults(defineProps<DomainFormProps>(), {
 });
 
 const { t } = useI18n();
+
 const ruleFormRef = ref();
+
+function handleTlsChange(val: boolean) {
+  if (!val) {
+    newFormInline.value.h2 = false;
+  }
+  if (ruleFormRef.value) {
+    ruleFormRef.value.validateField("certificate");
+  }
+}
+
+
+const validateCertificate = (_rule: any, _value: any, callback: any) => {
+  if (newFormInline.value.tls && !newFormInline.value.certificate) {
+    callback(
+      new Error(
+        t("webvpnDomain.certRequiredForTls", "开启 TLS 必须选择关联证书")
+      )
+    );
+  } else {
+    callback();
+  }
+};
+
+const localRules = {
+  ...formRules,
+  certificate: [{ validator: validateCertificate, trigger: ["change", "blur"] }]
+};
+
 const newFormInline = ref(props.formInline);
 
 watch(
@@ -65,7 +94,7 @@ defineExpose({ getRef, newFormInline });
   <el-form
     ref="ruleFormRef"
     :model="newFormInline"
-    :rules="formRules"
+    :rules="localRules"
     label-width="140px"
     class="space-y-6"
   >
@@ -86,10 +115,10 @@ defineExpose({ getRef, newFormInline });
       </template>
 
       <el-row :gutter="24">
-        <!-- 1. 基础域名称 -->
+        <!-- 1. 名称 -->
         <re-col :value="24">
           <el-form-item
-            :label="t('webvpnDomain.name', '基础域名称')"
+            :label="t('webvpnDomain.name', '名称')"
             prop="name"
           >
             <el-input
@@ -103,7 +132,7 @@ defineExpose({ getRef, newFormInline });
         </re-col>
 
         <!-- 2. 泛域名 -->
-        <re-col :value="24">
+        <re-col :value="16" :xs="24" :sm="16">
           <el-form-item
             :label="t('webvpnDomain.hostname', '泛域名')"
             prop="hostname"
@@ -131,13 +160,16 @@ defineExpose({ getRef, newFormInline });
           </el-form-item>
         </re-col>
 
-        <!-- 3. 监听端口 -->
-        <re-col :value="24">
-          <el-form-item :label="t('webvpnDomain.port', '监听端口')" prop="port">
-            <el-input
+        <!-- 3. 端口 -->
+        <re-col :value="8" :xs="24" :sm="8">
+          <el-form-item :label="t('webvpnDomain.port', '端口')" prop="port">
+            <el-input-number
               v-model="newFormInline.port"
-              clearable
+              :min="0"
+              :max="65536"
+              controls-position="right"
               :placeholder="t('webvpnDomain.portPlaceholder', '443')"
+              class="!w-full"
             />
           </el-form-item>
         </re-col>
@@ -153,7 +185,7 @@ defineExpose({ getRef, newFormInline });
                 <span class="text-sm text-gray-600 dark:text-gray-300"
                   >TLS:</span
                 >
-                <el-switch v-model="newFormInline.tls" />
+                <el-switch v-model="newFormInline.tls" @change="handleTlsChange" />
               </div>
               <div class="flex items-center gap-2">
                 <span class="text-sm text-gray-600 dark:text-gray-300"

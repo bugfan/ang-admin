@@ -90,8 +90,6 @@ function getFormInlineFromRow(row: any) {
     domain_id:
       row?.DomainId ||
       row?.domain_id ||
-      row?.HttpProxyId ||
-      row?.http_proxy_id ||
       domainList.value[0]?.Id ||
       domainList.value[0]?.id,
     target_url: row?.TargetURL || row?.target_url || "",
@@ -220,12 +218,12 @@ async function handleSaveSubmit() {
         </el-form-item>
 
         <el-form-item
-          :label="t('webvpn.domain', '所属基础域')"
+          :label="t('webvpn.domain', '基础域')"
           prop="domain_id"
         >
           <el-select
             v-model="form.domain_id"
-            :placeholder="t('webvpn.domainPlaceholder', '选择所属基础域')"
+            :placeholder="t('webvpn.domainPlaceholder', '选择基础域')"
             clearable
             class="w-full sm:w-56!"
           >
@@ -338,7 +336,7 @@ async function handleSaveSubmit() {
         :description="
           t(
             'webvpn.headerDesc',
-            '配置 WebVPN 站点目标地址、所属服务、关联域名与用户组权限'
+            '配置 WebVPN 站点目标地址、基础域、关联域名与用户组权限'
           )
         "
         :backTitle="t('webvpn.backToList', '返回站点列表')"

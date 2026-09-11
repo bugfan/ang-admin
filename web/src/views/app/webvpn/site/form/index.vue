@@ -249,7 +249,7 @@ const rules: FormRules = {
         if (!value || value <= 0) {
           callback(
             new Error(
-              t("webvpn.valDomainRequired", "必须选择所属 WebVPN 基础域")
+              t("webvpn.valDomainRequired", "必须选择基础域")
             )
           );
         } else {
@@ -291,7 +291,7 @@ const rules: FormRules = {
 // Selected WebVPN Domain details
 const selectedDomain = computed(() => {
   const sid =
-    newFormInline.value.domain_id || newFormInline.value.http_proxy_id;
+    newFormInline.value.domain_id;
   if (!sid || !props.domainList) return null;
   return props.domainList.find((s: any) => (s.Id || s.id) === sid);
 });
@@ -348,7 +348,7 @@ const derivedInfo = computed(() => {
     ref="ruleFormRef"
     :model="newFormInline"
     :rules="rules"
-    label-width="140px"
+    label-width="auto"
     class="space-y-6"
   >
     <!-- Section 1: 基本信息 -->
@@ -369,7 +369,7 @@ const derivedInfo = computed(() => {
 
       <el-row :gutter="24">
         <!-- 1. 应用名称 -->
-        <re-col :value="24">
+        <re-col :value="12" :xs="24" :sm="12">
           <el-form-item :label="t('webvpn.name', '名称')" prop="name">
             <el-input
               v-model="newFormInline.name"
@@ -381,16 +381,16 @@ const derivedInfo = computed(() => {
           </el-form-item>
         </re-col>
 
-        <!-- 2. 所属基础域 -->
-        <re-col :value="24">
+        <!-- 2. 基础域 -->
+        <re-col :value="12" :xs="24" :sm="12">
           <el-form-item
-            :label="t('webvpn.domain', '所属基础域')"
+            :label="t('webvpn.domain', '基础域')"
             prop="domain_id"
           >
             <el-select
               v-model="newFormInline.domain_id"
               :placeholder="
-                t('webvpn.domainPlaceholder', '选择已配置的 WebVPN 基础域网关')
+                t('webvpn.domainPlaceholder', '选择已配置的 基础域')
               "
               class="w-full"
               filterable

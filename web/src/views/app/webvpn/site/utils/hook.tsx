@@ -131,12 +131,12 @@ export function useWebvpnSite(t: Function, tableRef: any) {
       }
     },
     {
-      label: t("webvpn.domain", "所属基础域"),
+      label: t("webvpn.domain", "基础域"),
       align: "center",
       minWidth: 160,
       headerRenderer: () => (
         <span class="whitespace-nowrap">
-          {t("webvpn.domain", "所属基础域")}
+          {t("webvpn.domain", "基础域")}
         </span>
       ),
       cellRenderer: scope => {

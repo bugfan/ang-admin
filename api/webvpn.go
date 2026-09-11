@@ -120,8 +120,8 @@ func (h *webvpnDomainHandler) List(c *gin.Context) {
 		count, _ := models.GetEngine().Where("domain_id = ?", dom.Id).Count(new(models.WebvpnSite))
 		resList[i] = WebvpnDomainVO{
 			WebvpnDomain: dom,
-			RootDomain:    strings.TrimPrefix(dom.Hostname, "*."),
-			SiteCount:     count,
+			RootDomain:   strings.TrimPrefix(dom.Hostname, "*."),
+			SiteCount:    count,
 		}
 	}
 
@@ -139,8 +139,7 @@ func (h *webvpnDomainHandler) List(c *gin.Context) {
 type webvpnSiteHandler struct {
 	Id              int64     `json:"id"`
 	Name            string    `json:"name"`
-	DomainId       int64     `json:"domain_id"`
-	HttpProxyId     int64     `json:"http_proxy_id"`
+	DomainId        int64     `json:"domain_id"`
 	TargetURL       string    `json:"target_url"`
 	Prefix          string    `json:"prefix"`
 	Hosts           string    `json:"hosts"`
@@ -168,10 +167,6 @@ func (h *webvpnSiteHandler) Before(g *gin.Context, x *xorm.Engine) bool {
 			return false
 		}
 
-		// 兼容 domain_id 与旧版 http_proxy_id
-		if h.DomainId <= 0 && h.HttpProxyId > 0 {
-			h.DomainId = h.HttpProxyId
-		}
 		if h.DomainId <= 0 && method == http.MethodPost {
 			g.AbortWithStatusJSON(http.StatusOK, gin.H{
 				"code":    1,
@@ -247,10 +242,6 @@ func (h *webvpnSiteHandler) List(c *gin.Context) {
 		if sid, err := strconv.ParseInt(domainIdStr, 10, 64); err == nil && sid > 0 {
 			session.Where("domain_id = ?", sid)
 		}
-	} else if proxyIdStr := strings.TrimSpace(c.Query("http_proxy_id")); proxyIdStr != "" {
-		if pid, err := strconv.ParseInt(proxyIdStr, 10, 64); err == nil && pid > 0 {
-			session.Where("domain_id = ? OR http_proxy_id = ?", pid, pid)
-		}
 	}
 
 	err := session.Desc("id").Find(&list)
@@ -270,19 +261,11 @@ func (h *webvpnSiteHandler) List(c *gin.Context) {
 		domainMap[s.Id] = s
 	}
 
-	// 兼容旧版 HttpProxy 映射
-	var proxies []models.HttpProxy
-	_ = models.GetEngine().Find(&proxies)
-	proxyMap := make(map[int64]models.HttpProxy)
-	for _, p := range proxies {
-		proxyMap[p.Id] = p
-	}
-
 	type WebvpnSiteItemVO struct {
 		models.WebvpnSite
 		DomainName     string `json:"domain_name"`
 		DomainHostname string `json:"domain_hostname"`
-		FullAccessURL   string `json:"full_access_url"`
+		FullAccessURL  string `json:"full_access_url"`
 	}
 
 	resList := make([]WebvpnSiteItemVO, len(list))
@@ -304,23 +287,7 @@ func (h *webvpnSiteHandler) List(c *gin.Context) {
 				portSuffix = ":" + dom.Port
 			}
 			vo.FullAccessURL = fmt.Sprintf("%s%s.%s%s", scheme, item.Prefix, rootDomain, portSuffix)
-		} else if p, ok := proxyMap[item.HttpProxyId]; ok {
-			// 兼容回退 HttpProxy
-			vo.DomainName = p.Name
-			vo.DomainHostname = p.Hostname
-
-			rootDomain := strings.TrimPrefix(p.Hostname, "*.")
-			scheme := "http://"
-			if p.TLS || p.H2 {
-				scheme = "https://"
-			}
-			portSuffix := ""
-			if p.Port != "80" && p.Port != "443" && p.Port != "" {
-				portSuffix = ":" + p.Port
-			}
-			vo.FullAccessURL = fmt.Sprintf("%s%s.%s%s", scheme, item.Prefix, rootDomain, portSuffix)
 		}
-
 		resList[i] = vo
 	}
 
@@ -330,4 +297,3 @@ func (h *webvpnSiteHandler) List(c *gin.Context) {
 		"data":    resList,
 	})
 }
-

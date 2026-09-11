@@ -33,13 +33,13 @@ export function useWebvpnDomain(t: Function, tableRef: any) {
       formatter: row => row.Id || row.id
     },
     {
-      label: t("webvpnDomain.name", "基础域名称"),
+      label: t("webvpnDomain.name", "名称"),
       align: "center",
       prop: "Name",
       minWidth: 140,
       headerRenderer: () => (
         <span class="whitespace-nowrap">
-          {t("webvpnDomain.name", "基础域名称")}
+          {t("webvpnDomain.name", "名称")}
         </span>
       ),
       cellRenderer: scope => {

@@ -99,7 +99,6 @@ export type WebvpnSiteItem = {
   domain_id?: number;
   domain_name?: string;
   domain_hostname?: string;
-  http_proxy_id?: number;
   http_proxy_name?: string;
   http_proxy_hostname?: string;
   target_url?: string;

@@ -103,7 +103,7 @@ async function handleSaveSubmit() {
         const payload = {
           name: formData.name,
           hostname: formData.hostname,
-          port: formData.port,
+          port: String(formData.port),
           tls: formData.tls,
           h2: formData.h2,
           certificate: formData.certificate,
@@ -156,10 +156,10 @@ async function handleSaveSubmit() {
         :model="form"
         class="search-form bg-bg_color w-full px-3 sm:px-6 pt-3 pb-1 overflow-auto mb-3 rounded-xl border border-(--el-border-color-lighter) shadow-2xs"
       >
-        <el-form-item :label="t('webvpnDomain.name', '基础域名称')" prop="name">
+        <el-form-item :label="t('webvpnDomain.name', '名称')" prop="name">
           <el-input
             v-model="form.name"
-            :placeholder="t('webvpnDomain.namePlaceholder', '请输入基础域名称')"
+            :placeholder="t('webvpnDomain.namePlaceholder', '请输入名称')"
             clearable
             class="w-full sm:w-50!"
             @keyup.enter="onSearch"

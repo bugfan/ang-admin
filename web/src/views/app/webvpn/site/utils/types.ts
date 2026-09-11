@@ -7,7 +7,6 @@ export interface FormItemProps {
   id?: number;
   name: string;
   domain_id?: number;
-  http_proxy_id?: number;
   target_url: string;
   prefix: string;
   hosts: string;

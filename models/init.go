@@ -2,7 +2,6 @@ package models
 
 import (
 	"log"
-	"time"
 
 	"github.com/go-xorm/xorm"
 	_ "github.com/mattn/go-sqlite3"
@@ -18,49 +17,6 @@ func InitDB(dsn string) {
 		log.Fatalf("Failed to create engine: %v", err)
 	}
 
-	// Drop old tunnel table if it still contains obsolete key_name column
-	if isExist, _ := engine.IsTableExist("tunnel"); isExist {
-		results, err := engine.QueryString("PRAGMA table_info(tunnel)")
-		if err == nil {
-			for _, row := range results {
-				if row["name"] == "key_name" {
-					_ = engine.DropTables("tunnel")
-					break
-				}
-			}
-		}
-	}
-
-	// Migrate dns_provider table to acme_account if exists
-	if isExist, _ := engine.IsTableExist("dns_provider"); isExist {
-		_, _ = engine.Exec("ALTER TABLE dns_provider RENAME TO acme_account")
-	}
-
-	// Rename dns_provider_id to acme_account_id in certificate table
-	if isExist, _ := engine.IsTableExist("certificate"); isExist {
-		results, err := engine.QueryString("PRAGMA table_info(certificate)")
-		if err == nil {
-			for _, row := range results {
-				if row["name"] == "dns_provider_id" {
-					_, _ = engine.Exec("ALTER TABLE certificate RENAME COLUMN dns_provider_id TO acme_account_id")
-					break
-				}
-			}
-		}
-	}
-
-	// Migrate legacy tables if exists
-	if isExist, _ := engine.IsTableExist("access_group"); isExist {
-		_, _ = engine.Exec("ALTER TABLE access_group RENAME TO user_group")
-	}
-	if isExist, _ := engine.IsTableExist("access_user"); isExist {
-		_, _ = engine.Exec("ALTER TABLE access_user RENAME TO user")
-	}
-	if isExist, _ := engine.IsTableExist("auth_source"); isExist {
-		_, _ = engine.Exec("ALTER TABLE auth_source RENAME TO auth_method")
-	}
-
-	// Automatically sync database schemas if necessary
 	err = engine.Sync2(
 		new(AdminUser), new(Tunnel), new(Certificate), new(TunnelClient),
 		new(DnsProxy), new(TcpProxy), new(UdpProxy), new(SniProxy),
@@ -71,41 +27,6 @@ func InitDB(dsn string) {
 
 	if err != nil {
 		log.Fatalf("Failed to sync database: %v", err)
-	}
-
-	// Migrate legacy WebvpnSite http_proxy_id to WebvpnDomain if webvpn_domain is empty
-	if count, err := engine.Count(new(WebvpnDomain)); err == nil && count == 0 {
-		var sites []WebvpnSite
-		_ = engine.Find(&sites)
-		proxyDomainMap := make(map[int64]int64)
-		for _, s := range sites {
-			if s.HttpProxyId > 0 && s.DomainId == 0 {
-				if domId, ok := proxyDomainMap[s.HttpProxyId]; ok {
-					s.DomainId = domId
-					_, _ = engine.ID(s.Id).Cols("domain_id").Update(&s)
-				} else {
-					var p HttpProxy
-					if has, _ := engine.ID(s.HttpProxyId).Get(&p); has {
-						newDom := WebvpnDomain{
-							Name:        p.Name,
-							Hostname:    p.Hostname,
-							Port:        p.Port,
-							TLS:         p.TLS,
-							H2:          p.H2,
-							Certificate: p.Certificate,
-							Fallback:    "404",
-							Status:      1,
-							Remark:      p.Remark,
-						}
-						if _, err := engine.Insert(&newDom); err == nil && newDom.Id > 0 {
-							proxyDomainMap[s.HttpProxyId] = newDom.Id
-							s.DomainId = newDom.Id
-							_, _ = engine.ID(s.Id).Cols("domain_id").Update(&s)
-						}
-					}
-				}
-			}
-		}
 	}
 
 	// Ensure default UserGroup exists
@@ -128,26 +49,6 @@ func InitDB(dsn string) {
 			Remark:     "系统默认本地用户名密码认证",
 		})
 	}
-
-	// Backfill certificate parsed metadata for all certificates
-	var allCerts []Certificate
-	if err := engine.Where("cert_content != ''").Find(&allCerts); err == nil {
-		for _, cert := range allCerts {
-			cert.ParseCertInfo()
-			_, _ = engine.ID(cert.Id).Cols("subject_cn", "sans", "not_before", "not_after", "issuer", "serial_number").Update(&cert)
-		}
-	}
-
-	// Backfill missing or zero created_at dates across tables
-	nowStr := time.Now().Format("2006-01-02 15:04:05")
-	_, _ = engine.Exec("UPDATE http_proxy SET created_at = ? WHERE created_at IS NULL OR created_at = '' OR created_at LIKE '0001-01-01%'", nowStr)
-	_, _ = engine.Exec("UPDATE rule SET created_at = ? WHERE created_at IS NULL OR created_at = '' OR created_at LIKE '0001-01-01%'", nowStr)
-	_, _ = engine.Exec("UPDATE dns_proxy SET created_at = ? WHERE created_at IS NULL OR created_at = '' OR created_at LIKE '0001-01-01%'", nowStr)
-	_, _ = engine.Exec("UPDATE tunnel SET created_at = ? WHERE created_at IS NULL OR created_at = '' OR created_at LIKE '0001-01-01%'", nowStr)
-	_, _ = engine.Exec("UPDATE certificate SET source = 'MANUAL' WHERE source IS NULL OR source = ''")
-	_, _ = engine.Exec("UPDATE certificate SET source = 'MANUAL' WHERE source = 'SELF_SIGNED'")
-	_, _ = engine.Exec("UPDATE certificate SET type = 'STD' WHERE type = 'SELF-STD'")
-	_, _ = engine.Exec("UPDATE certificate SET source = 'ACME' WHERE cert_id LIKE 'acme-%'")
 
 	// Initialize default admin user
 	admin := &AdminUser{Username: "admin"}
@@ -172,4 +73,3 @@ func InitDB(dsn string) {
 func GetEngine() *xorm.Engine {
 	return engine
 }
-

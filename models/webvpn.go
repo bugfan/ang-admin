@@ -39,7 +39,6 @@ type WebvpnSite struct {
 	Id              int64     `xorm:"pk autoincr 'id'" json:"id"`
 	Name            string    `xorm:"varchar(255) notnull 'name'" json:"name"`                                 // 资源应用名称，如 "中国知网"
 	DomainId       int64     `xorm:"index 'domain_id'" json:"domain_id"`                                    // 关联的 WebVPN 服务 ID
-	HttpProxyId     int64     `xorm:"index 'http_proxy_id'" json:"http_proxy_id"`                              // 兼容保留字段
 	TargetURL       string    `xorm:"varchar(512) notnull 'target_url'" json:"target_url"`                     // 目标真实地址，如 https://www.cnki.net
 	Prefix          string    `xorm:"varchar(128) notnull 'prefix'" json:"prefix"`                             // 子域名前缀，如 s-cnki 或 s-www-cnki-net-443
 	Hosts           string    `xorm:"text 'hosts'" json:"hosts"`                                               // 关联地址/代理域名列表 (每行一个域名)

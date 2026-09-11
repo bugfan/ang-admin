@@ -265,120 +265,6 @@ func buildHTTPMap(rulesMap map[string]models.Rule) map[string]entity.HTTPConfig 
 			}
 		}
 
-		// Automatically synthesize and append subdomain_webvpn_action rule if active WebVPN sites exist on legacy HttpProxy
-		var domCount int64
-		if engine != nil {
-			domCount, _ = engine.Count(new(models.WebvpnDomain))
-		}
-		if domCount == 0 {
-			var vpnSites []models.WebvpnSite
-			_ = engine.Where("http_proxy_id = ?", item.Id).Find(&vpnSites)
-			if len(vpnSites) > 0 {
-				rootDomain := strings.TrimPrefix(item.Hostname, "*.")
-				vpnActionSites := make(map[string]interface{})
-				for _, vs := range vpnSites {
-					u, err := url.Parse(vs.TargetURL)
-					if err != nil {
-						continue
-					}
-					targetHost := u.Hostname()
-					targetPort := u.Port()
-					schemePrefix := "s-"
-					if u.Scheme == "http" {
-						schemePrefix = "c-"
-						if targetPort == "" {
-							targetPort = "80"
-						}
-					} else {
-						if targetPort == "" {
-							targetPort = "443"
-						}
-					}
-
-					hostMap := make(map[string]string)
-					wildcardMap := make(map[string]string)
-
-					// 1. Primary target host
-					dashedTarget := strings.ReplaceAll(strings.ReplaceAll(targetHost, "-", "--"), ".", "-")
-					mainVpnHost := fmt.Sprintf("%s%s-%s.%s", schemePrefix, dashedTarget, targetPort, rootDomain)
-					hostMap[u.Host] = mainVpnHost
-					if u.Port() != "" {
-						hostMap[targetHost] = mainVpnHost
-					}
-
-					// 2. Related domain names from vs.Hosts
-					for _, line := range strings.Split(vs.Hosts, "\n") {
-						domain := strings.TrimSpace(line)
-						if domain == "" {
-							continue
-						}
-						if strings.Contains(domain, "*") {
-							wildcardMap[domain] = ""
-						} else {
-							dashed := strings.ReplaceAll(strings.ReplaceAll(domain, "-", "--"), ".", "-")
-							relVpnHost := fmt.Sprintf("%s%s-%s.%s", schemePrefix, dashed, targetPort, rootDomain)
-							hostMap[domain] = relVpnHost
-						}
-					}
-
-					isProt := vs.IsProtected == 1
-					var groupIds []int64
-					if isProt && vs.AllowedGroupIds != "" {
-						_ = json.Unmarshal([]byte(vs.AllowedGroupIds), &groupIds)
-					}
-
-					replaceMap := make(map[string]string)
-					if vs.Replace != "" {
-						_ = json.Unmarshal([]byte(vs.Replace), &replaceMap)
-					}
-
-					var tunnelConfig map[string]string
-					if vs.TunnelId > 0 {
-						tType := vs.TunnelType
-						if tType == "" {
-							tType = "tls"
-						}
-						tunnelConfig = map[string]string{
-							"type":  tType,
-							"id":    strconv.FormatInt(vs.TunnelId, 10),
-							"token": vs.TunnelToken,
-						}
-					}
-
-
-					vpnActionSites[vs.Prefix] = map[string]interface{}{
-						"name":              vs.Name,
-						"protected":         isProt,
-						"allowed_group_ids": groupIds,
-						"host":              hostMap,
-						"wildcard":          wildcardMap,
-						"replace":           replaceMap,
-						"disabled":          vs.Status != 1,
-						"tunnel":            tunnelConfig,
-					}
-				}
-
-				if len(vpnActionSites) > 0 {
-					loginURL := discoverAuthLoginURL(httpList, rulesMap)
-
-					ruleConfigs = append(ruleConfigs, entity.RuleConfig{
-						Matcher: entity.MatcherConfig{
-							Name:   "always_true_matcher",
-							Config: map[string]interface{}{},
-						},
-						Action: entity.ActionConfig{
-							Name: "subdomain_webvpn_action",
-							Config: map[string]interface{}{
-								"Sites":        vpnActionSites,
-								"LoginURL":     loginURL,
-								"CookieDomain": "." + rootDomain,
-								"Fallback":     "404",
-							},
-						},
-					})
-				}
-			}
-		}
 
 		// Parse Backend Locations
 		var rawLocations []entity.HTTPLocation
@@ -478,7 +364,7 @@ func buildHTTPMap(rulesMap map[string]models.Rule) map[string]entity.HTTPConfig 
 		rootDomain := strings.TrimPrefix(dom.Hostname, "*.")
 
 		var vpnSites []models.WebvpnSite
-		_ = engine.Where("(domain_id = ? OR (domain_id = 0 AND http_proxy_id = ?))", dom.Id, dom.Id).Find(&vpnSites)
+		_ = engine.Where("domain_id = ?", dom.Id).Find(&vpnSites)
 
 		vpnActionSites := make(map[string]interface{})
 		for _, vs := range vpnSites {
