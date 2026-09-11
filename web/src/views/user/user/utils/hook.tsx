@@ -1,12 +1,7 @@
 import { reactive, ref, onMounted } from "vue";
 import type { PaginationProps } from "@pureadmin/table";
 import { message } from "@/utils/message";
-import {
-  getUserList,
-  deleteUser,
-  updateUser,
-  type UserItem
-} from "@/api/user";
+import { getUserList, deleteUser, updateUser, type UserItem } from "@/api/user";
 import { getUserGroupList, type UserGroupItem } from "@/api/user-group";
 
 export function useUser(t: Function, tableRef: any) {
@@ -100,7 +95,7 @@ export function useUser(t: Function, tableRef: any) {
         );
       }
     },
-    
+
     {
       label: t("identity.mobile", "手机号"),
       align: "center",
@@ -124,12 +119,21 @@ export function useUser(t: Function, tableRef: any) {
             inactive-value={0}
             onChange={async (val: number) => {
               try {
-                const res = await updateUser(id, { id, status: val, username: row.Username || row.username });
+                const res = await updateUser(id, {
+                  id,
+                  status: val,
+                  username: row.Username || row.username
+                });
                 if (res && res.code === 0) {
-                  message(t("common.operationSuccess", "操作成功"), { type: "success" });
+                  message(t("common.operationSuccess", "操作成功"), {
+                    type: "success"
+                  });
                 } else {
                   row.status = val === 1 ? 0 : 1;
-                  message(res?.message || t("common.operationFailed", "操作失败"), { type: "error" });
+                  message(
+                    res?.message || t("common.operationFailed", "操作失败"),
+                    { type: "error" }
+                  );
                 }
               } catch (e) {
                 row.status = val === 1 ? 0 : 1;
@@ -192,7 +196,9 @@ export function useUser(t: Function, tableRef: any) {
         message(t("common.deleteSuccess", "删除成功"), { type: "success" });
         onSearch();
       } else {
-        message(res?.message || t("common.operationFailed", "删除失败"), { type: "error" });
+        message(res?.message || t("common.operationFailed", "删除失败"), {
+          type: "error"
+        });
       }
     } catch (e) {
       // ignore

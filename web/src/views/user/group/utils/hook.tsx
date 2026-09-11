@@ -38,12 +38,17 @@ export function useUserGroup(t: Function, tableRef: any) {
         const row = scope.row;
         const isDefault = Boolean(row.IsDefault ?? row.is_default);
         return (
-          <div class="flex justify-center items-center space-x-2">
+          <div class="flex-c   space-x-2">
             <span class="font-semibold text-sm text-(--el-text-color-primary)">
               {row.Name || row.name}
             </span>
             {isDefault && (
-              <el-tag size="small" type="success" effect="light" class="font-medium">
+              <el-tag
+                size="small"
+                type="success"
+                effect="light"
+                class="font-medium"
+              >
                 {t("identity.defaultGroupTag", "默认")}
               </el-tag>
             )}
@@ -122,7 +127,9 @@ export function useUserGroup(t: Function, tableRef: any) {
         message(t("common.deleteSuccess", "删除成功"), { type: "success" });
         onSearch();
       } else {
-        message(res?.message || t("common.operationFailed", "删除失败"), { type: "error" });
+        message(res?.message || t("common.operationFailed", "删除失败"), {
+          type: "error"
+        });
       }
     } catch (e) {
       // ignore

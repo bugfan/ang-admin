@@ -129,7 +129,9 @@ async function handleSaveSubmit() {
         showView.value = "list";
         onSearch();
       } catch (e: any) {
-        message(e.message || t("rule.submitFailed", "提交失败"), { type: "error" });
+        message(e.message || t("rule.submitFailed", "提交失败"), {
+          type: "error"
+        });
       } finally {
         saving.value = false;
       }

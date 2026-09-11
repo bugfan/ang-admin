@@ -70,7 +70,9 @@ export function useTunnel(t: any, tableRef: Ref) {
       minWidth: 130,
       cellRenderer: scope => {
         const rawType = scope.row.Type || scope.row.type || "";
-        const displayType = rawType.toUpperCase().includes("QUIC") ? "QUIC" : "TLS";
+        const displayType = rawType.toUpperCase().includes("QUIC")
+          ? "QUIC"
+          : "TLS";
         const tagType = "primary";
         return (
           <el-tag type={tagType} effect="plain" class="font-bold">
@@ -105,7 +107,9 @@ export function useTunnel(t: any, tableRef: Ref) {
             type={isAuth ? "success" : "info"}
             effect={isAuth ? "light" : "plain"}
           >
-            {isAuth ? t("tunnel.authEnabled", "已开启") : t("tunnel.authDisabled", "未开启")}
+            {isAuth
+              ? t("tunnel.authEnabled", "已开启")
+              : t("tunnel.authDisabled", "未开启")}
           </el-tag>
         );
       }

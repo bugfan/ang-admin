@@ -332,6 +332,20 @@ func buildHTTPMap(rulesMap map[string]models.Rule) map[string]entity.HTTPConfig 
 						_ = json.Unmarshal([]byte(vs.Replace), &replaceMap)
 					}
 
+					var tunnelConfig map[string]string
+					if vs.TunnelId > 0 {
+						tType := vs.TunnelType
+						if tType == "" {
+							tType = "tls"
+						}
+						tunnelConfig = map[string]string{
+							"type":  tType,
+							"id":    strconv.FormatInt(vs.TunnelId, 10),
+							"token": vs.TunnelToken,
+						}
+					}
+
+
 					vpnActionSites[vs.Prefix] = map[string]interface{}{
 						"name":              vs.Name,
 						"protected":         isProt,
@@ -340,6 +354,7 @@ func buildHTTPMap(rulesMap map[string]models.Rule) map[string]entity.HTTPConfig 
 						"wildcard":          wildcardMap,
 						"replace":           replaceMap,
 						"disabled":          vs.Status != 1,
+						"tunnel":            tunnelConfig,
 					}
 				}
 
@@ -517,10 +532,24 @@ func buildHTTPMap(rulesMap map[string]models.Rule) map[string]entity.HTTPConfig 
 				_ = json.Unmarshal([]byte(vs.AllowedGroupIds), &groupIds)
 			}
 
-			replaceMap := make(map[string]string)
-			if vs.Replace != "" {
-				_ = json.Unmarshal([]byte(vs.Replace), &replaceMap)
-			}
+		replaceMap := make(map[string]string)
+		if vs.Replace != "" {
+		_ = json.Unmarshal([]byte(vs.Replace), &replaceMap)
+		}
+
+		var tunnelConfig map[string]string
+		if vs.TunnelId > 0 {
+		tType := vs.TunnelType
+		if tType == "" {
+		tType = "tls"
+		}
+		tunnelConfig = map[string]string{
+		"type":  tType,
+		"id":    strconv.FormatInt(vs.TunnelId, 10),
+		"token": vs.TunnelToken,
+		}
+		}
+
 
 			vpnActionSites[vs.Prefix] = map[string]interface{}{
 				"name":              vs.Name,
@@ -529,7 +558,8 @@ func buildHTTPMap(rulesMap map[string]models.Rule) map[string]entity.HTTPConfig 
 				"host":              hostMap,
 				"wildcard":          wildcardMap,
 				"replace":           replaceMap,
-						"disabled":          vs.Status != 1,
+				"disabled":          vs.Status != 1,
+				"tunnel":            tunnelConfig,
 			}
 		}
 

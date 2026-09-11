@@ -51,16 +51,16 @@ function getDefaultFormInline() {
     title: t("webvpn.addTitle", "添加 WebVPN 站点"),
     id: undefined,
     name: "",
-    domain_id:
-      domainList.value[0]?.Id ||
-      domainList.value[0]?.id ||
-      undefined,
+    domain_id: domainList.value[0]?.Id || domainList.value[0]?.id || undefined,
     target_url: "",
     hosts: "",
     replaceList: [],
     is_protected: 1,
     group_ids: [],
     status: 1,
+    tunnel_id: "",
+    tunnel_token: "",
+    tunnel_type: "",
     remark: ""
   };
 }
@@ -92,13 +92,17 @@ function getFormInlineFromRow(row: any) {
       row?.domain_id ||
       row?.HttpProxyId ||
       row?.http_proxy_id ||
-      (domainList.value[0]?.Id || domainList.value[0]?.id),
+      domainList.value[0]?.Id ||
+      domainList.value[0]?.id,
     target_url: row?.TargetURL || row?.target_url || "",
     hosts: row?.Hosts || row?.hosts || "",
     replaceList: initialReplaceList,
     is_protected: row?.IsProtected ?? row?.is_protected ?? 1,
     group_ids: initialGroupIds,
     status: row?.Status ?? row?.status ?? 1,
+    tunnel_id: row?.TunnelId || row?.tunnel_id || "",
+    tunnel_token: row?.TunnelToken || row?.tunnel_token || "",
+    tunnel_type: row?.TunnelType || row?.tunnel_type || "",
     remark: row?.Remark || row?.remark || ""
   };
 }
@@ -150,6 +154,9 @@ async function handleSaveSubmit() {
           is_protected: formData.is_protected,
           allowed_group_ids: JSON.stringify(formData.group_ids || []),
           status: formData.status,
+          tunnel_id: formData.tunnel_id ? Number(formData.tunnel_id) : 0,
+          tunnel_token: formData.tunnel_token || "",
+          tunnel_type: formData.tunnel_type || "",
           remark: formData.remark
         };
 
@@ -212,7 +219,10 @@ async function handleSaveSubmit() {
           />
         </el-form-item>
 
-        <el-form-item :label="t('webvpn.domain', '所属基础域')" prop="domain_id">
+        <el-form-item
+          :label="t('webvpn.domain', '所属基础域')"
+          prop="domain_id"
+        >
           <el-select
             v-model="form.domain_id"
             :placeholder="t('webvpn.domainPlaceholder', '选择所属基础域')"
@@ -237,7 +247,10 @@ async function handleSaveSubmit() {
           >
             {{ t("buttons.pureSearch", "搜索") }}
           </el-button>
-          <el-button :icon="useRenderIcon(Refresh)" @click="resetForm(searchFormRef)">
+          <el-button
+            :icon="useRenderIcon(Refresh)"
+            @click="resetForm(searchFormRef)"
+          >
             {{ t("buttons.pureReset", "重置") }}
           </el-button>
         </el-form-item>
@@ -279,7 +292,7 @@ async function handleSaveSubmit() {
             @page-current-change="onSearch"
           >
             <template #operation="{ row }">
-              <div class="flex items-center justify-center space-x-2 whitespace-nowrap">
+              <div class="flex-c space-x-2 whitespace-nowrap">
                 <el-button
                   class="reset-margin"
                   link
@@ -291,7 +304,9 @@ async function handleSaveSubmit() {
                   {{ t("common.edit", "编辑") }}
                 </el-button>
                 <el-popconfirm
-                  :title="t('webvpn.deleteConfirm', { name: row.Name || row.name })"
+                  :title="
+                    t('webvpn.deleteConfirm', { name: row.Name || row.name })
+                  "
                   @confirm="handleDelete(row)"
                 >
                   <template #reference>
@@ -320,7 +335,12 @@ async function handleSaveSubmit() {
     >
       <PageHeader
         :title="formInline.title"
-        :description="t('webvpn.headerDesc', '配置 WebVPN 站点目标地址、所属服务、关联域名与用户组权限')"
+        :description="
+          t(
+            'webvpn.headerDesc',
+            '配置 WebVPN 站点目标地址、所属服务、关联域名与用户组权限'
+          )
+        "
         :backTitle="t('webvpn.backToList', '返回站点列表')"
         @back="handleCancelPage"
       >

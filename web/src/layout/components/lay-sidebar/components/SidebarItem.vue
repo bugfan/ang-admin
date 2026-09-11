@@ -186,7 +186,9 @@ function resolvePath(routePath) {
   >
     <template #title>
       <div class="sidebar-group-title">
-        <span class="sidebar-group-text">{{ transformI18n(item.meta.title) }}</span>
+        <span class="sidebar-group-text">{{
+          transformI18n(item.meta.title)
+        }}</span>
       </div>
     </template>
     <sidebar-item

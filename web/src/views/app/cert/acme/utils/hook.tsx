@@ -5,7 +5,11 @@ import { deviceDetection } from "@pureadmin/utils";
 import { getAcmeAccounts, deleteAcmeAccount } from "@/api/acme-account";
 import { type Ref, ref, computed, toRaw, reactive, onMounted } from "vue";
 
-export function useAcmeAccount(t: any, tableRef: Ref, emitEdit: (row: any) => void) {
+export function useAcmeAccount(
+  t: any,
+  tableRef: Ref,
+  emitEdit: (row: any) => void
+) {
   const form = reactive({
     name: "",
     provider: ""
@@ -72,7 +76,12 @@ export function useAcmeAccount(t: any, tableRef: Ref, emitEdit: (row: any) => vo
         const provider = scope.row.provider || "";
         const label = providerLabels[provider] || provider.toUpperCase() || "-";
         return (
-          <el-tag size="small" type="primary" effect="plain" class="font-medium">
+          <el-tag
+            size="small"
+            type="primary"
+            effect="plain"
+            class="font-medium"
+          >
             {label}
           </el-tag>
         );
@@ -86,7 +95,10 @@ export function useAcmeAccount(t: any, tableRef: Ref, emitEdit: (row: any) => vo
       cellRenderer: scope => {
         const url = scope.row.directory_url || "";
         let serverName = url;
-        if (url.includes("letsencrypt.org/directory") && !url.includes("staging")) {
+        if (
+          url.includes("letsencrypt.org/directory") &&
+          !url.includes("staging")
+        ) {
           serverName = "Let's Encrypt";
         } else if (url.includes("staging")) {
           serverName = "Let's Encrypt (Staging)";
@@ -114,7 +126,12 @@ export function useAcmeAccount(t: any, tableRef: Ref, emitEdit: (row: any) => vo
       cellRenderer: scope => {
         const kt = scope.row.key_type || "EC256";
         return (
-          <el-tag size="small" type="success" effect="plain" class="font-mono font-semibold">
+          <el-tag
+            size="small"
+            type="success"
+            effect="plain"
+            class="font-mono font-semibold"
+          >
             {kt}
           </el-tag>
         );
@@ -127,7 +144,9 @@ export function useAcmeAccount(t: any, tableRef: Ref, emitEdit: (row: any) => vo
       align: "center",
       cellRenderer: scope => {
         const email = scope.row.email || "-";
-        return <span class="text-xs text-(--el-text-color-regular)">{email}</span>;
+        return (
+          <span class="text-xs text-(--el-text-color-regular)">{email}</span>
+        );
       }
     },
     {
@@ -153,9 +172,12 @@ export function useAcmeAccount(t: any, tableRef: Ref, emitEdit: (row: any) => vo
     const targetId = row.id || row.Id;
     const { code, message: msg } = await deleteAcmeAccount(targetId);
     if (code === 0) {
-      message(`${t("cert.delete")} ID: ${targetId} ${t("common.success", "成功")}`, {
-        type: "success"
-      });
+      message(
+        `${t("cert.delete")} ID: ${targetId} ${t("common.success", "成功")}`,
+        {
+          type: "success"
+        }
+      );
       onSearch();
     } else {
       message(msg, { type: "error" });

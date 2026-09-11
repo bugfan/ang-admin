@@ -124,7 +124,12 @@ defineExpose({ getRef });
               :inactive-text="t('buttons.pureCloseText', '关')"
             />
             <span class="text-xs text-(--el-text-color-secondary)">
-              {{ t('tunnel.clientAuthTip', '开启后，仅允许在【客户端】列表中已配置且 Token 匹配的节点连接') }}
+              {{
+                t(
+                  "tunnel.clientAuthTip",
+                  "开启后，仅允许在【客户端】列表中已配置且 Token 匹配的节点连接"
+                )
+              }}
             </span>
           </div>
         </el-form-item>

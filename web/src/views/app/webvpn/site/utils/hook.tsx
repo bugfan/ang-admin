@@ -81,7 +81,9 @@ export function useWebvpnSite(t: Function, tableRef: any) {
       prop: "TargetURL",
       minWidth: 180,
       headerRenderer: () => (
-        <span class="whitespace-nowrap">{t("webvpn.targetUrl", "站点地址")}</span>
+        <span class="whitespace-nowrap">
+          {t("webvpn.targetUrl", "站点地址")}
+        </span>
       ),
       cellRenderer: scope => {
         const row = scope.row;
@@ -91,7 +93,7 @@ export function useWebvpnSite(t: Function, tableRef: any) {
             <el-tag
               type="primary"
               effect="light"
-              class="font-mono font-bold truncate max-w-[240px] inline-block"
+              class="font-mono font-bold truncate max-w-60 inline-block"
             >
               {targetUrl}
             </el-tag>
@@ -104,7 +106,9 @@ export function useWebvpnSite(t: Function, tableRef: any) {
       align: "center",
       minWidth: 200,
       headerRenderer: () => (
-        <span class="whitespace-nowrap">{t("webvpn.accessUrl", "访问地址")}</span>
+        <span class="whitespace-nowrap">
+          {t("webvpn.accessUrl", "访问地址")}
+        </span>
       ),
       cellRenderer: scope => {
         const row = scope.row;
@@ -116,7 +120,7 @@ export function useWebvpnSite(t: Function, tableRef: any) {
                 href={fullUrl}
                 target="_blank"
                 rel="noreferrer"
-                class="font-mono text-xs text-primary hover:underline truncate max-w-[240px] inline-block"
+                class="font-mono text-xs text-primary hover:underline truncate max-w-60 inline-block"
               >
                 {fullUrl}
               </a>
@@ -131,7 +135,9 @@ export function useWebvpnSite(t: Function, tableRef: any) {
       align: "center",
       minWidth: 160,
       headerRenderer: () => (
-        <span class="whitespace-nowrap">{t("webvpn.domain", "所属基础域")}</span>
+        <span class="whitespace-nowrap">
+          {t("webvpn.domain", "所属基础域")}
+        </span>
       ),
       cellRenderer: scope => {
         const row = scope.row;
@@ -139,7 +145,9 @@ export function useWebvpnSite(t: Function, tableRef: any) {
         const sHost = row.domain_hostname || row.http_proxy_hostname || "";
         return (
           <div class="flex flex-col items-center">
-            <span class="text-xs font-medium text-(--el-text-color-primary)">{sName}</span>
+            <span class="text-xs font-medium text-(--el-text-color-primary)">
+              {sName}
+            </span>
             {sHost ? (
               <span class="text-xs text-gray-400 font-mono">{sHost}</span>
             ) : null}
@@ -152,7 +160,9 @@ export function useWebvpnSite(t: Function, tableRef: any) {
       align: "center",
       width: 100,
       headerRenderer: () => (
-        <span class="whitespace-nowrap">{t("webvpn.accessMode", "公开访问")}</span>
+        <span class="whitespace-nowrap">
+          {t("webvpn.accessMode", "公开访问")}
+        </span>
       ),
       cellRenderer: scope => {
         const row = scope.row;
@@ -174,7 +184,9 @@ export function useWebvpnSite(t: Function, tableRef: any) {
       prop: "allowed_group_ids",
       minWidth: 150,
       headerRenderer: () => (
-        <span class="whitespace-nowrap">{t("webvpn.allowedGroups", "用户组")}</span>
+        <span class="whitespace-nowrap">
+          {t("webvpn.allowedGroups", "用户组")}
+        </span>
       ),
       cellRenderer: scope => {
         const row = scope.row;
@@ -284,10 +296,14 @@ export function useWebvpnSite(t: Function, tableRef: any) {
         message(t("common.updateSuccess", "状态更新成功"), { type: "success" });
         onSearch();
       } else {
-        message(res.message || t("common.updateFailed", "更新失败"), { type: "error" });
+        message(res.message || t("common.updateFailed", "更新失败"), {
+          type: "error"
+        });
       }
     } catch (err: any) {
-      message(err.message || t("common.updateFailed", "更新失败"), { type: "error" });
+      message(err.message || t("common.updateFailed", "更新失败"), {
+        type: "error"
+      });
     }
   }
 
@@ -296,13 +312,19 @@ export function useWebvpnSite(t: Function, tableRef: any) {
     try {
       const res = await deleteWebvpn(id);
       if (res.code === 0) {
-        message(t("webvpn.delSuccess", "删除 WebVPN 应用成功"), { type: "success" });
+        message(t("webvpn.delSuccess", "删除 WebVPN 应用成功"), {
+          type: "success"
+        });
         onSearch();
       } else {
-        message(res.message || t("common.deleteFailed", "删除失败"), { type: "error" });
+        message(res.message || t("common.deleteFailed", "删除失败"), {
+          type: "error"
+        });
       }
     } catch (err: any) {
-      message(err.message || t("common.deleteFailed", "删除失败"), { type: "error" });
+      message(err.message || t("common.deleteFailed", "删除失败"), {
+        type: "error"
+      });
     }
   }
 

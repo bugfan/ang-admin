@@ -167,7 +167,9 @@ async function fetchCustomRules() {
 
 function addDnsResolver() {
   if (dnsResolverList.value.some(item => item.value.trim() === "")) {
-    message(t("common.dnsEmptyExists", "已存在默认解析(空项)，无需重复添加"), { type: "warning" });
+    message(t("common.dnsEmptyExists", "已存在默认解析(空项)，无需重复添加"), {
+      type: "warning"
+    });
     return;
   }
   dnsResolverList.value.push({
@@ -202,7 +204,9 @@ function syncDnsResolver() {
   }
   newFormInline.value.dns_resolver = JSON.stringify(activeList);
 
-  const duplicates = nonEmpties.filter((item, idx) => nonEmpties.indexOf(item) !== idx);
+  const duplicates = nonEmpties.filter(
+    (item, idx) => nonEmpties.indexOf(item) !== idx
+  );
   if (duplicates.length > 0) {
     dnsError.value = t(
       "common.upstreamTargetDuplicate",
@@ -222,7 +226,10 @@ function initDnsResolverFromProps() {
         if (parsed.startsWith("[")) {
           parsed = JSON.parse(parsed);
         } else {
-          parsed = parsed.split(/[\n,;]+/).map((s: string) => s.trim()).filter(Boolean);
+          parsed = parsed
+            .split(/[\n,;]+/)
+            .map((s: string) => s.trim())
+            .filter(Boolean);
         }
       }
       if (Array.isArray(parsed) && parsed.length > 0) {
@@ -251,8 +258,12 @@ function getRef() {
   return {
     validate: (callback: (valid: boolean) => void) => {
       ruleFormRef.value.validate((valid: boolean) => {
-        const dnsVals = dnsResolverList.value.map(d => d.value.trim()).filter(Boolean);
-        const dupDns = dnsVals.filter((item, idx) => dnsVals.indexOf(item) !== idx);
+        const dnsVals = dnsResolverList.value
+          .map(d => d.value.trim())
+          .filter(Boolean);
+        const dupDns = dnsVals.filter(
+          (item, idx) => dnsVals.indexOf(item) !== idx
+        );
         if (dupDns.length > 0) {
           const errMsg = t(
             "common.upstreamTargetDuplicate",
@@ -504,7 +515,8 @@ const formRules = computed(() => ({
       trigger: "blur"
     },
     {
-      pattern: /^([1-9][0-9]{0,3}|[1-5][0-9]{4}|6[0-4][0-9]{3}|65[0-4][0-9]{2}|655[0-2][0-9]|6553[0-5])$/,
+      pattern:
+        /^([1-9][0-9]{0,3}|[1-5][0-9]{4}|6[0-4][0-9]{3}|65[0-4][0-9]{2}|655[0-2][0-9]|6553[0-5])$/,
       message: t("sni.portFormatError", "端口必须为有效数字 (1-65535)"),
       trigger: "blur"
     }
@@ -521,11 +533,16 @@ const formRules = computed(() => ({
     label-position="right"
     class="mt-2"
   >
-    <el-card shadow="never" class="mb-4 border-(--el-border-color-lighter)! rounded-xl">
+    <el-card
+      shadow="never"
+      class="mb-4 border-(--el-border-color-lighter)! rounded-xl"
+    >
       <template #header>
         <div class="flex items-center space-x-2">
           <div class="w-1.5 h-4 bg-primary rounded-full" />
-          <span class="font-bold text-(--el-text-color-primary) text-sm sm:text-base">
+          <span
+            class="font-bold text-(--el-text-color-primary) text-sm sm:text-base"
+          >
             {{ t("sni.baseInfoSection", "基本信息") }}
           </span>
         </div>
@@ -580,11 +597,21 @@ const formRules = computed(() => ({
                 v-model="extraSniText"
                 type="textarea"
                 :rows="4"
-                :placeholder="t('sni.extraSniPlaceholder', '每行一个 SNI 地址，支持通配符，如:\n*.example.com\napi.example.com\n*.other.org')"
+                :placeholder="
+                  t(
+                    'sni.extraSniPlaceholder',
+                    '每行一个 SNI 地址，支持通配符，如:\n*.example.com\napi.example.com\n*.other.org'
+                  )
+                "
                 @input="syncExtraSniToForm"
               />
               <div class="text-xs text-(--el-text-color-secondary)">
-                {{ t("sni.extraSniTip", "可在此填写多个关联域名（支持精确匹配和通配符，如 *.example.com）。匹配时将优先精确匹配主 SNI，再精确匹配关联地址，最后通配匹配。") }}
+                {{
+                  t(
+                    "sni.extraSniTip",
+                    "可在此填写多个关联域名（支持精确匹配和通配符，如 *.example.com）。匹配时将优先精确匹配主 SNI，再精确匹配关联地址，最后通配匹配。"
+                  )
+                }}
               </div>
             </div>
           </el-form-item>
@@ -592,12 +619,19 @@ const formRules = computed(() => ({
       </el-row>
     </el-card>
 
-    <el-card shadow="never" class="mb-4 border-(--el-border-color-lighter)! rounded-xl">
+    <el-card
+      shadow="never"
+      class="mb-4 border-(--el-border-color-lighter)! rounded-xl"
+    >
       <template #header>
-        <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
+        <div
+          class="flex flex-col sm:flex-row sm:items-center justify-between gap-2"
+        >
           <div class="flex items-center space-x-2">
             <div class="w-1.5 h-4 bg-orange-500 rounded-full" />
-            <span class="font-bold text-(--el-text-color-primary) text-sm sm:text-base">
+            <span
+              class="font-bold text-(--el-text-color-primary) text-sm sm:text-base"
+            >
               {{ t("sni.rulesSection", "规则") }}
             </span>
           </div>
@@ -621,9 +655,11 @@ const formRules = computed(() => ({
               :label="item.label"
               :value="item.value"
             >
-              <div class="flex justify-between items-center">
+              <div class="flex-bc">
                 <span>{{ item.label }}</span>
-                <span class="text-xs text-gray-400 max-w-[200px] truncate ml-4">{{ item.desc }}</span>
+                <span class="text-xs text-gray-400 max-w-50 truncate ml-4">{{
+                  item.desc
+                }}</span>
               </div>
             </el-option>
           </el-select>
@@ -637,14 +673,18 @@ const formRules = computed(() => ({
           </div>
         </div>
       </el-form-item>
-
     </el-card>
 
-    <el-card shadow="never" class="mb-4 border-(--el-border-color-lighter)! rounded-xl">
+    <el-card
+      shadow="never"
+      class="mb-4 border-(--el-border-color-lighter)! rounded-xl"
+    >
       <template #header>
         <div class="flex items-center space-x-2">
           <div class="w-1.5 h-4 bg-purple-500 rounded-full" />
-          <span class="font-bold text-(--el-text-color-primary) text-sm sm:text-base">
+          <span
+            class="font-bold text-(--el-text-color-primary) text-sm sm:text-base"
+          >
             {{ t("sni.backendSection", "上游") }}
           </span>
         </div>
@@ -660,7 +700,12 @@ const formRules = computed(() => ({
                 clearable
                 filterable
                 class="w-full"
-                :placeholder="t('sni.selectTunnelPlaceholder', '选择关联的 Tunnel 客户端节点')"
+                :placeholder="
+                  t(
+                    'sni.selectTunnelPlaceholder',
+                    '选择关联的 Tunnel 客户端节点'
+                  )
+                "
                 @change="handleTunnelNodeChange"
               >
                 <el-option-group
@@ -675,11 +720,26 @@ const formRules = computed(() => ({
                     :value="item.value"
                     :disabled="item.disabled"
                   >
-                    <div v-if="!item.disabled" class="flex items-center space-x-2 py-0.5 text-xs">
-                      <el-tag size="small" :type="item.isOnline ? 'success' : 'info'" effect="light" class="font-medium">
-                        {{ item.isOnline ? t("tunnelClient.online", "在线") : t("tunnelClient.offline", "离线") }}
+                    <div
+                      v-if="!item.disabled"
+                      class="flex items-center space-x-2 py-0.5 text-xs"
+                    >
+                      <el-tag
+                        size="small"
+                        :type="item.isOnline ? 'success' : 'info'"
+                        effect="light"
+                        class="font-medium"
+                      >
+                        {{
+                          item.isOnline
+                            ? t("tunnelClient.online", "在线")
+                            : t("tunnelClient.offline", "离线")
+                        }}
                       </el-tag>
-                      <span class="font-semibold text-(--el-text-color-primary) font-mono">{{ item.cName || "Node" }}</span>
+                      <span
+                        class="font-semibold text-(--el-text-color-primary) font-mono"
+                        >{{ item.cName || "Node" }}</span
+                      >
                     </div>
                     <div v-else class="text-xs text-gray-400 py-0.5">
                       {{ item.cName }}
@@ -688,7 +748,12 @@ const formRules = computed(() => ({
                 </el-option-group>
               </el-select>
               <div class="text-xs text-(--el-text-color-secondary) mt-1">
-                {{ t("sni.tunnelTip", "可选配置。若选择隧道节点，流量将通过该 Tunnel 客户端进行代理转发。") }}
+                {{
+                  t(
+                    "sni.tunnelTip",
+                    "可选配置。若选择隧道节点，流量将通过该 Tunnel 客户端进行代理转发。"
+                  )
+                }}
               </div>
             </el-form-item>
           </re-col>
@@ -707,7 +772,12 @@ const formRules = computed(() => ({
                   >
                     <el-input
                       v-model="dns.value"
-                      :placeholder="t('sni.dnsResolverPlaceholder', '支持标准 DNS 与 DoH，如 8.8.8.8:53 或 https://dns.google/dns-query (留空使用系统默认 DNS)')"
+                      :placeholder="
+                        t(
+                          'sni.dnsResolverPlaceholder',
+                          '支持标准 DNS 与 DoH，如 8.8.8.8:53 或 https://dns.google/dns-query (留空使用系统默认 DNS)'
+                        )
+                      "
                       clearable
                       @input="syncDnsResolver"
                     />
@@ -717,7 +787,10 @@ const formRules = computed(() => ({
                       :icon="useRenderIcon(Delete)"
                       @click="removeDnsResolver(dIdx)"
                     />
-                    <el-tooltip :content="t('sni.dragToReorder', '拖动改变顺序')" placement="top">
+                    <el-tooltip
+                      :content="t('sni.dragToReorder', '拖动改变顺序')"
+                      placement="top"
+                    >
                       <el-button
                         type="info"
                         link
@@ -727,7 +800,7 @@ const formRules = computed(() => ({
                     </el-tooltip>
                   </div>
                 </div>
-                <div class="flex items-center justify-between w-full">
+                <div class="flex-bc w-full">
                   <el-button
                     type="primary"
                     plain
@@ -743,7 +816,12 @@ const formRules = computed(() => ({
                   {{ dnsError }}
                 </div>
                 <div class="text-xs text-(--el-text-color-secondary) mt-1">
-                  {{ t("sni.dnsResolverTip", "当流量未走 Tunnel 隧道转发时，系统将按顺序优先使用上方的 DNS 服务器解析 SNI 目标域名，仅在当前服务器解析失败或异常时自动向下尝试（类似于 /etc/resolv.conf 故障转移机制）。") }}
+                  {{
+                    t(
+                      "sni.dnsResolverTip",
+                      "当流量未走 Tunnel 隧道转发时，系统将按顺序优先使用上方的 DNS 服务器解析 SNI 目标域名，仅在当前服务器解析失败或异常时自动向下尝试（类似于 /etc/resolv.conf 故障转移机制）。"
+                    )
+                  }}
                 </div>
               </div>
             </el-form-item>

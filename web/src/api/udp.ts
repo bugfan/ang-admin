@@ -72,7 +72,10 @@ export const createUdp = async (data?: object) => {
       res.code !== undefined &&
       res.code !== 0
     ) {
-      return { code: res.code, message: formatApiError(res, "udp", "创建 TCP 失败") };
+      return {
+        code: res.code,
+        message: formatApiError(res, "udp", "创建 TCP 失败")
+      };
     }
     return { code: 0, message: "success", data: res };
   } catch (err: any) {
@@ -93,7 +96,10 @@ export const updateUdp = async (data: any) => {
       res.code !== undefined &&
       res.code !== 0
     ) {
-      return { code: res.code, message: formatApiError(res, "udp", "更新 TCP 失败") };
+      return {
+        code: res.code,
+        message: formatApiError(res, "udp", "更新 TCP 失败")
+      };
     }
     return { code: 0, message: "success", data: res };
   } catch (err: any) {

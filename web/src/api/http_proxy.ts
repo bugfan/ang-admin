@@ -79,11 +79,17 @@ export const createHttpProxy = async (data?: object) => {
       res.code !== undefined &&
       res.code !== 0
     ) {
-      return { code: res.code, message: formatApiError(res, "http", "创建 HTTP 代理失败") };
+      return {
+        code: res.code,
+        message: formatApiError(res, "http", "创建 HTTP 代理失败")
+      };
     }
     return { code: 0, message: "success", data: res };
   } catch (err: any) {
-    return { code: 1, message: formatApiError(err, "http", "创建 HTTP 代理失败") };
+    return {
+      code: 1,
+      message: formatApiError(err, "http", "创建 HTTP 代理失败")
+    };
   }
 };
 
@@ -100,11 +106,17 @@ export const updateHttpProxy = async (data: any) => {
       res.code !== undefined &&
       res.code !== 0
     ) {
-      return { code: res.code, message: formatApiError(res, "http", "更新 HTTP 代理失败") };
+      return {
+        code: res.code,
+        message: formatApiError(res, "http", "更新 HTTP 代理失败")
+      };
     }
     return { code: 0, message: "success", data: res };
   } catch (err: any) {
-    return { code: 1, message: formatApiError(err, "http", "更新 HTTP 代理失败") };
+    return {
+      code: 1,
+      message: formatApiError(err, "http", "更新 HTTP 代理失败")
+    };
   }
 };
 
@@ -121,6 +133,9 @@ export const deleteHttpProxy = async (param: any) => {
     }
     return { code: 0, message: "success" };
   } catch (err: any) {
-    return { code: 1, message: formatApiError(err, "http", "删除 HTTP 代理失败") };
+    return {
+      code: 1,
+      message: formatApiError(err, "http", "删除 HTTP 代理失败")
+    };
   }
 };

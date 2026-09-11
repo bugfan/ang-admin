@@ -154,7 +154,9 @@ async function handleSaveSubmit() {
         showView.value = "list";
         onSearch();
       } catch (e: any) {
-        message(e.message || t("dns.submitFailed", "提交失败"), { type: "error" });
+        message(e.message || t("dns.submitFailed", "提交失败"), {
+          type: "error"
+        });
       } finally {
         saving.value = false;
       }
@@ -286,10 +288,7 @@ async function handleSaveSubmit() {
               <div
                 class="p-3 sm:p-4 bg-(--el-fill-color-light) rounded-xl m-1 sm:my-2 sm:mx-4 border border-(--el-border-color-lighter) space-y-3 text-xs"
               >
-                <div
-                  v-if="row.hosts_text"
-                  class="space-y-1.5"
-                >
+                <div v-if="row.hosts_text" class="space-y-1.5">
                   <div
                     class="font-bold text-(--el-text-color-primary) flex-bc flex-wrap gap-1"
                   >
@@ -433,8 +432,17 @@ async function handleSaveSubmit() {
     >
       <!-- Full Page Header Bar -->
       <PageHeader
-        :title="showView === 'new' ? t('dns.addDns') : t('dns.editDns') + ' (id: ' + (formInline.id || 'new') + ')'"
-        :description="t('dns.headerDesc', '配置 DNS 代理监听端口、传输层规则过滤 (Rule)、本地 Hosts 静态解析与 Backend 上游服务器')"
+        :title="
+          showView === 'new'
+            ? t('dns.addDns')
+            : t('dns.editDns') + ' (id: ' + (formInline.id || 'new') + ')'
+        "
+        :description="
+          t(
+            'dns.headerDesc',
+            '配置 DNS 代理监听端口、传输层规则过滤 (Rule)、本地 Hosts 静态解析与 Backend 上游服务器'
+          )
+        "
         :backTitle="t('dns.backToList', '返回 DNS 列表')"
         @back="handleCancelPage"
       >

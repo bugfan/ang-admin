@@ -43,10 +43,15 @@ onMounted(() => {
     }
 
     if (status === "SUCCESS") {
-      message(`${domain ? `[${domain}] ` : ''}${t('cert.issueSuccess')}`, { type: "success" });
+      message(`${domain ? `[${domain}] ` : ""}${t("cert.issueSuccess")}`, {
+        type: "success"
+      });
     } else if (status === "FAILED") {
-      const errMsg = certData.acme_issue_error || certData.AcmeIssueError || '';
-      message(`${domain ? `[${domain}] ` : ''}${t('cert.issueFailed')}${errMsg ? `: ${errMsg}` : ''}`, { type: "error" });
+      const errMsg = certData.acme_issue_error || certData.AcmeIssueError || "";
+      message(
+        `${domain ? `[${domain}] ` : ""}${t("cert.issueFailed")}${errMsg ? `: ${errMsg}` : ""}`,
+        { type: "error" }
+      );
     }
 
     onSearch();
@@ -142,15 +147,17 @@ async function handleIssue(row: any) {
     const { issueCert } = await import("@/api/certificate");
     const res = await issueCert(targetId);
     if (res.code === 0) {
-      message(t('cert.issueTaskSubmitted', '签发任务已提交后台执行'), { type: "info" });
+      message(t("cert.issueTaskSubmitted", "签发任务已提交后台执行"), {
+        type: "info"
+      });
       onSearch(); // 立即刷新列表状态为签发中
     } else {
-      message(res.message || t('cert.issueFailed'), { type: "error" });
+      message(res.message || t("cert.issueFailed"), { type: "error" });
       issuingMap.value[targetId] = false;
       onSearch();
     }
   } catch (error: any) {
-    message(error?.message || t('cert.issueFailed'), { type: "error" });
+    message(error?.message || t("cert.issueFailed"), { type: "error" });
     issuingMap.value[targetId] = false;
     onSearch();
   }
@@ -161,9 +168,11 @@ function handleDownload(row: any) {
   const keyContent = row.key_content || row.KeyContent;
   const certContent = row.cert_content || row.CertContent;
   const intermediateContent = row.intermediate_cert || row.IntermediateCert;
-  
+
   if (!keyContent && !certContent) {
-    message(t("cert.noContentToDownload", "该证书尚未生成内容，无法下载"), { type: "warning" });
+    message(t("cert.noContentToDownload", "该证书尚未生成内容，无法下载"), {
+      type: "warning"
+    });
     return;
   }
 
@@ -181,12 +190,12 @@ function handleDownload(row: any) {
     zip.file(`${name}_fullchain.pem`, fullchain);
   }
 
-  zip.generateAsync({ type: "blob" }).then((blob) => {
+  zip.generateAsync({ type: "blob" }).then(blob => {
     const url = URL.createObjectURL(blob);
-    const element = document.createElement('a');
-    element.setAttribute('href', url);
-    element.setAttribute('download', `${name}_cert.zip`);
-    element.style.display = 'none';
+    const element = document.createElement("a");
+    element.setAttribute("href", url);
+    element.setAttribute("download", `${name}_cert.zip`);
+    element.style.display = "none";
     document.body.appendChild(element);
     element.click();
     document.body.removeChild(element);
@@ -226,7 +235,9 @@ async function handleSaveSubmit() {
         showView.value = "list";
         onSearch();
       } catch (e: any) {
-        message(e.message || t("cert.submitFailed", "提交失败"), { type: "error" });
+        message(e.message || t("cert.submitFailed", "提交失败"), {
+          type: "error"
+        });
       } finally {
         saving.value = false;
       }
@@ -455,38 +466,67 @@ async function handleSaveSubmit() {
 
             <!-- 签发状态列 -->
             <template #issue_status="{ row }">
-              <div v-if="row.source === 'ACME' || row.Source === 'ACME'" class="flex items-center justify-center">
-                <span v-if="row.acme_issue_status === 'ISSUING' || row.AcmeIssueStatus === 'ISSUING'" class="text-blue-500 text-xs font-semibold">{{ $t('cert.issuing') }}...</span>
+              <div
+                v-if="row.source === 'ACME' || row.Source === 'ACME'"
+                class="flex-c"
+              >
+                <span
+                  v-if="
+                    row.acme_issue_status === 'ISSUING' ||
+                    row.AcmeIssueStatus === 'ISSUING'
+                  "
+                  class="text-blue-500 text-xs font-semibold"
+                  >{{ $t("cert.issuing") }}...</span
+                >
                 <el-tooltip
-                  v-else-if="row.acme_issue_status === 'FAILED' || row.AcmeIssueStatus === 'FAILED'"
+                  v-else-if="
+                    row.acme_issue_status === 'FAILED' ||
+                    row.AcmeIssueStatus === 'FAILED'
+                  "
                   effect="dark"
-                  :content="row.acme_issue_error || row.AcmeIssueError || $t('cert.issueFailed')"
+                  :content="
+                    row.acme_issue_error ||
+                    row.AcmeIssueError ||
+                    $t('cert.issueFailed')
+                  "
                   placement="top"
                 >
-                  <span class="text-red-500 text-xs font-semibold cursor-help">{{ $t('cert.issueFailed') }}</span>
+                  <span
+                    class="text-red-500 text-xs font-semibold cursor-help"
+                    >{{ $t("cert.issueFailed") }}</span
+                  >
                 </el-tooltip>
                 <span
-                  v-else-if="row.acme_issue_status === 'SUCCESS' || row.AcmeIssueStatus === 'SUCCESS'"
+                  v-else-if="
+                    row.acme_issue_status === 'SUCCESS' ||
+                    row.AcmeIssueStatus === 'SUCCESS'
+                  "
                   class="text-green-600 text-xs font-semibold"
-                >{{ $t('cert.issueSuccess') }}</span>
-                <span v-else class="text-gray-400 text-xs">{{ $t('cert.notIssued') }}</span>
+                  >{{ $t("cert.issueSuccess") }}</span
+                >
+                <span v-else class="text-gray-400 text-xs">{{
+                  $t("cert.notIssued")
+                }}</span>
               </div>
               <span v-else class="text-gray-400 text-xs">-</span>
             </template>
 
             <!-- 选项列 -->
             <template #options="{ row }">
-              <div class="flex items-center justify-center gap-2">
+              <div class="flex-c gap-2">
                 <template v-if="row.source === 'ACME' || row.Source === 'ACME'">
                   <el-button
-                    v-if="row.acme_issue_status === 'ISSUING' || row.AcmeIssueStatus === 'ISSUING'"
+                    v-if="
+                      row.acme_issue_status === 'ISSUING' ||
+                      row.AcmeIssueStatus === 'ISSUING'
+                    "
                     class="reset-margin shrink-0"
                     link
                     type="success"
                     :size="size"
                     loading
                   >
-                    {{ $t('cert.issuing') }}
+                    {{ $t("cert.issuing") }}
                   </el-button>
                   <el-popconfirm
                     v-else
@@ -501,7 +541,11 @@ async function handleSaveSubmit() {
                         :size="size"
                         :loading="issuingMap[row.id || row.Id]"
                       >
-                        {{ issuingMap[row.id || row.Id] ? $t('cert.issuing') : $t('cert.issueBtn') }}
+                        {{
+                          issuingMap[row.id || row.Id]
+                            ? $t("cert.issuing")
+                            : $t("cert.issueBtn")
+                        }}
                       </el-button>
                     </template>
                   </el-popconfirm>
@@ -514,7 +558,7 @@ async function handleSaveSubmit() {
                   :size="size"
                   @click="handleDownload(row)"
                 >
-                  {{ $t('cert.downloadBtn') }}
+                  {{ $t("cert.downloadBtn") }}
                 </el-button>
               </div>
             </template>

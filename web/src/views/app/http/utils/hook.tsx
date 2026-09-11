@@ -69,7 +69,9 @@ export function useHttpProxy(t: any, tableRef: Ref) {
       label: t("http.hostAndPort", "Hostname / 端口"),
       minWidth: 160,
       headerRenderer: () => (
-        <span class="whitespace-nowrap">{t("http.hostAndPort", "Hostname / 端口")}</span>
+        <span class="whitespace-nowrap">
+          {t("http.hostAndPort", "Hostname / 端口")}
+        </span>
       ),
       cellRenderer: scope => {
         const host = scope.row.Hostname || scope.row.hostname || "-";
@@ -206,7 +208,9 @@ export function useHttpProxy(t: any, tableRef: Ref) {
         const rulesStr = scope.row.Rules || scope.row.rules || "";
         let ruleList: string[] = [];
         try {
-          if (rulesStr) ruleList = typeof rulesStr === "string" ? JSON.parse(rulesStr) : rulesStr;
+          if (rulesStr)
+            ruleList =
+              typeof rulesStr === "string" ? JSON.parse(rulesStr) : rulesStr;
         } catch (e) {
           ruleList = [];
         }
@@ -241,25 +245,33 @@ export function useHttpProxy(t: any, tableRef: Ref) {
       cellRenderer: scope => {
         const row = scope.row;
         const tunnelId = String(row.TunnelId ?? row.tunnel_id ?? "").trim();
-        const tunnelToken = String(row.TunnelToken ?? row.tunnel_token ?? "").trim();
-        const tunnelType = String(row.TunnelType ?? row.tunnel_type ?? "TLS").toUpperCase();
+        const tunnelToken = String(
+          row.TunnelToken ?? row.tunnel_token ?? ""
+        ).trim();
+        const tunnelType = String(
+          row.TunnelType ?? row.tunnel_type ?? "TLS"
+        ).toUpperCase();
 
         if (!tunnelId && !tunnelToken) {
           return (
-            <div class="flex justify-center items-center h-full w-full py-1">
+            <div class="flex-c   size-full  py-1">
               <span class="text-(--el-text-color-placeholder) text-xs">-</span>
             </div>
           );
         }
 
         const mapKey = `${tunnelId}|${tunnelToken}`;
-        const tInfo = tunnelMap.value[tunnelToken] || tunnelMap.value[mapKey] || tunnelMap.value[tunnelId];
+        const tInfo =
+          tunnelMap.value[tunnelToken] ||
+          tunnelMap.value[mapKey] ||
+          tunnelMap.value[tunnelId];
 
-        const displayName = tInfo?.name || `${tunnelType} ${tunnelId || tunnelToken}`;
+        const displayName =
+          tInfo?.name || `${tunnelType} ${tunnelId || tunnelToken}`;
         const isOnline = Boolean(tInfo?.isOnline);
 
         return (
-          <div class="flex justify-center items-center h-full w-full py-1">
+          <div class="flex-c   size-full  py-1">
             <span
               class={[
                 "font-mono font-bold text-sm whitespace-nowrap",
@@ -595,7 +607,7 @@ export function useHttpProxy(t: any, tableRef: Ref) {
     });
   }
 
-    async function fetchTunnelNames() {
+  async function fetchTunnelNames() {
     try {
       const clientRes = await getTunnelClientList();
       let cList: any[] = [];

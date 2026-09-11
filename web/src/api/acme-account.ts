@@ -15,15 +15,27 @@ export const getAcmeAccounts = async (params?: object) => {
 export const saveAcmeAccount = async (data: any) => {
   try {
     if (data.id) {
-      const res = await http.request<any>("put", `/api/acme-account/${data.id}`, { data });
+      const res = await http.request<any>(
+        "put",
+        `/api/acme-account/${data.id}`,
+        { data }
+      );
       if (res && res.code !== undefined && res.code !== 0) {
-        return { code: res.code, message: formatApiError(res, "acmeAccount", "保存失败") };
+        return {
+          code: res.code,
+          message: formatApiError(res, "acmeAccount", "保存失败")
+        };
       }
       return { code: 0, data: res };
     } else {
-      const res = await http.request<any>("post", "/api/acme-account", { data });
+      const res = await http.request<any>("post", "/api/acme-account", {
+        data
+      });
       if (res && res.code !== undefined && res.code !== 0) {
-        return { code: res.code, message: formatApiError(res, "acmeAccount", "保存失败") };
+        return {
+          code: res.code,
+          message: formatApiError(res, "acmeAccount", "保存失败")
+        };
       }
       return { code: 0, data: res };
     }

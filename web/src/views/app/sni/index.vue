@@ -53,7 +53,10 @@ function parseDnsList(rawDns: any): string[] {
       if (rawDns.startsWith("[")) {
         return JSON.parse(rawDns);
       }
-      return rawDns.split(/[\n,;]+/).map((s: string) => s.trim()).filter(Boolean);
+      return rawDns
+        .split(/[\n,;]+/)
+        .map((s: string) => s.trim())
+        .filter(Boolean);
     }
     if (Array.isArray(rawDns)) return rawDns;
   } catch {
@@ -135,7 +138,9 @@ async function handleSaveSubmit() {
           }
         }
       } catch (e: any) {
-        message(e.message || t("sni.saveFailed", "保存失败"), { type: "error" });
+        message(e.message || t("sni.saveFailed", "保存失败"), {
+          type: "error"
+        });
       } finally {
         saving.value = false;
       }
@@ -210,7 +215,7 @@ async function handleSaveSubmit() {
         <template v-slot="{ size, dynamicColumns }">
           <div
             v-if="selectedNum > 0"
-            class="bg-(--el-fill-color-light) border border-(--el-color-primary-light-8) text-(--el-color-primary) rounded-md p-2 flex items-center justify-between mb-2 text-sm"
+            class="bg-(--el-fill-color-light) border border-(--el-color-primary-light-8) text-(--el-color-primary) rounded-md p-2 flex-bc mb-2 text-sm"
           >
             <div class="flex items-center space-x-2">
               <span class="font-medium"
@@ -228,7 +233,9 @@ async function handleSaveSubmit() {
               </el-button>
             </div>
             <el-popconfirm
-              :title="t('sni.batchDeleteConfirm', '确认批量删除选中的 SNI 代理？')"
+              :title="
+                t('sni.batchDeleteConfirm', '确认批量删除选中的 SNI 代理？')
+              "
               @confirm="onbatchDel"
             >
               <template #reference>
@@ -261,17 +268,34 @@ async function handleSaveSubmit() {
             @page-current-change="handleCurrentChange"
           >
             <!-- Sub table expand -->
-            
 
             <!-- Operation Column -->
             <template #operation="{ row }">
-              <div class="flex items-center justify-center space-x-2 whitespace-nowrap">
-                <el-button class="reset-margin" link type="primary" :size="size" :icon="useRenderIcon(EditPen)" @click="handleEditPage(row)">
+              <div class="flex-c space-x-2 whitespace-nowrap">
+                <el-button
+                  class="reset-margin"
+                  link
+                  type="primary"
+                  :size="size"
+                  :icon="useRenderIcon(EditPen)"
+                  @click="handleEditPage(row)"
+                >
                   {{ t("sni.edit", "编辑") }}
                 </el-button>
-                <el-popconfirm :title="t('sni.confirmDelete', '是否确认删除该 SNI 代理配置?')" @confirm="handleDelete(row)">
+                <el-popconfirm
+                  :title="
+                    t('sni.confirmDelete', '是否确认删除该 SNI 代理配置?')
+                  "
+                  @confirm="handleDelete(row)"
+                >
                   <template #reference>
-                    <el-button class="reset-margin" link type="danger" :size="size" :icon="useRenderIcon(Delete)">
+                    <el-button
+                      class="reset-margin"
+                      link
+                      type="danger"
+                      :size="size"
+                      :icon="useRenderIcon(Delete)"
+                    >
                       {{ t("sni.delete", "删除") }}
                     </el-button>
                   </template>
@@ -284,10 +308,22 @@ async function handleSaveSubmit() {
     </div>
 
     <!-- Create / Edit Full Page Mode -->
-    <div v-else-if="showView === 'new' || showView === 'edit'" class="p-3 sm:p-5 bg-bg_color rounded-xl border border-(--el-border-color-lighter) shadow-2xs">
+    <div
+      v-else-if="showView === 'new' || showView === 'edit'"
+      class="p-3 sm:p-5 bg-bg_color rounded-xl border border-(--el-border-color-lighter) shadow-2xs"
+    >
       <PageHeader
-        :title="showView === 'new' ? t('sni.addSni') : t('sni.editSni') + ' (id: ' + (formInline.id || 'new') + ')'"
-        :description="t('sni.headerDesc', '配置 SNI 代理监听端口、传输层规则与后端 Tunnel/DNS')"
+        :title="
+          showView === 'new'
+            ? t('sni.addSni')
+            : t('sni.editSni') + ' (id: ' + (formInline.id || 'new') + ')'
+        "
+        :description="
+          t(
+            'sni.headerDesc',
+            '配置 SNI 代理监听端口、传输层规则与后端 Tunnel/DNS'
+          )
+        "
         :backTitle="t('sni.backToList', '返回 SNI 列表')"
         @back="handleCancelPage"
       >
@@ -295,7 +331,12 @@ async function handleSaveSubmit() {
           <el-button :icon="useRenderIcon(CloseIcon)" @click="handleCancelPage">
             {{ t("sni.cancel", "取消") }}
           </el-button>
-          <el-button type="primary" :loading="saving" :icon="useRenderIcon(CheckIcon)" @click="handleSaveSubmit">
+          <el-button
+            type="primary"
+            :loading="saving"
+            :icon="useRenderIcon(CheckIcon)"
+            @click="handleSaveSubmit"
+          >
             {{ t("sni.save", "保存") }}
           </el-button>
         </template>
@@ -303,11 +344,18 @@ async function handleSaveSubmit() {
 
       <editForm ref="createEditFormRef" :formInline="formInline" />
 
-      <div class="flex items-center justify-end space-x-3 pt-4 mt-4 border-t border-(--el-border-color-lighter)">
+      <div
+        class="flex items-center justify-end space-x-3 pt-4 mt-4 border-t border-(--el-border-color-lighter)"
+      >
         <el-button :icon="useRenderIcon(CloseIcon)" @click="handleCancelPage">
           {{ t("sni.cancel", "取消") }}
         </el-button>
-        <el-button type="primary" :loading="saving" :icon="useRenderIcon(CheckIcon)" @click="handleSaveSubmit">
+        <el-button
+          type="primary"
+          :loading="saving"
+          :icon="useRenderIcon(CheckIcon)"
+          @click="handleSaveSubmit"
+        >
           {{ t("sni.save", "保存") }}
         </el-button>
       </div>

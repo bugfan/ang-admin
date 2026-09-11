@@ -32,11 +32,16 @@ defineExpose({ getRef });
     label-position="top"
     class="space-y-4"
   >
-    <el-card shadow="never" class="border-(--el-border-color-lighter)! rounded-xl">
+    <el-card
+      shadow="never"
+      class="border-(--el-border-color-lighter)! rounded-xl"
+    >
       <template #header>
         <div class="flex items-center space-x-2">
           <div class="w-1.5 h-4 bg-indigo-500 rounded-full" />
-          <span class="font-bold text-(--el-text-color-primary) text-sm sm:text-base">
+          <span
+            class="font-bold text-(--el-text-color-primary) text-sm sm:text-base"
+          >
             {{ t("identity.baseInfo", "基本信息") }}
           </span>
         </div>
@@ -47,11 +52,22 @@ defineExpose({ getRef });
           <el-form-item
             :label="t('identity.groupName', '用户组名称')"
             prop="name"
-            :rules="[{ required: true, message: () => t('common.nameRequired', '名称不能为空'), trigger: 'blur' }]"
+            :rules="[
+              {
+                required: true,
+                message: () => t('common.nameRequired', '名称不能为空'),
+                trigger: 'blur'
+              }
+            ]"
           >
             <el-input
               v-model="newFormInline.name"
-              :placeholder="t('identity.groupNamePlaceholder', '如：研发部、外部访客、系统管理员')"
+              :placeholder="
+                t(
+                  'identity.groupNamePlaceholder',
+                  '如：研发部、外部访客、系统管理员'
+                )
+              "
               clearable
             />
           </el-form-item>
@@ -62,7 +78,12 @@ defineExpose({ getRef });
             <div class="pt-1">
               <el-switch v-model="newFormInline.is_default" />
               <div class="text-xs text-(--el-text-color-secondary) mt-1">
-                {{ t("identity.isDefaultGroupTip", "外部认证用户首次登录且未指定组时自动归属此组") }}
+                {{
+                  t(
+                    "identity.isDefaultGroupTip",
+                    "外部认证用户首次登录且未指定组时自动归属此组"
+                  )
+                }}
               </div>
             </div>
           </el-form-item>
@@ -74,7 +95,12 @@ defineExpose({ getRef });
               v-model="newFormInline.description"
               type="textarea"
               :rows="3"
-              :placeholder="t('identity.groupDescPlaceholder', '简要说明该组的权限范围或用途')"
+              :placeholder="
+                t(
+                  'identity.groupDescPlaceholder',
+                  '简要说明该组的权限范围或用途'
+                )
+              "
             />
           </el-form-item>
         </re-col>

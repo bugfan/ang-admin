@@ -124,8 +124,6 @@ function handleRulesChange(val: string[]) {
   newFormInline.value.rules = JSON.stringify(val);
 }
 
-
-
 interface TunnelGroupOption {
   label: string;
   value: string;
@@ -326,10 +324,18 @@ const upstreamError = ref("");
 
 function syncUpstreamToForm() {
   newFormInline.value.upstream_servers = JSON.stringify(upstreamList.value);
-  const targets = upstreamList.value.map(s => (s.target || "").trim()).filter(Boolean);
-  const duplicates = targets.filter((item, index) => targets.indexOf(item) !== index);
+  const targets = upstreamList.value
+    .map(s => (s.target || "").trim())
+    .filter(Boolean);
+  const duplicates = targets.filter(
+    (item, index) => targets.indexOf(item) !== index
+  );
   if (duplicates.length > 0) {
-    upstreamError.value = t("common.upstreamTargetDuplicate", { target: duplicates[0] }, `上游列表中存在重复的目标服务器地址 [${duplicates[0]}]`);
+    upstreamError.value = t(
+      "common.upstreamTargetDuplicate",
+      { target: duplicates[0] },
+      `上游列表中存在重复的目标服务器地址 [${duplicates[0]}]`
+    );
     return;
   }
   if (!upstreamList.value.some(s => !s.target || s.target.trim() === "")) {
@@ -339,7 +345,10 @@ function syncUpstreamToForm() {
 
 function addUpstreamRow() {
   if (upstreamList.value.some(s => !s.target || s.target.trim() === "")) {
-    message(t("common.targetEmptyExists", "已存在未填写的目标服务器项，请先填写完整"), { type: "warning" });
+    message(
+      t("common.targetEmptyExists", "已存在未填写的目标服务器项，请先填写完整"),
+      { type: "warning" }
+    );
     return;
   }
   upstreamList.value.push({ target: "", weight: 1 });
@@ -379,17 +388,27 @@ function getRef() {
   return {
     validate: (callback: (valid: boolean) => void) => {
       ruleFormRef.value.validate((valid: boolean) => {
-        const hasEmptyTarget = upstreamList.value.some(s => !s.target || s.target.trim() === "");
+        const hasEmptyTarget = upstreamList.value.some(
+          s => !s.target || s.target.trim() === ""
+        );
         if (hasEmptyTarget) {
           upstreamError.value = t("udp.targetRequired", "请输入目标地址");
           callback(false);
           return;
         }
 
-        const targets = upstreamList.value.map(s => (s.target || "").trim()).filter(Boolean);
-        const duplicates = targets.filter((item, index) => targets.indexOf(item) !== index);
+        const targets = upstreamList.value
+          .map(s => (s.target || "").trim())
+          .filter(Boolean);
+        const duplicates = targets.filter(
+          (item, index) => targets.indexOf(item) !== index
+        );
         if (duplicates.length > 0) {
-          const errMsg = t("common.upstreamTargetDuplicate", { target: duplicates[0] }, `上游列表中存在重复的目标服务器地址 [${duplicates[0]}]`);
+          const errMsg = t(
+            "common.upstreamTargetDuplicate",
+            { target: duplicates[0] },
+            `上游列表中存在重复的目标服务器地址 [${duplicates[0]}]`
+          );
           upstreamError.value = errMsg;
           message(errMsg, { type: "warning" });
           callback(false);
@@ -486,9 +505,7 @@ watch(
             <el-input
               v-model="newFormInline.remark"
               clearable
-              :placeholder="
-                t('tcp.remarkPlaceholder', '请输入备注信息 (选填)')
-              "
+              :placeholder="t('tcp.remarkPlaceholder', '请输入备注信息 (选填)')"
             />
           </el-form-item>
         </re-col>
@@ -527,9 +544,11 @@ watch(
             :label="ruleItem.label"
             :value="ruleItem.value"
           >
-            <div class="flex items-center justify-between w-full">
+            <div class="flex-bc w-full">
               <span class="font-mono text-sm">{{ ruleItem.label }}</span>
-              <span class="text-xs text-gray-400 ml-4">{{ ruleItem.desc }}</span>
+              <span class="text-xs text-gray-400 ml-4">{{
+                ruleItem.desc
+              }}</span>
             </div>
           </el-option>
         </el-select>

@@ -38,7 +38,9 @@ export function useWebvpnDomain(t: Function, tableRef: any) {
       prop: "Name",
       minWidth: 140,
       headerRenderer: () => (
-        <span class="whitespace-nowrap">{t("webvpnDomain.name", "基础域名称")}</span>
+        <span class="whitespace-nowrap">
+          {t("webvpnDomain.name", "基础域名称")}
+        </span>
       ),
       cellRenderer: scope => {
         const row = scope.row;
@@ -55,7 +57,9 @@ export function useWebvpnDomain(t: Function, tableRef: any) {
       prop: "Hostname",
       minWidth: 180,
       headerRenderer: () => (
-        <span class="whitespace-nowrap">{t("webvpnDomain.hostname", "泛域名")}</span>
+        <span class="whitespace-nowrap">
+          {t("webvpnDomain.hostname", "泛域名")}
+        </span>
       ),
       cellRenderer: scope => {
         const row = scope.row;
@@ -86,14 +90,16 @@ export function useWebvpnDomain(t: Function, tableRef: any) {
       align: "center",
       width: 130,
       headerRenderer: () => (
-        <span class="whitespace-nowrap">{t("webvpnDomain.protocol", "安全协议")}</span>
+        <span class="whitespace-nowrap">
+          {t("webvpnDomain.protocol", "安全协议")}
+        </span>
       ),
       cellRenderer: scope => {
         const row = scope.row;
         const tls = row.TLS ?? row.tls;
         const h2 = row.H2 ?? row.h2;
         return (
-          <div class="flex items-center justify-center gap-1">
+          <div class="flex-c   gap-1">
             <el-tag size="small" type={tls ? "success" : "info"} effect="light">
               {tls ? "TLS" : "No-TLS"}
             </el-tag>
@@ -112,7 +118,9 @@ export function useWebvpnDomain(t: Function, tableRef: any) {
       prop: "Certificate",
       minWidth: 140,
       headerRenderer: () => (
-        <span class="whitespace-nowrap">{t("webvpnDomain.certificate", "SSL 证书")}</span>
+        <span class="whitespace-nowrap">
+          {t("webvpnDomain.certificate", "SSL 证书")}
+        </span>
       ),
       cellRenderer: scope => {
         const row = scope.row;
@@ -120,7 +128,9 @@ export function useWebvpnDomain(t: Function, tableRef: any) {
         return cert ? (
           <span class="text-xs text-gray-600 dark:text-gray-300">{cert}</span>
         ) : (
-          <span class="text-xs text-gray-400">{t("common.auto", "自动匹配")}</span>
+          <span class="text-xs text-gray-400">
+            {t("common.auto", "自动匹配")}
+          </span>
         );
       }
     },
@@ -130,7 +140,9 @@ export function useWebvpnDomain(t: Function, tableRef: any) {
       prop: "Fallback",
       width: 120,
       headerRenderer: () => (
-        <span class="whitespace-nowrap">{t("webvpnDomain.fallback", "未命中策略")}</span>
+        <span class="whitespace-nowrap">
+          {t("webvpnDomain.fallback", "未命中策略")}
+        </span>
       ),
       cellRenderer: scope => {
         const row = scope.row;
@@ -151,7 +163,9 @@ export function useWebvpnDomain(t: Function, tableRef: any) {
       align: "center",
       width: 90,
       headerRenderer: () => (
-        <span class="whitespace-nowrap">{t("webvpnDomain.siteCount", "站点数")}</span>
+        <span class="whitespace-nowrap">
+          {t("webvpnDomain.siteCount", "站点数")}
+        </span>
       ),
       cellRenderer: scope => {
         const count = scope.row.site_count ?? 0;
@@ -168,7 +182,9 @@ export function useWebvpnDomain(t: Function, tableRef: any) {
       prop: "Status",
       width: 90,
       headerRenderer: () => (
-        <span class="whitespace-nowrap">{t("webvpnDomain.status", "状态")}</span>
+        <span class="whitespace-nowrap">
+          {t("webvpnDomain.status", "状态")}
+        </span>
       ),
       cellRenderer: scope => {
         const row = scope.row;
@@ -190,7 +206,9 @@ export function useWebvpnDomain(t: Function, tableRef: any) {
       prop: "Remark",
       minWidth: 120,
       headerRenderer: () => (
-        <span class="whitespace-nowrap">{t("webvpnDomain.remark", "备注")}</span>
+        <span class="whitespace-nowrap">
+          {t("webvpnDomain.remark", "备注")}
+        </span>
       ),
       formatter: row => row.Remark || row.remark || "-"
     },
@@ -235,10 +253,14 @@ export function useWebvpnDomain(t: Function, tableRef: any) {
         message(t("common.updateSuccess", "状态更新成功"), { type: "success" });
         onSearch();
       } else {
-        message(res.message || t("common.updateFailed", "更新失败"), { type: "error" });
+        message(res.message || t("common.updateFailed", "更新失败"), {
+          type: "error"
+        });
       }
     } catch (err: any) {
-      message(err.message || t("common.updateFailed", "更新失败"), { type: "error" });
+      message(err.message || t("common.updateFailed", "更新失败"), {
+        type: "error"
+      });
     }
   }
 
@@ -247,13 +269,19 @@ export function useWebvpnDomain(t: Function, tableRef: any) {
     try {
       const res = await deleteWebvpnDomain(id);
       if (res.code === 0) {
-        message(t("webvpnDomain.delSuccess", "删除基础域成功"), { type: "success" });
+        message(t("webvpnDomain.delSuccess", "删除基础域成功"), {
+          type: "success"
+        });
         onSearch();
       } else {
-        message(res.message || t("common.deleteFailed", "删除失败"), { type: "error" });
+        message(res.message || t("common.deleteFailed", "删除失败"), {
+          type: "error"
+        });
       }
     } catch (err: any) {
-      message(err.message || t("common.deleteFailed", "删除失败"), { type: "error" });
+      message(err.message || t("common.deleteFailed", "删除失败"), {
+        type: "error"
+      });
     }
   }
 

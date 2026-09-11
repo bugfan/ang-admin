@@ -73,7 +73,10 @@ export const createDns = async (data?: object) => {
       res.code !== undefined &&
       res.code !== 0
     ) {
-      return { code: res.code, message: formatApiError(res, "dns", "创建 DNS 失败") };
+      return {
+        code: res.code,
+        message: formatApiError(res, "dns", "创建 DNS 失败")
+      };
     }
     return { code: 0, message: "success", data: res };
   } catch (err: any) {
@@ -94,7 +97,10 @@ export const updateDns = async (data: any) => {
       res.code !== undefined &&
       res.code !== 0
     ) {
-      return { code: res.code, message: formatApiError(res, "dns", "更新 DNS 失败") };
+      return {
+        code: res.code,
+        message: formatApiError(res, "dns", "更新 DNS 失败")
+      };
     }
     return { code: 0, message: "success", data: res };
   } catch (err: any) {

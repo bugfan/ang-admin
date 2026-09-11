@@ -29,7 +29,11 @@ export const getClusterNodeList = async (params?: object) => {
     }
     return { code: 0, message: "success", data: { list: [], total: 0 } };
   } catch (err: any) {
-    return { code: 1, message: formatApiError(err, "cluster", "获取节点列表失败"), data: { list: [], total: 0 } };
+    return {
+      code: 1,
+      message: formatApiError(err, "cluster", "获取节点列表失败"),
+      data: { list: [], total: 0 }
+    };
   }
 };
 
@@ -43,7 +47,10 @@ export const createClusterNode = async (data?: object) => {
       res.code !== undefined &&
       res.code !== 0
     ) {
-      return { code: res.code, message: formatApiError(res, "cluster", "创建节点失败") };
+      return {
+        code: res.code,
+        message: formatApiError(res, "cluster", "创建节点失败")
+      };
     }
     return { code: 0, message: "success", data: res };
   } catch (err: any) {
@@ -64,7 +71,10 @@ export const updateClusterNode = async (data: any) => {
       res.code !== undefined &&
       res.code !== 0
     ) {
-      return { code: res.code, message: formatApiError(res, "cluster", "更新节点失败") };
+      return {
+        code: res.code,
+        message: formatApiError(res, "cluster", "更新节点失败")
+      };
     }
     return { code: 0, message: "success", data: res };
   } catch (err: any) {

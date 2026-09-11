@@ -25,8 +25,10 @@ export type WebvpnDomainItem = {
 
 export const getWebvpnDomainList = async (params?: object) => {
   try {
-    const res = await http.request<any>("get", "/api/webvpn-domain", { params });
-    const list = Array.isArray(res) ? res : (res?.data || res?.list || []);
+    const res = await http.request<any>("get", "/api/webvpn-domain", {
+      params
+    });
+    const list = Array.isArray(res) ? res : res?.data || res?.list || [];
     return {
       code: 0,
       message: "success",
@@ -116,7 +118,7 @@ export type WebvpnSiteItem = {
 export const getWebvpnList = async (params?: object) => {
   try {
     const res = await http.request<any>("get", "/api/webvpn-site", { params });
-    const list = Array.isArray(res) ? res : (res?.data || res?.list || []);
+    const list = Array.isArray(res) ? res : res?.data || res?.list || [];
     return {
       code: 0,
       message: "success",
@@ -182,4 +184,3 @@ export const getWebvpnSiteList = getWebvpnList;
 export const createWebvpnSite = createWebvpn;
 export const updateWebvpnSite = updateWebvpn;
 export const deleteWebvpnSite = deleteWebvpn;
-

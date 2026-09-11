@@ -445,7 +445,9 @@ function parseItemFromJSON(item: any): RuleItemConfig {
     base.authPortalTokenName = aCfg.token_name || aCfg.TokenName || "_angt";
     base.authPortalTokenExpire = aCfg.token_expire || aCfg.TokenExpire || 86400;
     base.authPortalCookieDomain = aCfg.cookie_domain || aCfg.CookieDomain || "";
-    base.authPortalStrictExpire = Boolean(aCfg.strict_expire ?? aCfg.StrictExpire ?? false);
+    base.authPortalStrictExpire = Boolean(
+      aCfg.strict_expire ?? aCfg.StrictExpire ?? false
+    );
   }
   if (aName === "auth_guard_action") {
     base.authGuardPortalURL = aCfg.portal_url || aCfg.PortalURL || "";
@@ -2102,7 +2104,9 @@ defineExpose({ getRef });
                     class="mb-3"
                   />
                   <div class="field-row">
-                    <label class="field-label">{{ t("rule.portalTitle") }}</label>
+                    <label class="field-label">{{
+                      t("rule.portalTitle")
+                    }}</label>
                     <div class="flex-1 w-full">
                       <el-input
                         v-model="itemForm.authPortalTitle"
@@ -2111,7 +2115,9 @@ defineExpose({ getRef });
                     </div>
                   </div>
                   <div class="field-row">
-                    <label class="field-label">{{ t("rule.portalTokenExpire") }}</label>
+                    <label class="field-label">{{
+                      t("rule.portalTokenExpire")
+                    }}</label>
                     <div class="flex-1 w-full">
                       <el-input-number
                         v-model="itemForm.authPortalTokenExpire"
@@ -2122,7 +2128,9 @@ defineExpose({ getRef });
                     </div>
                   </div>
                   <div class="field-row">
-                    <label class="field-label">{{ t("rule.portalStrictExpire") }}</label>
+                    <label class="field-label">{{
+                      t("rule.portalStrictExpire")
+                    }}</label>
                     <div class="flex-1 w-full">
                       <el-switch
                         v-model="itemForm.authPortalStrictExpire"
@@ -2130,17 +2138,23 @@ defineExpose({ getRef });
                         :inactive-text="t('rule.portalStrictExpireInactive')"
                         inline-prompt
                       />
-                      <p class="field-hint">{{ t("rule.portalStrictExpireTip") }}</p>
+                      <p class="field-hint">
+                        {{ t("rule.portalStrictExpireTip") }}
+                      </p>
                     </div>
                   </div>
                   <div class="field-row">
-                    <label class="field-label">{{ t("rule.portalCookieDomain") }}</label>
+                    <label class="field-label">{{
+                      t("rule.portalCookieDomain")
+                    }}</label>
                     <div class="flex-1 w-full">
                       <el-input
                         v-model="itemForm.authPortalCookieDomain"
                         placeholder="例如 .example.com (留空为当前域名)"
                       />
-                      <p class="field-hint">{{ t("rule.portalCookieDomainTip") }}</p>
+                      <p class="field-hint">
+                        {{ t("rule.portalCookieDomainTip") }}
+                      </p>
                     </div>
                   </div>
                 </div>
@@ -2158,13 +2172,17 @@ defineExpose({ getRef });
                     class="mb-3"
                   />
                   <div class="field-row">
-                    <label class="field-label required">{{ t("rule.guardPortalUrl") }}</label>
+                    <label class="field-label required">{{
+                      t("rule.guardPortalUrl")
+                    }}</label>
                     <div class="flex-1 w-full">
                       <el-input
                         v-model="itemForm.authGuardPortalURL"
                         :placeholder="t('rule.guardPortalUrlPlaceholder')"
                       />
-                      <p class="field-hint">{{ t("rule.guardPortalUrlTip") }}</p>
+                      <p class="field-hint">
+                        {{ t("rule.guardPortalUrlTip") }}
+                      </p>
                     </div>
                   </div>
                 </div>

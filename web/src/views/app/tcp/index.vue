@@ -268,15 +268,10 @@ async function handleSaveSubmit() {
             @page-current-change="handleCurrentChange"
           >
             <!-- Expand Row Slot: Detailed Inspection -->
-            
-
-
 
             <!-- Operation Column -->
             <template #operation="{ row }">
-              <div
-                class="flex items-center justify-center space-x-2 whitespace-nowrap"
-              >
+              <div class="flex-c space-x-2 whitespace-nowrap">
                 <el-button
                   class="reset-margin"
                   link
@@ -288,7 +283,9 @@ async function handleSaveSubmit() {
                   {{ t("tcp.edit", "编辑") }}
                 </el-button>
                 <el-popconfirm
-                  :title="t('tcp.confirmDelete', '是否确认删除该 TCP 代理配置?')"
+                  :title="
+                    t('tcp.confirmDelete', '是否确认删除该 TCP 代理配置?')
+                  "
                   @confirm="handleDelete(row)"
                 >
                   <template #reference>
@@ -317,8 +314,17 @@ async function handleSaveSubmit() {
     >
       <!-- Full Page Header Bar -->
       <PageHeader
-        :title="showView === 'new' ? t('tcp.addTcp') : t('tcp.editTcp') + ' (id: ' + (formInline.id || 'new') + ')'"
-        :description="t('tcp.headerDesc', '配置 TCP 代理监听端口、传输层中间件规则 (Rule) 与 Backend 上游服务器')"
+        :title="
+          showView === 'new'
+            ? t('tcp.addTcp')
+            : t('tcp.editTcp') + ' (id: ' + (formInline.id || 'new') + ')'
+        "
+        :description="
+          t(
+            'tcp.headerDesc',
+            '配置 TCP 代理监听端口、传输层中间件规则 (Rule) 与 Backend 上游服务器'
+          )
+        "
         :backTitle="t('tcp.backToList', '返回 TCP 列表')"
         @back="handleCancelPage"
       >

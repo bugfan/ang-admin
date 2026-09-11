@@ -338,7 +338,10 @@ function handleMethodChange(val: string) {
 
 function addUpstreamRow() {
   if (upstreamList.value.some(s => !s.target || s.target.trim() === "")) {
-    message(t("common.targetEmptyExists", "已存在未填写的目标服务器项，请先填写完整"), { type: "warning" });
+    message(
+      t("common.targetEmptyExists", "已存在未填写的目标服务器项，请先填写完整"),
+      { type: "warning" }
+    );
     return;
   }
   upstreamList.value.push({ target: "", weight: 1 });
@@ -354,10 +357,18 @@ const upstreamError = ref("");
 
 function syncUpstreamJSON() {
   newFormInline.value.upstream_servers = JSON.stringify(upstreamList.value);
-  const targets = upstreamList.value.map(s => (s.target || "").trim()).filter(Boolean);
-  const duplicates = targets.filter((item, index) => targets.indexOf(item) !== index);
+  const targets = upstreamList.value
+    .map(s => (s.target || "").trim())
+    .filter(Boolean);
+  const duplicates = targets.filter(
+    (item, index) => targets.indexOf(item) !== index
+  );
   if (duplicates.length > 0) {
-    upstreamError.value = t("common.upstreamTargetDuplicate", { target: duplicates[0] }, `上游列表中存在重复的目标服务器地址 [${duplicates[0]}]`);
+    upstreamError.value = t(
+      "common.upstreamTargetDuplicate",
+      { target: duplicates[0] },
+      `上游列表中存在重复的目标服务器地址 [${duplicates[0]}]`
+    );
     return;
   }
   if (!upstreamList.value.some(s => !s.target || s.target.trim() === "")) {
@@ -433,17 +444,27 @@ function getRef() {
   return {
     validate: (callback: (valid: boolean) => void) => {
       ruleFormRef.value.validate((valid: boolean) => {
-        const hasEmptyTarget = upstreamList.value.some(s => !s.target || s.target.trim() === "");
+        const hasEmptyTarget = upstreamList.value.some(
+          s => !s.target || s.target.trim() === ""
+        );
         if (hasEmptyTarget) {
           upstreamError.value = t("dns.targetRequired", "请输入目标地址");
           callback(false);
           return;
         }
 
-        const targets = upstreamList.value.map(s => (s.target || "").trim()).filter(Boolean);
-        const duplicates = targets.filter((item, index) => targets.indexOf(item) !== index);
+        const targets = upstreamList.value
+          .map(s => (s.target || "").trim())
+          .filter(Boolean);
+        const duplicates = targets.filter(
+          (item, index) => targets.indexOf(item) !== index
+        );
         if (duplicates.length > 0) {
-          const errMsg = t("common.upstreamTargetDuplicate", { target: duplicates[0] }, `上游列表中存在重复的目标服务器地址 [${duplicates[0]}]`);
+          const errMsg = t(
+            "common.upstreamTargetDuplicate",
+            { target: duplicates[0] },
+            `上游列表中存在重复的目标服务器地址 [${duplicates[0]}]`
+          );
           upstreamError.value = errMsg;
           message(errMsg, { type: "warning" });
           callback(false);
@@ -754,53 +775,55 @@ defineExpose({ getRef });
               >
                 <el-table-column label="#" width="50" align="center">
                   <template #default="{ $index }">
-                    <span class="font-mono text-gray-400">{{ $index + 1 }}</span>
+                    <span class="font-mono text-gray-400">{{
+                      $index + 1
+                    }}</span>
                   </template>
                 </el-table-column>
-              <el-table-column :label="t('dns.targetServer')" min-width="180">
-                <template #default="{ row }">
-                  <el-input
-                    v-model="row.target"
-                    placeholder="8.8.8.8:53"
-                    size="small"
-                    class="font-mono"
-                    @input="syncUpstreamJSON"
-                  />
-                </template>
-              </el-table-column>
-              <el-table-column
-                :label="t('dns.weight')"
-                width="100"
-                align="center"
-              >
-                <template #default="{ row }">
-                  <el-input-number
-                    v-model="row.weight"
-                    :min="1"
-                    :max="100"
-                    :disabled="isWeightDisabled"
-                    size="small"
-                    controls-position="right"
-                    class="w-full!"
-                  />
-                </template>
-              </el-table-column>
-              <el-table-column
-                :label="t('dns.operation')"
-                width="65"
-                align="center"
-              >
-                <template #default="{ $index }">
-                  <el-button
-                    type="danger"
-                    link
-                    size="small"
-                    :icon="useRenderIcon(Delete)"
-                    @click="removeUpstreamRow($index)"
-                  />
-                </template>
-              </el-table-column>
-            </el-table>
+                <el-table-column :label="t('dns.targetServer')" min-width="180">
+                  <template #default="{ row }">
+                    <el-input
+                      v-model="row.target"
+                      placeholder="8.8.8.8:53"
+                      size="small"
+                      class="font-mono"
+                      @input="syncUpstreamJSON"
+                    />
+                  </template>
+                </el-table-column>
+                <el-table-column
+                  :label="t('dns.weight')"
+                  width="100"
+                  align="center"
+                >
+                  <template #default="{ row }">
+                    <el-input-number
+                      v-model="row.weight"
+                      :min="1"
+                      :max="100"
+                      :disabled="isWeightDisabled"
+                      size="small"
+                      controls-position="right"
+                      class="w-full!"
+                    />
+                  </template>
+                </el-table-column>
+                <el-table-column
+                  :label="t('dns.operation')"
+                  width="65"
+                  align="center"
+                >
+                  <template #default="{ $index }">
+                    <el-button
+                      type="danger"
+                      link
+                      size="small"
+                      :icon="useRenderIcon(Delete)"
+                      @click="removeUpstreamRow($index)"
+                    />
+                  </template>
+                </el-table-column>
+              </el-table>
             </div>
             <div v-if="upstreamError" class="text-xs text-red-500 mt-1.5 ml-1">
               {{ upstreamError }}

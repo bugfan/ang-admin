@@ -72,7 +72,10 @@ export const createTcp = async (data?: object) => {
       res.code !== undefined &&
       res.code !== 0
     ) {
-      return { code: res.code, message: formatApiError(res, "tcp", "创建 TCP 失败") };
+      return {
+        code: res.code,
+        message: formatApiError(res, "tcp", "创建 TCP 失败")
+      };
     }
     return { code: 0, message: "success", data: res };
   } catch (err: any) {
@@ -93,7 +96,10 @@ export const updateTcp = async (data: any) => {
       res.code !== undefined &&
       res.code !== 0
     ) {
-      return { code: res.code, message: formatApiError(res, "tcp", "更新 TCP 失败") };
+      return {
+        code: res.code,
+        message: formatApiError(res, "tcp", "更新 TCP 失败")
+      };
     }
     return { code: 0, message: "success", data: res };
   } catch (err: any) {

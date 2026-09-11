@@ -19,8 +19,12 @@ export const copy: Directive = {
       useEventListener(el, arg, () => {
         const success = copyTextToClipboard(el.copyValue);
         success
-          ? message((i18n.global as any).t("common.copySuccess", "复制成功"), { type: "success" })
-          : message((i18n.global as any).t("common.copyFailed", "复制失败"), { type: "error" });
+          ? message((i18n.global as any).t("common.copySuccess", "复制成功"), {
+              type: "success"
+            })
+          : message((i18n.global as any).t("common.copyFailed", "复制失败"), {
+              type: "error"
+            });
       });
     } else {
       throw new Error(

@@ -24,7 +24,10 @@ export const createTunnel = async (data?: object) => {
   try {
     const res = await http.request<any>("post", "/api/tunnel", { data });
     if (res && res.code !== undefined && res.code !== 0) {
-      return { code: res.code, message: formatApiError(res, "tunnel", "create failed") };
+      return {
+        code: res.code,
+        message: formatApiError(res, "tunnel", "create failed")
+      };
     }
     return { code: 0, message: "success", data: res };
   } catch (err: any) {
@@ -38,7 +41,10 @@ export const updateTunnel = async (data: any) => {
     const id = data.id || data.Id;
     const res = await http.request<any>("put", `/api/tunnel/${id}`, { data });
     if (res && res.code !== undefined && res.code !== 0) {
-      return { code: res.code, message: formatApiError(res, "tunnel", "update failed") };
+      return {
+        code: res.code,
+        message: formatApiError(res, "tunnel", "update failed")
+      };
     }
     return { code: 0, message: "success", data: res };
   } catch (err: any) {

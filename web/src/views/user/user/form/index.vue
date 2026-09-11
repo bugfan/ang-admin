@@ -25,7 +25,6 @@ const ruleFormRef = ref();
 const newFormInline = ref(props.formInline);
 const groupOptions = ref<UserGroupItem[]>([]);
 
-
 async function loadGroups() {
   try {
     const res = await getUserGroupList();
@@ -35,7 +34,7 @@ async function loadGroups() {
 
 onMounted(() => {
   loadGroups();
-  });
+});
 
 function getRef() {
   return ruleFormRef.value;
@@ -52,11 +51,16 @@ defineExpose({ getRef });
     label-position="top"
     class="space-y-4"
   >
-    <el-card shadow="never" class="border-(--el-border-color-lighter)! rounded-xl">
+    <el-card
+      shadow="never"
+      class="border-(--el-border-color-lighter)! rounded-xl"
+    >
       <template #header>
         <div class="flex items-center space-x-2">
           <div class="w-1.5 h-4 bg-teal-500 rounded-full" />
-          <span class="font-bold text-(--el-text-color-primary) text-sm sm:text-base">
+          <span
+            class="font-bold text-(--el-text-color-primary) text-sm sm:text-base"
+          >
             {{ t("identity.baseInfo", "基本信息") }}
           </span>
         </div>
@@ -67,12 +71,20 @@ defineExpose({ getRef });
           <el-form-item
             :label="t('identity.username', '用户名')"
             prop="username"
-            :rules="[{ required: true, message: () => t('common.nameRequired', '用户名不能为空'), trigger: 'blur' }]"
+            :rules="[
+              {
+                required: true,
+                message: () => t('common.nameRequired', '用户名不能为空'),
+                trigger: 'blur'
+              }
+            ]"
           >
             <el-input
               v-model="newFormInline.username"
               :disabled="Boolean(newFormInline.id)"
-              :placeholder="t('identity.usernamePlaceholder', '请输入登录用户名')"
+              :placeholder="
+                t('identity.usernamePlaceholder', '请输入登录用户名')
+              "
               clearable
             />
           </el-form-item>
@@ -82,13 +94,35 @@ defineExpose({ getRef });
           <el-form-item
             :label="t('identity.password', '密码')"
             prop="password"
-            :rules="!newFormInline.id ? [{ required: true, min: 6, message: () => t('identity.passwordPlaceholder', '请输入 6 位以上密码'), trigger: 'blur' }] : []"
+            :rules="
+              !newFormInline.id
+                ? [
+                    {
+                      required: true,
+                      min: 6,
+                      message: () =>
+                        t(
+                          'identity.passwordPlaceholder',
+                          '请输入 6 位以上密码'
+                        ),
+                      trigger: 'blur'
+                    }
+                  ]
+                : []
+            "
           >
             <el-input
               v-model="newFormInline.password"
               type="password"
               show-password
-              :placeholder="newFormInline.id ? t('identity.passwordEditPlaceholder', '留空表示保留原密码不变') : t('identity.passwordPlaceholder', '请输入 6 位以上密码')"
+              :placeholder="
+                newFormInline.id
+                  ? t(
+                      'identity.passwordEditPlaceholder',
+                      '留空表示保留原密码不变'
+                    )
+                  : t('identity.passwordPlaceholder', '请输入 6 位以上密码')
+              "
             />
           </el-form-item>
         </re-col>
@@ -112,7 +146,9 @@ defineExpose({ getRef });
               collapse-tags
               collapse-tags-tooltip
               class="w-full"
-              :placeholder="t('identity.belongGroupsPlaceholder', '请选择所属用户组')"
+              :placeholder="
+                t('identity.belongGroupsPlaceholder', '请选择所属用户组')
+              "
             >
               <el-option
                 v-for="g in groupOptions"
@@ -144,17 +180,16 @@ defineExpose({ getRef });
           </el-form-item>
         </re-col>
 
-        
-        
-
         <re-col :value="12" :xs="24">
           <el-form-item :label="t('identity.expireAt', '账号有效期')">
             <el-date-picker
               v-model="newFormInline.expire_at"
               type="datetime"
               value-format="YYYY-MM-DD HH:mm:ss"
-              class="!w-full"
-              :placeholder="t('identity.expireAtPlaceholder', '选择过期时间 (留空永不过期)')"
+              class="w-full!"
+              :placeholder="
+                t('identity.expireAtPlaceholder', '选择过期时间 (留空永不过期)')
+              "
               clearable
             />
           </el-form-item>

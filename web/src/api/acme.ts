@@ -41,14 +41,21 @@ export const getAcmeConfigs = async (params?: object) => {
 export const saveAcmeConfig = async (data: any) => {
   try {
     if (data.id) {
-      const res = await http.request<any>("put", `/api/acme-config/${data.id}`, { data });
+      const res = await http.request<any>(
+        "put",
+        `/api/acme-config/${data.id}`,
+        { data }
+      );
       return { code: 0, data: res };
     } else {
       const res = await http.request<any>("post", "/api/acme-config", { data });
       return { code: 0, data: res };
     }
   } catch (err: any) {
-    return { code: 1, message: err?.response?.data?.message || err?.message || "保存配置失败" };
+    return {
+      code: 1,
+      message: err?.response?.data?.message || err?.message || "保存配置失败"
+    };
   }
 };
 
@@ -58,7 +65,10 @@ export const deleteAcmeConfig = async (id: number | string) => {
     await http.request<any>("delete", `/api/acme-config/${id}`);
     return { code: 0 };
   } catch (err: any) {
-    return { code: 1, message: err?.response?.data?.message || err?.message || "删除配置失败" };
+    return {
+      code: 1,
+      message: err?.response?.data?.message || err?.message || "删除配置失败"
+    };
   }
 };
 

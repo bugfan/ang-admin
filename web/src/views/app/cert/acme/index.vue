@@ -44,11 +44,7 @@ const {
   onSelectionCancel,
   handleCurrentChange,
   handleSelectionChange
-} = useAcmeAccount(
-  t,
-  tableRef,
-  row => handleEditPage(row)
-);
+} = useAcmeAccount(t, tableRef, row => handleEditPage(row));
 
 function getDefaultFormInline() {
   return {
@@ -72,7 +68,8 @@ function getFormInlineFromRow(row: any) {
   let customServerUrl = "";
   if (
     row.directory_url === "https://acme-v02.api.letsencrypt.org/directory" ||
-    row.directory_url === "https://acme-staging-v02.api.letsencrypt.org/directory" ||
+    row.directory_url ===
+      "https://acme-staging-v02.api.letsencrypt.org/directory" ||
     row.directory_url === "https://acme.zerossl.com/v2/DV90" ||
     row.directory_url === "https://dv.acme-v02.api.pki.goog/directory" ||
     row.directory_url === "https://api.buypass.com/acme/directory"
@@ -134,14 +131,17 @@ async function handleSaveSubmit() {
       saving.value = true;
       try {
         const curData = formInline.value;
-        const directoryUrl = curData.serverSelect === "custom" ? curData.customServerUrl : curData.serverSelect;
-        
+        const directoryUrl =
+          curData.serverSelect === "custom"
+            ? curData.customServerUrl
+            : curData.serverSelect;
+
         // 若用户修改了邮箱、CA 服务器或 EAB Key，重置已保存的私钥让其重新注册新账号；若只是改名或改 DNS 密钥，则完好保留已绑定的 ACME 账号凭据
-        const isAccountChanged = curData.id && (
-          curData.email !== curData.originalEmail ||
-          directoryUrl !== curData.originalDirectoryUrl ||
-          (curData.eabKid || "") !== (curData.originalEabKid || "")
-        );
+        const isAccountChanged =
+          curData.id &&
+          (curData.email !== curData.originalEmail ||
+            directoryUrl !== curData.originalDirectoryUrl ||
+            (curData.eabKid || "") !== (curData.originalEabKid || ""));
 
         const payload = {
           id: curData.id,
@@ -150,8 +150,8 @@ async function handleSaveSubmit() {
           directory_url: directoryUrl,
           eab_kid: curData.eabKid || "",
           eab_hmac_key: curData.eabHmacKey || "",
-          private_key: isAccountChanged ? "" : (curData.privateKey || ""),
-          registration: isAccountChanged ? "" : (curData.registration || ""),
+          private_key: isAccountChanged ? "" : curData.privateKey || "",
+          registration: isAccountChanged ? "" : curData.registration || "",
           key_type: curData.keyType,
           challenge_type: curData.challengeType,
           provider: curData.provider,
@@ -167,10 +167,14 @@ async function handleSaveSubmit() {
           showView.value = "list";
           onSearch();
         } else {
-          message(res.message || t("acmeAccount.saveFailed", "保存失败"), { type: "error" });
+          message(res.message || t("acmeAccount.saveFailed", "保存失败"), {
+            type: "error"
+          });
         }
       } catch (e: any) {
-        message(e.message || t("acmeAccount.submitFailed", "提交失败"), { type: "error" });
+        message(e.message || t("acmeAccount.submitFailed", "提交失败"), {
+          type: "error"
+        });
       } finally {
         saving.value = false;
       }

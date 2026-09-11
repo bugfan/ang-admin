@@ -1,11 +1,7 @@
 import { reactive, ref, onMounted } from "vue";
 import type { PaginationProps } from "@pureadmin/table";
 import { message } from "@/utils/message";
-import {
-  getAuthList,
-  deleteAuth,
-  updateAuth,
-} from "@/api/auth-config";
+import { getAuthList, deleteAuth, updateAuth } from "@/api/auth-config";
 
 export function useAuthMethod(t: Function, tableRef: any) {
   const form = reactive({
@@ -23,7 +19,7 @@ export function useAuthMethod(t: Function, tableRef: any) {
     background: true
   });
 
-    const columns: TableColumnList = [
+  const columns: TableColumnList = [
     {
       label: "ID",
       prop: "Id",
@@ -121,14 +117,14 @@ export function useAuthMethod(t: Function, tableRef: any) {
         message(t("common.deleteSuccess", "删除成功"), { type: "success" });
         onSearch();
       } else {
-        message(res?.message || t("common.operationFailed", "删除失败"), { type: "error" });
+        message(res?.message || t("common.operationFailed", "删除失败"), {
+          type: "error"
+        });
       }
     } catch (e) {
       // ignore
     }
   }
-
-  
 
   onMounted(() => {
     onSearch();

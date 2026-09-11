@@ -108,7 +108,9 @@ function openResetPwdDialog(row: any) {
 
 async function handleConfirmResetPwd() {
   if (!newPasswordValue.value || newPasswordValue.value.length < 6) {
-    message(t("identity.passwordPlaceholder", "请输入 6 位以上密码"), { type: "warning" });
+    message(t("identity.passwordPlaceholder", "请输入 6 位以上密码"), {
+      type: "warning"
+    });
     return;
   }
   if (!resetPwdUserId.value) return;
@@ -119,13 +121,19 @@ async function handleConfirmResetPwd() {
       password: newPasswordValue.value
     });
     if (res && res.code === 0) {
-      message(t("common.operationSuccess", "密码重置成功"), { type: "success" });
+      message(t("common.operationSuccess", "密码重置成功"), {
+        type: "success"
+      });
       resetPwdDialogVisible.value = false;
     } else {
-      message(res?.message || t("common.operationFailed", "密码重置失败"), { type: "error" });
+      message(res?.message || t("common.operationFailed", "密码重置失败"), {
+        type: "error"
+      });
     }
   } catch (e: any) {
-    message(e?.message || t("common.operationFailed", "操作失败"), { type: "error" });
+    message(e?.message || t("common.operationFailed", "操作失败"), {
+      type: "error"
+    });
   } finally {
     resetPwdLoading.value = false;
   }
@@ -167,10 +175,14 @@ async function handleSaveSubmit() {
           showView.value = "list";
           onSearch();
         } else {
-          message(res?.message || t("common.saveFailed", "保存失败"), { type: "error" });
+          message(res?.message || t("common.saveFailed", "保存失败"), {
+            type: "error"
+          });
         }
       } catch (err: any) {
-        message(err?.message || t("common.saveFailed", "保存失败"), { type: "error" });
+        message(err?.message || t("common.saveFailed", "保存失败"), {
+          type: "error"
+        });
       } finally {
         saving.value = false;
       }
@@ -187,14 +199,17 @@ async function handleSaveSubmit() {
         ref="searchFormRef"
         :inline="true"
         :model="form"
-        class="search-form bg-bg_color w-[99/100] pl-8 pt-[12px] overflow-auto"
+        class="search-form bg-bg_color w-[99/100] pl-8 pt-3 overflow-auto"
       >
-        <el-form-item :label="t('identity.username', '用户名/姓名')" prop="query">
+        <el-form-item
+          :label="t('identity.username', '用户名/姓名')"
+          prop="query"
+        >
           <el-input
             v-model="form.query"
             placeholder="搜索用户名/姓名/手机"
             clearable
-            class="!w-[200px]"
+            class="w-50!"
             @keyup.enter="onSearch"
           />
         </el-form-item>
@@ -203,7 +218,7 @@ async function handleSaveSubmit() {
             v-model="form.status"
             clearable
             placeholder="全部状态"
-            class="!w-[130px]"
+            class="w-32.5!"
             @change="onSearch"
           >
             <el-option label="启用" value="1" />
@@ -267,7 +282,13 @@ async function handleSaveSubmit() {
                 {{ t("common.edit", "编辑") }}
               </el-button>
               <el-popconfirm
-                :title="t('identity.deleteUserConfirm', { name: row.Username || row.username }, '确认删除该用户吗？')"
+                :title="
+                  t(
+                    'identity.deleteUserConfirm',
+                    { name: row.Username || row.username },
+                    '确认删除该用户吗？'
+                  )
+                "
                 @confirm="handleDelete(row)"
               >
                 <template #reference>
@@ -292,12 +313,20 @@ async function handleSaveSubmit() {
     <template v-else>
       <PageHeader
         :title="formInline.title"
-        :description="t('identity.userDesc', '管理具备访问权限的系统用户，支持本地密码管理与归属组配置')"
+        :description="
+          t(
+            'identity.userDesc',
+            '管理具备访问权限的系统用户，支持本地密码管理与归属组配置'
+          )
+        "
         @back="handleCancelPage"
       >
         <template #actions>
           <div class="flex items-center space-x-2">
-            <el-button :icon="useRenderIcon(BackIcon)" @click="handleCancelPage">
+            <el-button
+              :icon="useRenderIcon(BackIcon)"
+              @click="handleCancelPage"
+            >
               {{ t("common.cancel", "取消") }}
             </el-button>
             <el-button
@@ -312,7 +341,9 @@ async function handleSaveSubmit() {
         </template>
       </PageHeader>
 
-      <div class="bg-bg_color p-4 rounded-xl border border-(--el-border-color-lighter)">
+      <div
+        class="bg-bg_color p-4 rounded-xl border border-(--el-border-color-lighter)"
+      >
         <editForm ref="createEditFormRef" :formInline="formInline" />
       </div>
     </template>

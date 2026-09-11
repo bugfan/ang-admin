@@ -46,6 +46,9 @@ type WebvpnSite struct {
 	Replace         string    `xorm:"text 'replace'" json:"replace"`                                           // 扩展内容替换 JSON map, 如 {"知网": "XX"}
 	AllowedGroupIds string    `xorm:"varchar(255) default '[]' 'allowed_group_ids'" json:"allowed_group_ids"` // 允许访问的用户组 ID 列表 JSON 数组
 	IsProtected     int       `xorm:"tinyint default 1 'is_protected'" json:"is_protected"`                    // 1: 保护模式(需登录), 0: 公开模式(免登录)
+	TunnelId        int64     `xorm:"bigint 'tunnel_id'" json:"tunnel_id"`
+	TunnelToken     string    `xorm:"varchar(255) 'tunnel_token'" json:"tunnel_token"`
+	TunnelType      string    `xorm:"varchar(32) 'tunnel_type'" json:"tunnel_type"`
 	Status          int       `xorm:"tinyint default 1 'status'" json:"status"`                                // 1: 启用, 0: 禁用
 	Remark          string    `xorm:"varchar(255) 'remark'" json:"remark"`                                     // 备注
 	CreatedAt       time.Time `xorm:"created" json:"created_at"`

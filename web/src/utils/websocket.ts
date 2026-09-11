@@ -34,7 +34,11 @@ class WebSocketManager {
    * 启动 WebSocket 连接
    */
   public connect() {
-    if (this.ws && (this.ws.readyState === WebSocket.OPEN || this.ws.readyState === WebSocket.CONNECTING)) {
+    if (
+      this.ws &&
+      (this.ws.readyState === WebSocket.OPEN ||
+        this.ws.readyState === WebSocket.CONNECTING)
+    ) {
       return;
     }
 
@@ -50,7 +54,7 @@ class WebSocketManager {
         this.startHeartbeat();
       };
 
-      this.ws.onmessage = (event) => {
+      this.ws.onmessage = event => {
         try {
           const raw = JSON.parse(event.data);
           if (raw.type === "PONG") {
@@ -65,7 +69,7 @@ class WebSocketManager {
         }
       };
 
-      this.ws.onerror = (err) => {
+      this.ws.onerror = err => {
         console.warn("[WebSocket] 遇到连接错误:", err);
       };
 
@@ -132,7 +136,7 @@ class WebSocketManager {
   private dispatch(type: string, data: any, raw: WSMessage) {
     const set = this.handlers.get(type);
     if (set) {
-      set.forEach((handler) => {
+      set.forEach(handler => {
         try {
           handler(data, raw);
         } catch (err) {

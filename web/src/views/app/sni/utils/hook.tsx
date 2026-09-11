@@ -35,7 +35,6 @@ export function useSniProxy(t: any, tableRef: Ref) {
   const tunnelMap = ref<Record<string, any>>({});
 
   const columns = computed<TableColumnList>(() => [
-    
     {
       label: t("sni.selectionColumn", "勾选列"),
       type: "selection",
@@ -126,25 +125,33 @@ export function useSniProxy(t: any, tableRef: Ref) {
       cellRenderer: scope => {
         const row = scope.row;
         const tunnelId = String(row.TunnelId ?? row.tunnel_id ?? "").trim();
-        const tunnelToken = String(row.TunnelToken ?? row.tunnel_token ?? "").trim();
-        const tunnelType = String(row.TunnelType ?? row.tunnel_type ?? "TLS").toUpperCase();
+        const tunnelToken = String(
+          row.TunnelToken ?? row.tunnel_token ?? ""
+        ).trim();
+        const tunnelType = String(
+          row.TunnelType ?? row.tunnel_type ?? "TLS"
+        ).toUpperCase();
 
         if (!tunnelId && !tunnelToken) {
           return (
-            <div class="flex justify-center items-center h-full w-full py-1">
+            <div class="flex-c   size-full  py-1">
               <span class="text-(--el-text-color-placeholder) text-xs">-</span>
             </div>
           );
         }
 
         const mapKey = `${tunnelId}|${tunnelToken}`;
-        const tInfo = tunnelMap.value[tunnelToken] || tunnelMap.value[mapKey] || tunnelMap.value[tunnelId];
+        const tInfo =
+          tunnelMap.value[tunnelToken] ||
+          tunnelMap.value[mapKey] ||
+          tunnelMap.value[tunnelId];
 
-        const displayName = tInfo?.name || `${tunnelType} ${tunnelId || tunnelToken}`;
+        const displayName =
+          tInfo?.name || `${tunnelType} ${tunnelId || tunnelToken}`;
         const isOnline = Boolean(tInfo?.isOnline);
 
         return (
-          <div class="flex justify-center items-center h-full w-full py-1">
+          <div class="flex-c   size-full  py-1">
             <span
               class={[
                 "font-mono font-bold text-sm whitespace-nowrap",
@@ -174,7 +181,10 @@ export function useSniProxy(t: any, tableRef: Ref) {
             } else if (Array.isArray(rawDns)) {
               dnsList = rawDns;
             } else if (typeof rawDns === "string") {
-              dnsList = rawDns.split(/[\n,;]+/).map((s: string) => s.trim()).filter(Boolean);
+              dnsList = rawDns
+                .split(/[\n,;]+/)
+                .map((s: string) => s.trim())
+                .filter(Boolean);
             }
           }
         } catch {
@@ -190,7 +200,9 @@ export function useSniProxy(t: any, tableRef: Ref) {
                     key={idx}
                     class="inline-flex items-center font-mono text-[11px] bg-(--el-bg-color) px-1.5 py-0.5 rounded border border-(--el-border-color-lighter) shrink-0 whitespace-nowrap"
                   >
-                    <span class="font-medium text-(--el-text-color-primary)">{dns || "Default"}</span>
+                    <span class="font-medium text-(--el-text-color-primary)">
+                      {dns || "Default"}
+                    </span>
                   </span>
                 ))}
               </div>
@@ -252,7 +264,9 @@ export function useSniProxy(t: any, tableRef: Ref) {
       dataList.value = data?.list || [];
       pagination.total = data?.total || dataList.value.length;
     } catch (e: any) {
-      message(e.message || t("sni.fetchFailed", "获取 SNI 列表失败"), { type: "error" });
+      message(e.message || t("sni.fetchFailed", "获取 SNI 列表失败"), {
+        type: "error"
+      });
     } finally {
       loading.value = false;
     }
@@ -308,7 +322,9 @@ export function useSniProxy(t: any, tableRef: Ref) {
         message(msg || t("common.failed", "批量删除失败"), { type: "error" });
       }
     } catch (e: any) {
-      message(e.message || t("common.failed", "批量删除失败"), { type: "error" });
+      message(e.message || t("common.failed", "批量删除失败"), {
+        type: "error"
+      });
     }
   }
 
@@ -322,7 +338,7 @@ export function useSniProxy(t: any, tableRef: Ref) {
     pagination.currentPage = val;
   }
 
-    async function fetchTunnelNames() {
+  async function fetchTunnelNames() {
     try {
       const clientRes = await getTunnelClientList();
       let cList: any[] = [];

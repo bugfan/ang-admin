@@ -17,10 +17,15 @@ const props = withDefaults(defineProps<FormProps>(), {
   })
 });
 
-
 const { t } = useI18n();
 const formRules = {
-  name: [{ required: true, message: t("identity.authConfigNamePlaceholder", "请输入认证名称"), trigger: "blur" }]
+  name: [
+    {
+      required: true,
+      message: t("identity.authConfigNamePlaceholder", "请输入认证名称"),
+      trigger: "blur"
+    }
+  ]
 };
 
 const ruleFormRef = ref();
@@ -34,7 +39,9 @@ onMounted(async () => {
     if (res && res.code === 0 && res.data && res.data.list) {
       authMethodOptions.value = res.data.list;
     }
-    selectedMethods.value = JSON.parse(newFormInline.value.auth_method_ids || "[]");
+    selectedMethods.value = JSON.parse(
+      newFormInline.value.auth_method_ids || "[]"
+    );
   } catch (e) {
     selectedMethods.value = [];
   }
@@ -60,17 +67,25 @@ defineExpose({ getRef });
   >
     <el-row :gutter="30">
       <re-col :value="12" :xs="24">
-        <el-form-item :label="t('identity.authConfigName', '认证名称')" prop="name">
+        <el-form-item
+          :label="t('identity.authConfigName', '认证名称')"
+          prop="name"
+        >
           <el-input
             v-model="newFormInline.name"
             clearable
-            :placeholder="t('identity.authConfigNamePlaceholder', '如：企业内网认证策略')"
+            :placeholder="
+              t('identity.authConfigNamePlaceholder', '如：企业内网认证策略')
+            "
           />
         </el-form-item>
       </re-col>
-      
+
       <re-col :value="12" :xs="24">
-        <el-form-item :label="t('identity.tokenName', '凭证名称')" prop="token_name">
+        <el-form-item
+          :label="t('identity.tokenName', '凭证名称')"
+          prop="token_name"
+        >
           <el-input
             v-model="newFormInline.token_name"
             clearable
@@ -80,11 +95,19 @@ defineExpose({ getRef });
       </re-col>
 
       <re-col :value="24" :xs="24">
-        <el-form-item :label="t('identity.portalUrl', '登录入口(Portal)')" prop="portal_url">
+        <el-form-item
+          :label="t('identity.portalUrl', '登录入口(Portal)')"
+          prop="portal_url"
+        >
           <el-input
             v-model="newFormInline.portal_url"
             clearable
-            :placeholder="t('identity.portalUrlPlaceholder', '如：https://auth.example.com/login 或 /ang-portal')"
+            :placeholder="
+              t(
+                'identity.portalUrlPlaceholder',
+                '如：https://auth.example.com/login 或 /ang-portal'
+              )
+            "
           />
         </el-form-item>
       </re-col>
@@ -96,7 +119,9 @@ defineExpose({ getRef });
             multiple
             clearable
             class="w-full"
-            :placeholder="t('identity.bindAuthMethodsPlaceholder', '请选择认证源(可多选)')"
+            :placeholder="
+              t('identity.bindAuthMethodsPlaceholder', '请选择认证源(可多选)')
+            "
             @change="handleMethodChange"
           >
             <el-option
@@ -110,12 +135,15 @@ defineExpose({ getRef });
       </re-col>
 
       <re-col :value="12" :xs="24">
-        <el-form-item :label="t('identity.tokenExpire', '凭证过期时间(秒)')" prop="token_expire">
+        <el-form-item
+          :label="t('identity.tokenExpire', '凭证过期时间(秒)')"
+          prop="token_expire"
+        >
           <el-input-number
             v-model="newFormInline.token_expire"
             :min="0"
             :step="3600"
-            class="!w-full"
+            class="w-full!"
             controls-position="right"
           />
         </el-form-item>

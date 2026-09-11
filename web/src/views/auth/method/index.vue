@@ -51,8 +51,8 @@ function getDefaultFormInline() {
     enabled: true,
     priority: 1,
     config_json: "{}",
-    remark: "",
-};
+    remark: ""
+  };
 }
 
 function getFormInlineFromRow(row: any) {
@@ -64,8 +64,8 @@ function getFormInlineFromRow(row: any) {
     enabled: Boolean(row?.Enabled ?? row?.enabled),
     priority: row?.Priority ?? row?.priority ?? 1,
     config_json: row?.ConfigJSON ?? row?.config_json ?? "{}",
-    remark: row?.Remark ?? row?.remark ?? "",
-};
+    remark: row?.Remark ?? row?.remark ?? ""
+  };
 }
 
 function handleAddPage() {
@@ -112,10 +112,14 @@ async function handleSaveSubmit() {
           showView.value = "list";
           onSearch();
         } else {
-          message(res?.message || t("common.saveFailed", "保存失败"), { type: "error" });
+          message(res?.message || t("common.saveFailed", "保存失败"), {
+            type: "error"
+          });
         }
       } catch (err: any) {
-        message(err?.message || t("common.saveFailed", "保存失败"), { type: "error" });
+        message(err?.message || t("common.saveFailed", "保存失败"), {
+          type: "error"
+        });
       } finally {
         saving.value = false;
       }
@@ -132,14 +136,17 @@ async function handleSaveSubmit() {
         ref="searchFormRef"
         :inline="true"
         :model="form"
-        class="search-form bg-bg_color w-[99/100] pl-8 pt-[12px] overflow-auto"
+        class="search-form bg-bg_color w-[99/100] pl-8 pt-3 overflow-auto"
       >
-        <el-form-item :label="t('identity.sourceName', '认证方式名称')" prop="name">
+        <el-form-item
+          :label="t('identity.sourceName', '认证方式名称')"
+          prop="name"
+        >
           <el-input
             v-model="form.name"
             :placeholder="t('identity.sourceNamePlaceholder', '请输入名称')"
             clearable
-            class="!w-[200px]"
+            class="w-50!"
             @keyup.enter="onSearch"
           />
         </el-form-item>
@@ -148,7 +155,7 @@ async function handleSaveSubmit() {
             v-model="form.type"
             clearable
             placeholder="全部类型"
-            class="!w-[160px]"
+            class="w-40!"
             @change="onSearch"
           >
             <el-option label="本地用户 (Local)" value="local" />
@@ -224,7 +231,13 @@ async function handleSaveSubmit() {
                 {{ t("common.edit", "编辑") }}
               </el-button>
               <el-popconfirm
-                :title="t('identity.deleteSourceConfirm', { name: row.Name || row.name }, '确认删除该认证方式吗？')"
+                :title="
+                  t(
+                    'identity.deleteSourceConfirm',
+                    { name: row.Name || row.name },
+                    '确认删除该认证方式吗？'
+                  )
+                "
                 @confirm="handleDelete(row)"
               >
                 <template #reference>
@@ -249,12 +262,20 @@ async function handleSaveSubmit() {
     <template v-else>
       <PageHeader
         :title="formInline.title"
-        :description="t('identity.authSourceDesc', '配置系统身份认证方式，支持本地账号、CAS 单点登录与 RADIUS 认证服务')"
+        :description="
+          t(
+            'identity.authSourceDesc',
+            '配置系统身份认证方式，支持本地账号、CAS 单点登录与 RADIUS 认证服务'
+          )
+        "
         @back="handleCancelPage"
       >
         <template #actions>
           <div class="flex items-center space-x-2">
-            <el-button :icon="useRenderIcon(BackIcon)" @click="handleCancelPage">
+            <el-button
+              :icon="useRenderIcon(BackIcon)"
+              @click="handleCancelPage"
+            >
               {{ t("common.cancel", "取消") }}
             </el-button>
             <el-button
@@ -269,7 +290,9 @@ async function handleSaveSubmit() {
         </template>
       </PageHeader>
 
-      <div class="bg-bg_color p-4 rounded-xl border border-(--el-border-color-lighter)">
+      <div
+        class="bg-bg_color p-4 rounded-xl border border-(--el-border-color-lighter)"
+      >
         <editForm ref="createEditFormRef" :formInline="formInline" />
       </div>
     </template>

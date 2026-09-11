@@ -153,7 +153,9 @@ function initSortableDns() {
 
 function addDnsResolver() {
   if (dnsResolverList.value.some(item => item.value.trim() === "")) {
-    message(t("common.dnsEmptyExists", "已存在默认解析(空项)，无需重复添加"), { type: "warning" });
+    message(t("common.dnsEmptyExists", "已存在默认解析(空项)，无需重复添加"), {
+      type: "warning"
+    });
     return;
   }
   dnsResolverList.value.push({
@@ -188,7 +190,9 @@ function syncDnsResolver() {
   }
   newFormInline.value.dns_resolver = JSON.stringify(activeList);
 
-  const duplicates = nonEmpties.filter((item, idx) => nonEmpties.indexOf(item) !== idx);
+  const duplicates = nonEmpties.filter(
+    (item, idx) => nonEmpties.indexOf(item) !== idx
+  );
   if (duplicates.length > 0) {
     dnsError.value = t(
       "common.upstreamTargetDuplicate",
@@ -404,8 +408,7 @@ const certMismatchWarning = computed(() => {
   if (currentHostnames.length === 0) return null;
 
   const unmatchedHosts = currentHostnames.filter(
-    (host: string) =>
-      !uniqueDomains.some(pattern => matchDomain(host, pattern))
+    (host: string) => !uniqueDomains.some(pattern => matchDomain(host, pattern))
   );
 
   if (unmatchedHosts.length > 0) {
@@ -680,8 +683,15 @@ function addUpstreamServer(locIdx: number) {
   if (!loc || loc.Upstream.Type !== "proxy_pass") return;
   if (!loc.Upstream.Data) loc.Upstream.Data = {};
   if (!Array.isArray(loc.Upstream.Data.Servers)) loc.Upstream.Data.Servers = [];
-  if (loc.Upstream.Data.Servers.some((s: any) => !s.Target || s.Target.trim() === "")) {
-    message(t("common.targetEmptyExists", "已存在未填写的目标服务器项，请先填写完整"), { type: "warning" });
+  if (
+    loc.Upstream.Data.Servers.some(
+      (s: any) => !s.Target || s.Target.trim() === ""
+    )
+  ) {
+    message(
+      t("common.targetEmptyExists", "已存在未填写的目标服务器项，请先填写完整"),
+      { type: "warning" }
+    );
     return;
   }
   loc.Upstream.Data.Servers.push({
@@ -732,22 +742,28 @@ function syncLocationJSON() {
       }
     };
   });
-  
+
   // Validate servers in each proxy_pass location
   locationErrors.value = {};
   for (let i = 0; i < locationList.value.length; i++) {
     const loc = locationList.value[i];
     if (loc.Upstream?.Type === "proxy_pass") {
       const servers = loc.Upstream.Data?.Servers || [];
-      const targets = servers.map((s: any) => (s.Target || "").trim()).filter(Boolean);
-      const duplicates = targets.filter((item: string, index: number) => targets.indexOf(item) !== index);
+      const targets = servers
+        .map((s: any) => (s.Target || "").trim())
+        .filter(Boolean);
+      const duplicates = targets.filter(
+        (item: string, index: number) => targets.indexOf(item) !== index
+      );
       if (duplicates.length > 0) {
         locationErrors.value[i] = t(
           "common.upstreamTargetDuplicate",
           { target: duplicates[0] },
           `上游列表中存在重复的目标服务器地址 [${duplicates[0]}]`
         );
-      } else if (servers.some((s: any) => !s.Target || s.Target.trim() === "")) {
+      } else if (
+        servers.some((s: any) => !s.Target || s.Target.trim() === "")
+      ) {
         locationErrors.value[i] = t("tcp.targetRequired", "请输入目标地址");
       }
     }
@@ -802,13 +818,17 @@ function getRef() {
     validate: (callback: (valid: boolean) => void) => {
       httpFormRef.value.validate((valid: boolean) => {
         let hasError = false;
-        
+
         for (let i = 0; i < locationList.value.length; i++) {
           const loc = locationList.value[i];
           if (loc.Upstream?.Type === "proxy_pass") {
             const servers = loc.Upstream.Data?.Servers || [];
-            const targets = servers.map((s: any) => (s.Target || "").trim()).filter(Boolean);
-            const duplicates = targets.filter((item: string, index: number) => targets.indexOf(item) !== index);
+            const targets = servers
+              .map((s: any) => (s.Target || "").trim())
+              .filter(Boolean);
+            const duplicates = targets.filter(
+              (item: string, index: number) => targets.indexOf(item) !== index
+            );
             if (duplicates.length > 0) {
               const errMsg = t(
                 "common.upstreamTargetDuplicate",
@@ -819,15 +839,24 @@ function getRef() {
               message(errMsg, { type: "warning" });
               hasError = true;
               break;
-            } else if (servers.some((s: any) => !s.Target || s.Target.trim() === "")) {
-              locationErrors.value[i] = t("tcp.targetRequired", "请输入目标地址");
+            } else if (
+              servers.some((s: any) => !s.Target || s.Target.trim() === "")
+            ) {
+              locationErrors.value[i] = t(
+                "tcp.targetRequired",
+                "请输入目标地址"
+              );
               hasError = true;
             }
           }
         }
 
-        const dnsVals = dnsResolverList.value.map(d => d.value.trim()).filter(Boolean);
-        const dupDns = dnsVals.filter((item, idx) => dnsVals.indexOf(item) !== idx);
+        const dnsVals = dnsResolverList.value
+          .map(d => d.value.trim())
+          .filter(Boolean);
+        const dupDns = dnsVals.filter(
+          (item, idx) => dnsVals.indexOf(item) !== idx
+        );
         if (dupDns.length > 0) {
           const errMsg = t(
             "common.upstreamTargetDuplicate",
@@ -840,12 +869,12 @@ function getRef() {
         } else {
           dnsError.value = "";
         }
-        
+
         if (!valid || hasError) {
           callback(false);
           return;
         }
-        
+
         callback(true);
       });
     }
@@ -906,7 +935,10 @@ defineExpose({ getRef, syncLocationJSON });
                 <WarningIcon class="shrink-0 text-sm" />
                 <span>{{ t("http.hostnameCertMismatchTip") }}</span>
               </div>
-              <div v-else class="text-xs text-(--el-text-color-secondary) mt-1.5">
+              <div
+                v-else
+                class="text-xs text-(--el-text-color-secondary) mt-1.5"
+              >
                 {{ t("http.hostnameTip") }}
               </div>
             </el-form-item>
@@ -1001,7 +1033,10 @@ defineExpose({ getRef, syncLocationJSON });
                       clearable
                       :placeholder="t('http.selectCertPlaceholder')"
                       class="w-full"
-                      @change="() => httpFormRef?.validateField('certificate', () => {})"
+                      @change="
+                        () =>
+                          httpFormRef?.validateField('certificate', () => {})
+                      "
                     >
                       <el-option
                         v-for="c in certOptions"
@@ -1014,12 +1049,21 @@ defineExpose({ getRef, syncLocationJSON });
                     <!-- 证书域名不匹配黄色提示条 -->
                     <div
                       v-if="certMismatchWarning"
-                      class="mt-2.5 p-2.5 bg-amber-50 dark:bg-amber-950/40 border border-amber-300 dark:border-amber-700/60 rounded-lg text-xs text-amber-700 dark:text-amber-300 flex items-start gap-2 leading-relaxed"
+                      class="mt-2.5 p-2.5 bg-amber-50 dark:bg-amber-950/40 border border-amber-300 dark:border-amber-700/60 rounded-lg text-xs/relaxed text-amber-700 dark:text-amber-300 flex items-start gap-2"
                     >
-                      <WarningIcon class="shrink-0 text-amber-500 text-sm mt-0.5" />
+                      <WarningIcon
+                        class="shrink-0 text-amber-500 text-sm mt-0.5"
+                      />
                       <div>
-                        <span class="font-bold">{{ t("http.certMismatchTitle") }}：</span>
-                        <span>{{ t("http.certMismatchDesc", { hostname: certMismatchWarning.hostname, covered: certMismatchWarning.covered }) }}</span>
+                        <span class="font-bold"
+                          >{{ t("http.certMismatchTitle") }}：</span
+                        >
+                        <span>{{
+                          t("http.certMismatchDesc", {
+                            hostname: certMismatchWarning.hostname,
+                            covered: certMismatchWarning.covered
+                          })
+                        }}</span>
                       </div>
                     </div>
                   </el-form-item>
@@ -1238,7 +1282,7 @@ defineExpose({ getRef, syncLocationJSON });
                       </el-tooltip>
                     </div>
                   </div>
-                  <div class="flex items-center justify-between w-full">
+                  <div class="flex-bc w-full">
                     <el-button
                       type="primary"
                       plain
@@ -1266,11 +1310,23 @@ defineExpose({ getRef, syncLocationJSON });
                   v-model="newFormInline.root_ca"
                   type="textarea"
                   :rows="4"
-                  :placeholder="t('http.rootCAPlaceholder', '-----BEGIN CERTIFICATE-----\n...\n-----END CERTIFICATE-----')"
+                  :placeholder="
+                    t(
+                      'http.rootCAPlaceholder',
+                      '-----BEGIN CERTIFICATE-----\n...\n-----END CERTIFICATE-----'
+                    )
+                  "
                   class="font-mono text-xs"
                 />
-                <div class="text-xs text-(--el-text-color-secondary) mt-1 leading-relaxed">
-                  {{ t('http.rootCATip', '上游 HTTPS 服务器使用自签名或私有 CA 证书时，粘贴 PEM 格式根证书。留空使用系统信任链。') }}
+                <div
+                  class="text-xs/relaxed text-(--el-text-color-secondary) mt-1"
+                >
+                  {{
+                    t(
+                      "http.rootCATip",
+                      "上游 HTTPS 服务器使用自签名或私有 CA 证书时，粘贴 PEM 格式根证书。留空使用系统信任链。"
+                    )
+                  }}
                 </div>
               </el-form-item>
             </re-col>
@@ -1435,7 +1491,9 @@ defineExpose({ getRef, syncLocationJSON });
                     class="flex flex-col sm:flex-row sm:items-center justify-between gap-2 mb-3"
                   >
                     <div>
-                      <span class="font-bold text-sm text-(--el-text-color-primary)">
+                      <span
+                        class="font-bold text-sm text-(--el-text-color-primary)"
+                      >
                         {{ t("http.targetUrl") }}
                       </span>
                     </div>
@@ -1459,8 +1517,16 @@ defineExpose({ getRef, syncLocationJSON });
                       class="w-full text-xs"
                       :empty-text="t('tcp.noUpstreamServers', '暂无服务器')"
                     >
-                      <el-table-column type="index" label="#" width="50" align="center" />
-                      <el-table-column :label="t('http.targetUrl')" min-width="220">
+                      <el-table-column
+                        type="index"
+                        label="#"
+                        width="50"
+                        align="center"
+                      />
+                      <el-table-column
+                        :label="t('http.targetUrl')"
+                        min-width="220"
+                      >
                         <template #default="{ row }">
                           <el-input
                             v-model="row.Target"
@@ -1471,7 +1537,11 @@ defineExpose({ getRef, syncLocationJSON });
                           />
                         </template>
                       </el-table-column>
-                      <el-table-column :label="t('http.weight')" width="140" align="center">
+                      <el-table-column
+                        :label="t('http.weight')"
+                        width="140"
+                        align="center"
+                      >
                         <template #default="{ row }">
                           <el-input-number
                             v-model="row.Weight"
@@ -1483,13 +1553,19 @@ defineExpose({ getRef, syncLocationJSON });
                           />
                         </template>
                       </el-table-column>
-                      <el-table-column :label="t('http.operation', '操作')" width="80" align="center">
+                      <el-table-column
+                        :label="t('http.operation', '操作')"
+                        width="80"
+                        align="center"
+                      >
                         <template #default="{ $index }">
                           <el-button
                             type="danger"
                             link
                             size="small"
-                            :disabled="(loc.Upstream.Data.Servers || []).length <= 1"
+                            :disabled="
+                              (loc.Upstream.Data.Servers || []).length <= 1
+                            "
                             :icon="useRenderIcon(Delete)"
                             @click="removeUpstreamServer(lIdx, $index)"
                           />
@@ -1497,7 +1573,10 @@ defineExpose({ getRef, syncLocationJSON });
                       </el-table-column>
                     </el-table>
                   </div>
-                  <div v-if="locationErrors[lIdx]" class="text-xs text-red-500 mt-1.5 ml-1">
+                  <div
+                    v-if="locationErrors[lIdx]"
+                    class="text-xs text-red-500 mt-1.5 ml-1"
+                  >
                     {{ locationErrors[lIdx] }}
                   </div>
                 </div>

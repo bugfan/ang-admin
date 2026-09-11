@@ -187,10 +187,9 @@ export function useTunnelClient(t: any, tableRef: Ref) {
     const ids = curSelected.map((item: any) => item.Id || item.id);
     const { code, message: msg } = await deleteTunnelClient({ ids });
     if (code === 0) {
-      message(
-        `${t("tunnel.batchDelete")} ${t("common.success", "成功")}`,
-        { type: "success" }
-      );
+      message(`${t("tunnel.batchDelete")} ${t("common.success", "成功")}`, {
+        type: "success"
+      });
       tableRef.value.getTableRef().clearSelection();
       onSearch();
     } else {
@@ -257,7 +256,9 @@ export function useTunnelClient(t: any, tableRef: Ref) {
                 return;
               }
             }
-            message(`${title} ${t("common.success", "成功")}`, { type: "success" });
+            message(`${title} ${t("common.success", "成功")}`, {
+              type: "success"
+            });
             done();
             onSearch();
           }

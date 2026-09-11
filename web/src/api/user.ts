@@ -126,7 +126,7 @@ export type UserItem = {
 export const getUserList = async (params?: object) => {
   try {
     const res = await http.request<any>("get", "/api/user", { params });
-    const list = Array.isArray(res) ? res : (res?.data || res?.list || []);
+    const list = Array.isArray(res) ? res : res?.data || res?.list || [];
     return {
       code: 0,
       message: "success",
@@ -149,7 +149,7 @@ export const getUserList = async (params?: object) => {
 export const createUser = async (data?: object) => {
   try {
     const res = await http.request<any>("post", "/api/user", { data });
-    if (res && typeof res.code === 'number' && res.code !== 0) return res;
+    if (res && typeof res.code === "number" && res.code !== 0) return res;
     return { code: 0, message: "success", data: res };
   } catch (err: any) {
     return {
@@ -162,7 +162,7 @@ export const createUser = async (data?: object) => {
 export const updateUser = async (id: number, data?: object) => {
   try {
     const res = await http.request<any>("put", `/api/user/${id}`, { data });
-    if (res && typeof res.code === 'number' && res.code !== 0) return res;
+    if (res && typeof res.code === "number" && res.code !== 0) return res;
     return { code: 0, message: "success", data: res };
   } catch (err: any) {
     return {
@@ -175,7 +175,7 @@ export const updateUser = async (id: number, data?: object) => {
 export const deleteUser = async (id: number) => {
   try {
     const res = await http.request<any>("delete", `/api/user/${id}`);
-    if (res && typeof res.code === 'number' && res.code !== 0) return res;
+    if (res && typeof res.code === "number" && res.code !== 0) return res;
     return { code: 0, message: "success", data: res };
   } catch (err: any) {
     return {
@@ -184,4 +184,3 @@ export const deleteUser = async (id: number) => {
     };
   }
 };
-

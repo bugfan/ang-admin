@@ -70,11 +70,16 @@ defineExpose({ getRef, newFormInline });
     class="space-y-6"
   >
     <!-- Section 1: 基本信息 -->
-    <el-card shadow="never" class="border-(--el-border-color-lighter)! rounded-xl">
+    <el-card
+      shadow="never"
+      class="border-(--el-border-color-lighter)! rounded-xl"
+    >
       <template #header>
         <div class="flex items-center space-x-2">
           <div class="w-1.5 h-4 bg-primary rounded-full" />
-          <span class="font-bold text-(--el-text-color-primary) text-sm sm:text-base">
+          <span
+            class="font-bold text-(--el-text-color-primary) text-sm sm:text-base"
+          >
             {{ t("webvpnDomain.basicSection", "基本信息") }}
           </span>
         </div>
@@ -83,26 +88,44 @@ defineExpose({ getRef, newFormInline });
       <el-row :gutter="24">
         <!-- 1. 基础域名称 -->
         <re-col :value="24">
-          <el-form-item :label="t('webvpnDomain.name', '基础域名称')" prop="name">
+          <el-form-item
+            :label="t('webvpnDomain.name', '基础域名称')"
+            prop="name"
+          >
             <el-input
               v-model="newFormInline.name"
               clearable
-              :placeholder="t('webvpnDomain.namePlaceholder', '如：主校区 WebVPN 网关')"
+              :placeholder="
+                t('webvpnDomain.namePlaceholder', '如：主校区 WebVPN 网关')
+              "
             />
           </el-form-item>
         </re-col>
 
         <!-- 2. 泛域名 -->
         <re-col :value="24">
-          <el-form-item :label="t('webvpnDomain.hostname', '泛域名')" prop="hostname">
+          <el-form-item
+            :label="t('webvpnDomain.hostname', '泛域名')"
+            prop="hostname"
+          >
             <div class="flex flex-col w-full">
               <el-input
                 v-model="newFormInline.hostname"
                 clearable
-                :placeholder="t('webvpnDomain.hostnamePlaceholder', '如：*.webvpn.example.com')"
+                :placeholder="
+                  t(
+                    'webvpnDomain.hostnamePlaceholder',
+                    '如：*.webvpn.example.com'
+                  )
+                "
               />
-              <p class="text-xs text-gray-400 mt-2 leading-relaxed">
-                {{ t("webvpnDomain.hostnameHint", "WebVPN 底座泛域名，必须以 *. 开头，例如 *.webvpn.example.com。") }}
+              <p class="text-xs/relaxed text-gray-400 mt-2">
+                {{
+                  t(
+                    "webvpnDomain.hostnameHint",
+                    "WebVPN 底座泛域名，必须以 *. 开头，例如 *.webvpn.example.com。"
+                  )
+                }}
               </p>
             </div>
           </el-form-item>
@@ -121,14 +144,21 @@ defineExpose({ getRef, newFormInline });
 
         <!-- 4. 安全协议 -->
         <re-col :value="24">
-          <el-form-item :label="t('webvpnDomain.protocol', '安全协议')" :for="''">
+          <el-form-item
+            :label="t('webvpnDomain.protocol', '安全协议')"
+            :for="''"
+          >
             <div class="flex items-center gap-8">
               <div class="flex items-center gap-2">
-                <span class="text-sm text-gray-600 dark:text-gray-300">TLS:</span>
+                <span class="text-sm text-gray-600 dark:text-gray-300"
+                  >TLS:</span
+                >
                 <el-switch v-model="newFormInline.tls" />
               </div>
               <div class="flex items-center gap-2">
-                <span class="text-sm text-gray-600 dark:text-gray-300">HTTP/2:</span>
+                <span class="text-sm text-gray-600 dark:text-gray-300"
+                  >HTTP/2:</span
+                >
                 <el-switch v-model="newFormInline.h2" />
               </div>
             </div>
@@ -137,14 +167,19 @@ defineExpose({ getRef, newFormInline });
 
         <!-- 5. SSL 证书 -->
         <re-col :value="24">
-          <el-form-item :label="t('webvpnDomain.certificate', 'SSL 证书')" prop="certificate">
+          <el-form-item
+            :label="t('webvpnDomain.certificate', 'SSL 证书')"
+            prop="certificate"
+          >
             <div class="flex flex-col w-full">
               <el-select
                 v-model="newFormInline.certificate"
                 filterable
                 clearable
                 class="w-full"
-                :placeholder="t('webvpnDomain.certPlaceholder', '选择匹配的通配符 SSL 证书')"
+                :placeholder="
+                  t('webvpnDomain.certPlaceholder', '选择匹配的通配符 SSL 证书')
+                "
               >
                 <el-option
                   v-for="c in certOptions"
@@ -153,8 +188,13 @@ defineExpose({ getRef, newFormInline });
                   :value="c.value"
                 />
               </el-select>
-              <p class="text-xs text-gray-400 mt-2 leading-relaxed">
-                {{ t("webvpnDomain.certHint", "请选择已在系统中颁发且涵盖该泛域名的通配符证书；留空时将尝试自动匹配。") }}
+              <p class="text-xs/relaxed text-gray-400 mt-2">
+                {{
+                  t(
+                    "webvpnDomain.certHint",
+                    "请选择已在系统中颁发且涵盖该泛域名的通配符证书；留空时将尝试自动匹配。"
+                  )
+                }}
               </p>
             </div>
           </el-form-item>
@@ -163,11 +203,16 @@ defineExpose({ getRef, newFormInline });
     </el-card>
 
     <!-- Section 2: 访问与安全策略 -->
-    <el-card shadow="never" class="border-(--el-border-color-lighter)! rounded-xl">
+    <el-card
+      shadow="never"
+      class="border-(--el-border-color-lighter)! rounded-xl"
+    >
       <template #header>
         <div class="flex items-center space-x-2">
           <div class="w-1.5 h-4 bg-primary rounded-full" />
-          <span class="font-bold text-(--el-text-color-primary) text-sm sm:text-base">
+          <span
+            class="font-bold text-(--el-text-color-primary) text-sm sm:text-base"
+          >
             {{ t("webvpnDomain.policySection", "访问与安全策略") }}
           </span>
         </div>
@@ -176,15 +221,28 @@ defineExpose({ getRef, newFormInline });
       <el-row :gutter="24">
         <!-- 6. 认证中心地址 -->
         <re-col :value="24">
-          <el-form-item :label="t('webvpnDomain.loginUrl', '认证中心地址')" prop="login_url">
+          <el-form-item
+            :label="t('webvpnDomain.loginUrl', '认证中心地址')"
+            prop="login_url"
+          >
             <div class="flex flex-col w-full">
               <el-input
                 v-model="newFormInline.login_url"
                 clearable
-                :placeholder="t('webvpnDomain.loginUrlPlaceholder', '选填，如 https://auth.example.com')"
+                :placeholder="
+                  t(
+                    'webvpnDomain.loginUrlPlaceholder',
+                    '选填，如 https://auth.example.com'
+                  )
+                "
               />
-              <p class="text-xs text-gray-400 mt-2 leading-relaxed">
-                {{ t("webvpnDomain.loginUrlHint", "用户未登录时跳转的认证登录页面；留空时自动关联系统内已配置的认证中心。") }}
+              <p class="text-xs/relaxed text-gray-400 mt-2">
+                {{
+                  t(
+                    "webvpnDomain.loginUrlHint",
+                    "用户未登录时跳转的认证登录页面；留空时自动关联系统内已配置的认证中心。"
+                  )
+                }}
               </p>
             </div>
           </el-form-item>
@@ -192,20 +250,35 @@ defineExpose({ getRef, newFormInline });
 
         <!-- 7. 兜底策略 -->
         <re-col :value="24">
-          <el-form-item :label="t('webvpnDomain.fallback', '未命中策略')" prop="fallback">
+          <el-form-item
+            :label="t('webvpnDomain.fallback', '未命中策略')"
+            prop="fallback"
+          >
             <div class="flex flex-col w-full">
               <el-select v-model="newFormInline.fallback" class="w-full">
                 <el-option
                   value="404"
-                  :label="t('webvpnDomain.fallback404', '404 页面阻断（推荐，严防未知请求穿透）')"
+                  :label="
+                    t(
+                      'webvpnDomain.fallback404',
+                      '404 页面阻断（推荐，严防未知请求穿透）'
+                    )
+                  "
                 />
                 <el-option
                   value="login"
-                  :label="t('webvpnDomain.fallbackLogin', '重定向至认证中心登录页')"
+                  :label="
+                    t('webvpnDomain.fallbackLogin', '重定向至认证中心登录页')
+                  "
                 />
               </el-select>
-              <p class="text-xs text-gray-400 mt-2 leading-relaxed">
-                {{ t("webvpnDomain.fallbackHint", "当外部请求的子域名未在站点列表中注册或已被停用时的安全防护策略。") }}
+              <p class="text-xs/relaxed text-gray-400 mt-2">
+                {{
+                  t(
+                    "webvpnDomain.fallbackHint",
+                    "当外部请求的子域名未在站点列表中注册或已被停用时的安全防护策略。"
+                  )
+                }}
               </p>
             </div>
           </el-form-item>
@@ -235,7 +308,12 @@ defineExpose({ getRef, newFormInline });
               v-model="newFormInline.remark"
               type="textarea"
               :rows="2"
-              :placeholder="t('webvpnDomain.remarkPlaceholder', '选填，关于该 WebVPN 网关基础域的说明')"
+              :placeholder="
+                t(
+                  'webvpnDomain.remarkPlaceholder',
+                  '选填，关于该 WebVPN 网关基础域的说明'
+                )
+              "
             />
           </el-form-item>
         </re-col>

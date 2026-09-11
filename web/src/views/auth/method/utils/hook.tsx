@@ -53,8 +53,11 @@ export function useAuthMethod(t: Function, tableRef: any) {
       prop: "Type",
       minWidth: 140,
       cellRenderer: scope => {
-        const type = String(scope.row.Type || scope.row.type || "").toLowerCase();
-        let tagType: "" | "success" | "warning" | "info" | "danger" | "primary" = "info";
+        const type = String(
+          scope.row.Type || scope.row.type || ""
+        ).toLowerCase();
+        let tagType:
+          "" | "success" | "warning" | "info" | "danger" | "primary" = "info";
         let label = type;
         if (type === "local") {
           tagType = "primary";
@@ -97,12 +100,22 @@ export function useAuthMethod(t: Function, tableRef: any) {
             inactive-value={false}
             onChange={async (val: boolean) => {
               try {
-                const res = await updateAuthMethod(id, { id, enabled: val, name: row.Name || row.name, type: row.Type || row.type });
+                const res = await updateAuthMethod(id, {
+                  id,
+                  enabled: val,
+                  name: row.Name || row.name,
+                  type: row.Type || row.type
+                });
                 if (res && res.code === 0) {
-                  message(t("common.operationSuccess", "操作成功"), { type: "success" });
+                  message(t("common.operationSuccess", "操作成功"), {
+                    type: "success"
+                  });
                 } else {
                   row.enabled = !val;
-                  message(res?.message || t("common.operationFailed", "操作失败"), { type: "error" });
+                  message(
+                    res?.message || t("common.operationFailed", "操作失败"),
+                    { type: "error" }
+                  );
                 }
               } catch (e) {
                 row.enabled = !val;
@@ -112,7 +125,7 @@ export function useAuthMethod(t: Function, tableRef: any) {
         );
       }
     },
-    
+
     {
       label: t("identity.remark", "备注"),
       align: "center",
@@ -171,7 +184,9 @@ export function useAuthMethod(t: Function, tableRef: any) {
         message(t("common.deleteSuccess", "删除成功"), { type: "success" });
         onSearch();
       } else {
-        message(res?.message || t("common.operationFailed", "删除失败"), { type: "error" });
+        message(res?.message || t("common.operationFailed", "删除失败"), {
+          type: "error"
+        });
       }
     } catch (e) {
       // ignore
@@ -185,12 +200,18 @@ export function useAuthMethod(t: Function, tableRef: any) {
     try {
       const res = await testAuthMethodConnection({ type, config_json });
       if (res && res.code === 0) {
-        message(res.message || t("identity.testSuccess", "连通性测试通过"), { type: "success" });
+        message(res.message || t("identity.testSuccess", "连通性测试通过"), {
+          type: "success"
+        });
       } else {
-        message(res?.message || t("identity.testFailed", "连通性测试失败"), { type: "error" });
+        message(res?.message || t("identity.testFailed", "连通性测试失败"), {
+          type: "error"
+        });
       }
     } catch (e: any) {
-      message(e?.message || t("identity.testFailed", "连通性测试失败"), { type: "error" });
+      message(e?.message || t("identity.testFailed", "连通性测试失败"), {
+        type: "error"
+      });
     }
   }
 

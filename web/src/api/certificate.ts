@@ -24,7 +24,10 @@ export const createCert = async (data?: object) => {
   try {
     const res = await http.request<any>("post", "/api/certificate", { data });
     if (res && res.code !== undefined && res.code !== 0) {
-      return { code: res.code, message: formatApiError(res, "cert", "create failed") };
+      return {
+        code: res.code,
+        message: formatApiError(res, "cert", "create failed")
+      };
     }
     return { code: 0, message: "success", data: res };
   } catch (err: any) {
@@ -41,7 +44,10 @@ export const batchDeleteCert = async (data?: Array<any>) => {
     }
     return { code: 0, message: "success" };
   } catch (err: any) {
-    return { code: 1, message: formatApiError(err, "cert", "batch delete failed") };
+    return {
+      code: 1,
+      message: formatApiError(err, "cert", "batch delete failed")
+    };
   }
 };
 
@@ -49,7 +55,11 @@ export const batchDeleteCert = async (data?: Array<any>) => {
 export const issueCert = async (id: string | number) => {
   try {
     // 设置 5 分钟超时，因为 ACME DNS 验证最长可能需要数分钟
-    const res = await http.request<any>("post", `/api/certificate/${id}/issue`, { timeout: 300000 });
+    const res = await http.request<any>(
+      "post",
+      `/api/certificate/${id}/issue`,
+      { timeout: 300000 }
+    );
     return res;
   } catch (err: any) {
     return { code: 1, message: formatApiError(err, "cert", "issue failed") };
@@ -64,7 +74,10 @@ export const updateCert = async (data: any) => {
       data
     });
     if (res && res.code !== undefined && res.code !== 0) {
-      return { code: res.code, message: formatApiError(res, "cert", "update failed") };
+      return {
+        code: res.code,
+        message: formatApiError(res, "cert", "update failed")
+      };
     }
     return { code: 0, message: "success", data: res };
   } catch (err: any) {

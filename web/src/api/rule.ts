@@ -64,7 +64,10 @@ export const createRule = async (data?: object) => {
       res.code !== undefined &&
       res.code !== 0
     ) {
-      return { code: res.code, message: formatApiError(res, "rule", "创建规则失败") };
+      return {
+        code: res.code,
+        message: formatApiError(res, "rule", "创建规则失败")
+      };
     }
     return { code: 0, message: "success", data: res };
   } catch (err: any) {
@@ -83,7 +86,10 @@ export const updateRule = async (data: any) => {
       res.code !== undefined &&
       res.code !== 0
     ) {
-      return { code: res.code, message: formatApiError(res, "rule", "更新规则失败") };
+      return {
+        code: res.code,
+        message: formatApiError(res, "rule", "更新规则失败")
+      };
     }
     return { code: 0, message: "success", data: res };
   } catch (err: any) {

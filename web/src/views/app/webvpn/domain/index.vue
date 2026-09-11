@@ -166,7 +166,10 @@ async function handleSaveSubmit() {
           />
         </el-form-item>
 
-        <el-form-item :label="t('webvpnDomain.hostname', '泛域名')" prop="hostname">
+        <el-form-item
+          :label="t('webvpnDomain.hostname', '泛域名')"
+          prop="hostname"
+        >
           <el-input
             v-model="form.hostname"
             :placeholder="t('webvpnDomain.hostnamePlaceholder', '请输入泛域名')"
@@ -185,7 +188,10 @@ async function handleSaveSubmit() {
           >
             {{ t("buttons.pureSearch", "搜索") }}
           </el-button>
-          <el-button :icon="useRenderIcon(Refresh)" @click="resetForm(searchFormRef)">
+          <el-button
+            :icon="useRenderIcon(Refresh)"
+            @click="resetForm(searchFormRef)"
+          >
             {{ t("buttons.pureReset", "重置") }}
           </el-button>
         </el-form-item>
@@ -227,7 +233,7 @@ async function handleSaveSubmit() {
             @page-current-change="onSearch"
           >
             <template #operation="{ row }">
-              <div class="flex items-center justify-center space-x-2 whitespace-nowrap">
+              <div class="flex-c space-x-2 whitespace-nowrap">
                 <el-button
                   class="reset-margin"
                   link
@@ -239,7 +245,11 @@ async function handleSaveSubmit() {
                   {{ t("common.edit", "编辑") }}
                 </el-button>
                 <el-popconfirm
-                  :title="t('webvpnDomain.deleteConfirm', { name: row.Name || row.name })"
+                  :title="
+                    t('webvpnDomain.deleteConfirm', {
+                      name: row.Name || row.name
+                    })
+                  "
                   @confirm="handleDelete(row)"
                 >
                   <template #reference>
@@ -268,7 +278,12 @@ async function handleSaveSubmit() {
     >
       <PageHeader
         :title="formInline.title"
-        :description="t('webvpnDomain.headerDesc', '配置 WebVPN 底座泛域名网关、监听端口、SSL 证书及安全策略')"
+        :description="
+          t(
+            'webvpnDomain.headerDesc',
+            '配置 WebVPN 底座泛域名网关、监听端口、SSL 证书及安全策略'
+          )
+        "
         :backTitle="t('webvpnDomain.backToList', '返回基础域列表')"
         @back="handleCancelPage"
       >

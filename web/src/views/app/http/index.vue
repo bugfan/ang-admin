@@ -160,7 +160,10 @@ async function handleSaveSubmit() {
     if (valid) {
       saving.value = true;
       try {
-        const curData = { ...formInline.value, port: String(formInline.value.port || 80) };
+        const curData = {
+          ...formInline.value,
+          port: String(formInline.value.port || 80)
+        };
         if (showView.value === "new") {
           const { code, message: msg } = await createHttpProxy(curData);
           if (code !== 0) {
@@ -183,7 +186,9 @@ async function handleSaveSubmit() {
         showView.value = "list";
         onSearch();
       } catch (e: any) {
-        message(e.message || t("http.submitFailed", "提交失败"), { type: "error" });
+        message(e.message || t("http.submitFailed", "提交失败"), {
+          type: "error"
+        });
       } finally {
         saving.value = false;
       }
@@ -351,7 +356,6 @@ function formatJSON(row: any) {
             @page-current-change="handleCurrentChange"
           >
             <!-- Expand Row Slot: Theme-Adaptive JSON Preview -->
-            
 
             <!-- Operation Slot -->
             <template #operation="{ row }">

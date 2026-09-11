@@ -218,7 +218,9 @@ async function handleBatchDelete() {
   const ids = selectedRows.value.map(r => r.id).filter(Boolean);
   const res = await deleteClusterNode({ ids });
   if (res.code === 0) {
-    message(t("common.batchDeleteSuccess", "批量删除成功"), { type: "success" });
+    message(t("common.batchDeleteSuccess", "批量删除成功"), {
+      type: "success"
+    });
     selectedNum.value = 0;
     selectedRows.value = [];
     fetchData();

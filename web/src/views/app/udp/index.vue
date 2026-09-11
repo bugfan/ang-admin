@@ -268,15 +268,10 @@ async function handleSaveSubmit() {
             @page-current-change="handleCurrentChange"
           >
             <!-- Expand Row Slot: Detailed Inspection -->
-            
-
-
 
             <!-- Operation Column -->
             <template #operation="{ row }">
-              <div
-                class="flex items-center justify-center space-x-2 whitespace-nowrap"
-              >
+              <div class="flex-c space-x-2 whitespace-nowrap">
                 <el-button
                   class="reset-margin"
                   link
@@ -288,7 +283,9 @@ async function handleSaveSubmit() {
                   {{ t("udp.edit", "编辑") }}
                 </el-button>
                 <el-popconfirm
-                  :title="t('udp.confirmDelete', '是否确认删除该 UDP 代理配置?')"
+                  :title="
+                    t('udp.confirmDelete', '是否确认删除该 UDP 代理配置?')
+                  "
                   @confirm="handleDelete(row)"
                 >
                   <template #reference>
@@ -317,8 +314,17 @@ async function handleSaveSubmit() {
     >
       <!-- Full Page Header Bar -->
       <PageHeader
-        :title="showView === 'new' ? t('udp.addUdp') : t('udp.editUdp') + ' (id: ' + (formInline.id || 'new') + ')'"
-        :description="t('udp.headerDesc', '配置 UDP 代理监听端口、传输层中间件规则 (Rule) 与 Backend 上游服务器')"
+        :title="
+          showView === 'new'
+            ? t('udp.addUdp')
+            : t('udp.editUdp') + ' (id: ' + (formInline.id || 'new') + ')'
+        "
+        :description="
+          t(
+            'udp.headerDesc',
+            '配置 UDP 代理监听端口、传输层中间件规则 (Rule) 与 Backend 上游服务器'
+          )
+        "
         :backTitle="t('udp.backToList', '返回 UDP 列表')"
         @back="handleCancelPage"
       >

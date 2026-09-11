@@ -114,7 +114,10 @@ const formRules = reactive({
             callback(new Error(t("acme.domainsRequired", "请输入待签发域名")));
             return;
           }
-          const domains = value.split(',').map(d => d.trim()).filter(Boolean);
+          const domains = value
+            .split(",")
+            .map(d => d.trim())
+            .filter(Boolean);
           if (domains.length === 0) {
             callback(new Error(t("acme.domainsRequired", "请输入待签发域名")));
             return;
@@ -200,14 +203,22 @@ defineExpose({ getRef });
     <el-row :gutter="16">
       <re-col :value="24" :xs="24" :sm="24">
         <el-form-item :label="t('cert.source')">
-          <el-radio-group v-model="newFormInline.source" @change="handleSourceChange">
+          <el-radio-group
+            v-model="newFormInline.source"
+            @change="handleSourceChange"
+          >
             <el-radio value="MANUAL">{{ t("cert.sourceManual") }}</el-radio>
             <el-radio value="ACME">{{ t("cert.sourceAcme") }}</el-radio>
           </el-radio-group>
         </el-form-item>
       </re-col>
 
-      <re-col :value="24" :xs="24" :sm="24" v-if="newFormInline.source === 'MANUAL'">
+      <re-col
+        v-if="newFormInline.source === 'MANUAL'"
+        :value="24"
+        :xs="24"
+        :sm="24"
+      >
         <div
           class="mb-3 flex flex-col sm:flex-row sm:items-center justify-between gap-2"
         >
@@ -307,7 +318,12 @@ defineExpose({ getRef });
         </el-form-item>
       </re-col>
 
-      <re-col v-if="newFormInline.source === 'MANUAL'" :value="12" :xs="24" :sm="12">
+      <re-col
+        v-if="newFormInline.source === 'MANUAL'"
+        :value="12"
+        :xs="24"
+        :sm="12"
+      >
         <el-form-item :label="t('cert.type')" prop="type">
           <el-select
             v-model="newFormInline.type"
@@ -326,7 +342,11 @@ defineExpose({ getRef });
 
       <template v-if="newFormInline.source === 'MANUAL'">
         <re-col :value="24" :xs="24" :sm="24">
-          <el-form-item :label="t('cert.certContent')" prop="cert_content" :required="true">
+          <el-form-item
+            :label="t('cert.certContent')"
+            prop="cert_content"
+            :required="true"
+          >
             <el-input
               v-model="newFormInline.cert_content"
               type="textarea"
@@ -339,7 +359,11 @@ defineExpose({ getRef });
         </re-col>
 
         <re-col :value="24" :xs="24" :sm="24">
-          <el-form-item :label="t('cert.keyContent')" prop="key_content" :required="true">
+          <el-form-item
+            :label="t('cert.keyContent')"
+            prop="key_content"
+            :required="true"
+          >
             <el-input
               v-model="newFormInline.key_content"
               type="textarea"
@@ -352,7 +376,10 @@ defineExpose({ getRef });
         </re-col>
 
         <re-col :value="24" :xs="24" :sm="24">
-          <el-form-item :label="t('cert.intermediateCert', '中间证书 / CA')" prop="intermediate_cert">
+          <el-form-item
+            :label="t('cert.intermediateCert', '中间证书 / CA')"
+            prop="intermediate_cert"
+          >
             <el-input
               v-model="newFormInline.intermediate_cert"
               type="textarea"
@@ -367,7 +394,11 @@ defineExpose({ getRef });
 
       <template v-else-if="newFormInline.source === 'ACME'">
         <re-col :value="12" :xs="24" :sm="12">
-          <el-form-item :label="t('acme.selectAcmeAccount')" prop="acme_account_id" :required="true">
+          <el-form-item
+            :label="t('acme.selectAcmeAccount')"
+            prop="acme_account_id"
+            :required="true"
+          >
             <div class="flex items-center w-full gap-2">
               <el-select
                 v-model="newFormInline.acme_account_id"
@@ -384,17 +415,21 @@ defineExpose({ getRef });
               <el-link
                 type="primary"
                 :underline="false"
-                class="!text-xs font-normal whitespace-nowrap shrink-0"
+                class="text-xs! font-normal whitespace-nowrap shrink-0"
                 @click="goToAcmeAccount"
               >
-                {{ t('acme.noneClickToAdd') }}
+                {{ t("acme.noneClickToAdd") }}
               </el-link>
             </div>
           </el-form-item>
         </re-col>
 
         <re-col :value="24" :xs="24" :sm="24">
-          <el-form-item :label="t('acme.domains', '签发域名')" prop="domains" :required="true">
+          <el-form-item
+            :label="t('acme.domains', '签发域名')"
+            prop="domains"
+            :required="true"
+          >
             <el-input
               v-model="newFormInline.domains"
               type="textarea"
@@ -411,7 +446,8 @@ defineExpose({ getRef });
             <div class="flex items-center gap-2">
               <el-switch v-model="newFormInline.acme_use_cname" />
               <span class="text-xs text-(--el-text-color-secondary)">
-                如果签发域名的 _acme-challenge 记录被 CNAME 到了其他域名，请开启此选项
+                如果签发域名的 _acme-challenge 记录被 CNAME
+                到了其他域名，请开启此选项
               </span>
             </div>
           </el-form-item>
@@ -420,8 +456,14 @@ defineExpose({ getRef });
         <re-col :value="24" :xs="24" :sm="24">
           <el-form-item :label="t('acme.autoRenew', '自动续签')">
             <div class="flex flex-wrap items-center gap-4">
-              <el-switch v-model="newFormInline.auto_renew" active-text="启用自动续签" />
-              <div v-if="newFormInline.auto_renew" class="flex items-center gap-1.5 text-xs text-(--el-text-color-regular)">
+              <el-switch
+                v-model="newFormInline.auto_renew"
+                active-text="启用自动续签"
+              />
+              <div
+                v-if="newFormInline.auto_renew"
+                class="flex items-center gap-1.5 text-xs text-(--el-text-color-regular)"
+              >
                 <span>证书到期前</span>
                 <el-input-number
                   v-model="newFormInline.renew_days"

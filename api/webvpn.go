@@ -147,6 +147,9 @@ type webvpnSiteHandler struct {
 	Replace         string    `json:"replace"`
 	AllowedGroupIds string    `json:"allowed_group_ids"`
 	IsProtected     int       `json:"is_protected"`
+	TunnelId        int64     `json:"tunnel_id"`
+	TunnelToken     string    `json:"tunnel_token"`
+	TunnelType      string    `json:"tunnel_type"`
 	Status          int       `json:"status"`
 	Remark          string    `json:"remark"`
 	CreatedAt       time.Time `json:"created_at"`
