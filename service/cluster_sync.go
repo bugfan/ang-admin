@@ -482,9 +482,6 @@ func buildHTTPMap(rulesMap map[string]models.Rule) map[string]entity.HTTPConfig 
 		}
 
 		loginURL := dom.LoginURL
-		if loginURL == "" {
-			loginURL = discoverAuthLoginURL(httpList, rulesMap)
-		}
 
 		fallbackPolicy := dom.Fallback
 		if fallbackPolicy == "" {
