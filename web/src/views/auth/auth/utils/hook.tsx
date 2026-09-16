@@ -5,8 +5,8 @@ import { getAuthList, deleteAuth, updateAuth } from "@/api/auth-config";
 
 export function useAuthMethod(t: Function, tableRef: any) {
   const form = reactive({
-    name: "",
-    type: ""
+    name: ""
+    
   });
   const loading = ref(true);
   const selectedNum = ref(0);
@@ -28,7 +28,7 @@ export function useAuthMethod(t: Function, tableRef: any) {
       cellRenderer: scope => scope.row.Id || scope.row.id
     },
     {
-      label: t("identity.authConfigName", "认证名称"),
+      label: t("identity.authConfigName", "名称"),
       align: "center",
       prop: "Name",
       minWidth: 160,
@@ -37,22 +37,7 @@ export function useAuthMethod(t: Function, tableRef: any) {
           {scope.row.Name || scope.row.name}
         </span>
       )
-    },
-    {
-      label: t("identity.tokenName", "凭证名称"),
-      align: "center",
-      prop: "TokenName",
-      minWidth: 120,
-      cellRenderer: scope => scope.row.TokenName || scope.row.token_name
-    },
-    {
-      label: t("identity.tokenExpire", "凭证过期时间(秒)"),
-      align: "center",
-      prop: "TokenExpire",
-      minWidth: 140,
-      cellRenderer: scope => scope.row.TokenExpire || scope.row.token_expire
-    },
-    {
+    },    {
       label: t("identity.portalUrl", "登录入口(Portal)"),
       align: "center",
       prop: "PortalUrl",
@@ -90,7 +75,7 @@ export function useAuthMethod(t: Function, tableRef: any) {
     try {
       const { data } = await getAuthList({
         name: form.name,
-        type: form.type
+        
       });
       dataList.value = data.list;
       pagination.total = data.total;
@@ -105,7 +90,7 @@ export function useAuthMethod(t: Function, tableRef: any) {
     if (!formEl) return;
     formEl.resetFields();
     form.name = "";
-    form.type = "";
+    
     onSearch();
   }
 

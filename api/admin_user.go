@@ -564,6 +564,16 @@ func AsyncRoutesHandler(c *gin.Context) {
 							"roles": []string{"admin", "common"},
 						},
 					},
+					{
+						"path":      "/auth/setting",
+						"name":      "AppAuthSetting",
+						"component": "auth/setting/index",
+						"meta": gin.H{
+							"icon":  "ri:settings-3-line",
+							"title": "menus.pureAuthSetting",
+							"roles": []string{"admin", "common"},
+						},
+					},
 				},
 			},
 			{

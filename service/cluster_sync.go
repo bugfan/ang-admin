@@ -251,6 +251,36 @@ func buildHTTPMap(rulesMap map[string]models.Rule) map[string]entity.HTTPConfig 
 							for i := range items {
 								if items[i].Action.Name == "auth_portal_action" {
 									if cfgMap, ok := items[i].Action.Config.(map[string]interface{}); ok {
+										var authConfig models.Auth
+										hasAuth, errAuth := engine.Where("portal_url LIKE ?", "%"+item.Hostname+"%").Get(&authConfig)
+										if errAuth == nil && hasAuth {
+											cfgMap["auth_id"] = authConfig.Id
+											if authConfig.AuthMethodIds != "" && authConfig.AuthMethodIds != "[]" {
+												var methodIds []int64
+												if err := json.Unmarshal([]byte(authConfig.AuthMethodIds), &methodIds); err == nil && len(methodIds) > 0 {
+													var methods []models.AuthMethod
+													if err := engine.In("id", methodIds).Find(&methods); err == nil {
+														methodMap := make(map[int64]models.AuthMethod)
+														for _, m := range methods {
+															methodMap[m.Id] = m
+														}
+														var orderedMethods []map[string]interface{}
+														for _, mid := range methodIds {
+															if m, ok := methodMap[mid]; ok && m.Enabled {
+																orderedMethods = append(orderedMethods, map[string]interface{}{
+																	"id":          m.Id,
+																	"name":        m.Name,
+																	"type":        m.Type,
+																	"config_json": m.ConfigJSON,
+																})
+															}
+														}
+														cfgMap["methods"] = orderedMethods
+													}
+												}
+											}
+										}
+
 										if cd, _ := cfgMap["cookie_domain"].(string); cd == "" && wildcardRootDomain != "" {
 											if strings.HasSuffix(item.Hostname, wildcardRootDomain) {
 												cfgMap["cookie_domain"] = "." + wildcardRootDomain
@@ -481,7 +511,23 @@ func buildHTTPMap(rulesMap map[string]models.Rule) map[string]entity.HTTPConfig 
 			}
 		}
 
-		loginURL := dom.LoginURL
+		loginURL := ""
+		
+		// 统一使用全局认证设置中的凭证名称
+		var authSetting models.AuthSetting
+		engine.ID(1).Get(&authSetting)
+		tokenName := "_angt"
+		if authSetting.TokenName != "" {
+			tokenName = authSetting.TokenName
+		}
+
+		if dom.AuthId > 0 {
+			var auth models.Auth
+			has, err := engine.ID(dom.AuthId).Get(&auth)
+			if err == nil && has {
+				loginURL = auth.PortalUrl
+			}
+		}
 
 		fallbackPolicy := dom.Fallback
 		if fallbackPolicy == "" {
@@ -499,6 +545,7 @@ func buildHTTPMap(rulesMap map[string]models.Rule) map[string]entity.HTTPConfig 
 					Config: map[string]interface{}{
 						"Sites":        vpnActionSites,
 						"LoginURL":     loginURL,
+						"TokenName":    tokenName,
 						"CookieDomain": "." + rootDomain,
 						"Fallback":     fallbackPolicy,
 					},

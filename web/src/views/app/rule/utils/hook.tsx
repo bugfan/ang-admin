@@ -235,7 +235,7 @@ export function useRule(t: any, tableRef: Ref) {
         const curData = options.props.formInline;
         FormRef.validate(async (valid: boolean) => {
           if (valid) {
-            if (title === (t("rule.addRule") || "新增规则")) {
+            if (title === (t("rule.addRule") || "添加规则")) {
               const { code, message: msg } = await createRule(curData);
               if (code !== 0) {
                 message(msg, { type: "error" });

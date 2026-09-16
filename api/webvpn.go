@@ -32,7 +32,7 @@ type webvpnDomainHandler struct {
 	TLS         bool      `json:"tls"`
 	H2          bool      `json:"h2"`
 	Certificate string    `json:"certificate"`
-	LoginURL    string    `json:"login_url"`
+	AuthId      int64     `json:"auth_id"`
 	Fallback    string    `json:"fallback"`
 	Status      int       `json:"status"`
 	Remark      string    `json:"remark"`

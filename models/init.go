@@ -23,6 +23,7 @@ func InitDB(dsn string) {
 		new(Rule), new(HttpProxy), new(ClusterNode), new(AcmeAccount),
 		new(UserGroup), new(User), new(AuthMethod), new(Auth),
 		new(WebvpnDomain), new(WebvpnSite),
+		new(AuthSetting),
 	)
 
 	if err != nil {
@@ -44,7 +45,6 @@ func InitDB(dsn string) {
 			Name:       "本地账号认证",
 			Type:       "local",
 			Enabled:    true,
-			Priority:   1,
 			ConfigJSON: `{"allow_self_register":false,"password_min_len":6}`,
 			Remark:     "系统默认本地用户名密码认证",
 		})

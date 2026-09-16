@@ -12,7 +12,7 @@ import Delete from "~icons/ep/delete";
 
 const props = withDefaults(defineProps<{ formInline: any }>(), {
   formInline: () => ({
-    title: "新增 DNS",
+    title: "添加 DNS",
     id: undefined,
     name: "",
     address: "",

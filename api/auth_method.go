@@ -10,6 +10,7 @@ import (
 	"time"
 
 	"github.com/bugfan/ang-admin/models"
+	"github.com/bugfan/ang-admin/service"
 	"github.com/bugfan/rest"
 	"github.com/gin-gonic/gin"
 	"github.com/go-xorm/xorm"
@@ -24,7 +25,6 @@ type authMethodHandler struct {
 	Name       string    `json:"name"`
 	Type       string    `json:"type"`
 	Enabled    bool      `json:"enabled"`
-	Priority   int       `json:"priority"`
 	ConfigJSON string    `json:"config_json"`
 	Remark     string    `json:"remark"`
 	CreatedAt  time.Time `json:"created_at"`
@@ -97,7 +97,7 @@ func (h *authMethodHandler) List(c *gin.Context) {
 		session.Where("type = ?", t)
 	}
 
-	err := session.Asc("priority").Desc("id").Find(&list)
+	err := session.Desc("id").Find(&list)
 	if err != nil {
 		c.JSON(http.StatusOK, gin.H{
 			"code":    1,
@@ -206,5 +206,12 @@ func TestAuthMethodHandler(c *gin.Context) {
 
 	default:
 		c.JSON(http.StatusOK, gin.H{"code": 1, "message": "不支持的认证方式类型"})
+	}
+}
+
+func (h *authMethodHandler) After(g *gin.Context, x *xorm.Engine, args ...interface{}) {
+	method := g.Request.Method
+	if method == "POST" || method == "PUT" || method == "PATCH" || method == "DELETE" {
+		service.SyncHTTPToCluster()
 	}
 }

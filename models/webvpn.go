@@ -10,7 +10,7 @@ type WebvpnDomain struct {
 	TLS         bool      `xorm:"bool default true 'tls'" json:"tls"`                                      // 是否启用 TLS
 	H2          bool      `xorm:"bool default true 'h2'" json:"h2"`                                        // 是否启用 HTTP/2
 	Certificate string    `xorm:"varchar(255) 'certificate'" json:"certificate"`                           // 关联证书
-	LoginURL    string    `xorm:"varchar(512) 'login_url'" json:"login_url"`                               // 认证中心登录地址
+	AuthId      int64     `xorm:"bigint default 0 'auth_id'" json:"auth_id"`                               // 绑定的认证中心 ID (关联 Auth 表)
 	Fallback    string    `xorm:"varchar(32) default '404' 'fallback'" json:"fallback"`                    // 未匹配兜底策略: "404" 或 "login"
 	Status      int       `xorm:"tinyint default 1 'status'" json:"status"`                                // 1: 启用, 0: 禁用
 	Remark      string    `xorm:"varchar(255) 'remark'" json:"remark"`                                     // 备注

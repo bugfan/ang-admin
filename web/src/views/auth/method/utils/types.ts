@@ -3,7 +3,6 @@ export interface FormItemProps {
   name: string;
   type: string; // local, cas, radius
   enabled: boolean;
-  priority: number;
   config_json: string;
   remark: string;
 }

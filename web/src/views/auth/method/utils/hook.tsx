@@ -34,7 +34,7 @@ export function useAuthMethod(t: Function, tableRef: any) {
       formatter: row => row.Id || row.id
     },
     {
-      label: t("identity.sourceName", "认证方式名称"),
+      label: t("identity.sourceName", "名称"),
       align: "center",
       prop: "Name",
       minWidth: 150,
@@ -48,7 +48,7 @@ export function useAuthMethod(t: Function, tableRef: any) {
       }
     },
     {
-      label: t("identity.sourceType", "认证类型"),
+      label: t("identity.sourceType", "类型"),
       align: "center",
       prop: "Type",
       minWidth: 140,
@@ -77,12 +77,10 @@ export function useAuthMethod(t: Function, tableRef: any) {
       }
     },
     {
-      label: t("identity.priority", "优先级"),
+      label: t("identity.action", "动作"),
       align: "center",
-      prop: "Priority",
-      width: 90,
-      align: "center",
-      formatter: row => row.Priority ?? row.priority ?? 0
+      width: 100,
+      slot: "action"
     },
     {
       label: t("identity.status", "状态"),
@@ -147,7 +145,7 @@ export function useAuthMethod(t: Function, tableRef: any) {
       label: t("identity.operation", "操作"),
       align: "center",
       fixed: "right",
-      width: 200,
+      width: 140,
       slot: "operation"
     }
   ];

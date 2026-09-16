@@ -9,7 +9,7 @@ import { useRenderIcon } from "@/components/ReIcon/src/hooks";
 
 const props = withDefaults(defineProps<{ formInline: any }>(), {
   formInline: () => ({
-    title: "新增",
+    title: "添加",
     id: undefined,
     name: "",
     token: "",

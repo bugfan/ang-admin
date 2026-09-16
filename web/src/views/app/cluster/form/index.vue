@@ -6,7 +6,7 @@ import { useI18n } from "vue-i18n";
 
 const props = withDefaults(defineProps<{ formInline: any }>(), {
   formInline: () => ({
-    title: "新增节点",
+    title: "添加节点",
     id: undefined,
     name: "",
     addr: "http://127.0.0.1:8081",

@@ -7,7 +7,7 @@ import { useUserStoreHook } from "@/store/modules/user";
 
 const props = withDefaults(defineProps<{ formInline: any }>(), {
   formInline: () => ({
-    title: "新增",
+    title: "添加",
     username: "",
     password: "",
     repeatPassword: "",

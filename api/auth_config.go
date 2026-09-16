@@ -4,8 +4,10 @@ import (
 	"fmt"
 	"net/http"
 	"strings"
+	"time"
 
 	"github.com/bugfan/ang-admin/models"
+	"github.com/bugfan/ang-admin/service"
 	"github.com/bugfan/rest"
 	"github.com/gin-gonic/gin"
 	"github.com/go-xorm/xorm"
@@ -16,7 +18,13 @@ func init() {
 }
 
 type authHandler struct {
-	models.Auth
+	Id            int64     `json:"id"`
+	Name          string    `json:"name"`
+	AuthMethodIds string    `json:"auth_method_ids"`
+	PortalUrl     string    `json:"portal_url"`
+	Remark        string    `json:"remark"`
+	CreatedAt     time.Time `json:"created_at"`
+	UpdatedAt     time.Time `json:"updated_at"`
 }
 
 func (h *authHandler) Before(g *gin.Context, x *xorm.Engine) bool {
@@ -50,6 +58,9 @@ func (h *authHandler) Before(g *gin.Context, x *xorm.Engine) bool {
 	return true
 }
 
-func (h *authHandler) After(g *gin.Context, x *xorm.Engine) bool {
-	return true
+func (h *authHandler) After(g *gin.Context, x *xorm.Engine, args ...interface{}) {
+	method := g.Request.Method
+	if method == "POST" || method == "PUT" || method == "PATCH" || method == "DELETE" {
+		service.SyncHTTPToCluster()
+	}
 }

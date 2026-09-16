@@ -6,7 +6,7 @@ import { useI18n } from "vue-i18n";
 
 const props = withDefaults(defineProps<{ formInline: any }>(), {
   formInline: () => ({
-    title: "新增",
+    title: "添加",
     id: undefined,
     name: "",
     type: "TLS-TUNNEL",

@@ -6,7 +6,7 @@ export interface DomainFormItemProps {
   tls: boolean;
   h2: boolean;
   certificate: string;
-  login_url: string;
+  auth_id: number | null;
   fallback: string;
   status: number;
   remark: string;

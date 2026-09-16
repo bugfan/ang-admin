@@ -52,7 +52,7 @@ function getDefaultFormInline() {
     tls: true,
     h2: true,
     certificate: "",
-    login_url: "",
+    auth_id: null,
     fallback: "404",
     status: 1,
     remark: ""
@@ -69,7 +69,7 @@ function getFormInlineFromRow(row: any) {
     tls: (row.TLS ?? row.tls ?? true) !== false,
     h2: (row.H2 ?? row.h2 ?? true) !== false,
     certificate: row.Certificate || row.certificate || "",
-    login_url: row.LoginURL || row.login_url || "",
+    auth_id: row.auth_id || null,
     fallback: row.Fallback || row.fallback || "404",
     status: row.Status ?? row.status ?? 1,
     remark: row.Remark || row.remark || ""
@@ -107,7 +107,7 @@ async function handleSaveSubmit() {
           tls: formData.tls,
           h2: formData.h2,
           certificate: formData.certificate,
-          login_url: formData.login_url,
+          auth_id: formData.auth_id,
           fallback: formData.fallback,
           status: formData.status,
           remark: formData.remark

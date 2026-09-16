@@ -12,7 +12,7 @@ import { closeAllDialog } from "@/components/ReDialog";
 
 const props = withDefaults(defineProps<{ formInline: any }>(), {
   formInline: () => ({
-    title: "新增",
+    title: "添加",
     id: undefined,
     cert_id: "",
     type: "STD",

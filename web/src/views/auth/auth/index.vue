@@ -14,6 +14,8 @@ import EditPen from "~icons/ep/edit-pen";
 import AddFill from "~icons/ri/add-circle-line";
 import CheckIcon from "~icons/ep/check";
 import CloseIcon from "~icons/ep/close";
+import Search from "~icons/ep/search";
+import Refresh from "~icons/ep/refresh";
 import BackIcon from "~icons/ep/back";
 
 defineOptions({
@@ -43,14 +45,12 @@ const {
 
 function getDefaultFormInline() {
   return {
-    title: t("identity.addAuthConfig", "新增认证配置"),
+    title: t("identity.addAuthConfig", "添加认证配置"),
     id: 0,
     name: "",
     auth_method_ids: "[]",
-    token_name: "ANG_TOKEN",
-    portal_url: "",
-    token_expire: 86400,
-    remark: ""
+        portal_url: "",
+        remark: ""
   };
 }
 
@@ -60,10 +60,8 @@ function getFormInlineFromRow(row: any) {
     id: row?.Id ?? row?.id,
     name: row?.Name ?? row?.name ?? "",
     auth_method_ids: row?.AuthMethodIds ?? row?.auth_method_ids ?? "[]",
-    token_name: row?.TokenName ?? row?.token_name ?? "ANG_TOKEN",
-    portal_url: row?.PortalUrl ?? row?.portal_url ?? "",
-    token_expire: row?.TokenExpire ?? row?.token_expire ?? 86400,
-    remark: row?.Remark ?? row?.remark ?? ""
+        portal_url: row?.PortalUrl ?? row?.portal_url ?? "",
+        remark: row?.Remark ?? row?.remark ?? ""
   };
 }
 
@@ -94,10 +92,8 @@ async function handleSaveSubmit() {
           id: formInline.value.id,
           name: formInline.value.name,
           auth_method_ids: formInline.value.auth_method_ids,
-          token_name: formInline.value.token_name,
-          portal_url: formInline.value.portal_url,
-          token_expire: formInline.value.token_expire,
-          remark: formInline.value.remark
+                    portal_url: formInline.value.portal_url,
+                    remark: formInline.value.remark
         };
         let res;
         if (showView.value === "new") {
@@ -135,9 +131,9 @@ async function handleSaveSubmit() {
         ref="searchFormRef"
         :inline="true"
         :model="form"
-        class="search-form bg-bg_color w-[99/100] pl-8 pt-3 overflow-auto"
+        class="search-form bg-bg_color w-full px-3 sm:px-6 pt-3 pb-1 overflow-auto mb-3 rounded-xl border border-(--el-border-color-lighter) shadow-2xs"
       >
-        <el-form-item :label="t('identity.sourceName', '认证名称')" prop="name">
+        <el-form-item :label="t('identity.sourceName', '名称')" prop="name">
           <el-input
             v-model="form.name"
             :placeholder="t('identity.sourceNamePlaceholder', '请输入名称')"
@@ -146,24 +142,11 @@ async function handleSaveSubmit() {
             @keyup.enter="onSearch"
           />
         </el-form-item>
-        <el-form-item :label="t('identity.sourceType', '认证类型')" prop="type">
-          <el-select
-            v-model="form.type"
-            clearable
-            placeholder="全部类型"
-            class="w-40!"
-            @change="onSearch"
-          >
-            <el-option label="本地用户 (Local)" value="local" />
-            <el-option label="CAS (v2/v3)" value="cas" />
-            <el-option label="RADIUS" value="radius" />
-          </el-select>
-        </el-form-item>
         <el-form-item>
-          <el-button type="primary" @click="onSearch">
+          <el-button type="primary" :icon="useRenderIcon(Search)" :loading="loading" @click="onSearch">
             {{ t("common.search", "搜索") }}
           </el-button>
-          <el-button @click="resetForm(searchFormRef)">
+          <el-button :icon="useRenderIcon(Refresh)" @click="resetForm(searchFormRef)">
             {{ t("common.reset", "重置") }}
           </el-button>
         </el-form-item>
@@ -255,42 +238,57 @@ async function handleSaveSubmit() {
     </template>
 
     <!-- 2. 新增 / 编辑视图 -->
-    <template v-else>
+    <div
+      v-else
+      class="p-3 sm:p-5 bg-bg_color rounded-xl border border-(--el-border-color-lighter) shadow-2xs"
+    >
       <PageHeader
         :title="formInline.title"
         :description="
           t(
             'identity.authSourceDesc',
-            '配置系统身份认证，支持本地账号、CAS 单点登录与 RADIUS 认证服务'
+            '配置系统的统一认证策略（SSO），支持串联组合多种认证方式形成双因子/多因子（MFA）认证流水线。'
           )
         "
+        :backTitle="t('common.backToList', '返回列表')"
         @back="handleCancelPage"
       >
         <template #actions>
-          <div class="flex items-center space-x-2">
-            <el-button
-              :icon="useRenderIcon(BackIcon)"
-              @click="handleCancelPage"
-            >
-              {{ t("common.cancel", "取消") }}
-            </el-button>
-            <el-button
-              type="primary"
-              :loading="saving"
-              :icon="useRenderIcon(CheckIcon)"
-              @click="handleSaveSubmit"
-            >
-              {{ t("common.save", "保存") }}
-            </el-button>
-          </div>
+          <el-button
+            :icon="useRenderIcon(CloseIcon)"
+            @click="handleCancelPage"
+          >
+            {{ t("common.cancel", "取消") }}
+          </el-button>
+          <el-button
+            type="primary"
+            :loading="saving"
+            :icon="useRenderIcon(CheckIcon)"
+            @click="handleSaveSubmit"
+          >
+            {{ t("common.save", "保存") }}
+          </el-button>
         </template>
       </PageHeader>
 
+      <editForm ref="createEditFormRef" :formInline="formInline" />
+
+      <!-- Bottom Actions -->
       <div
-        class="bg-bg_color p-4 rounded-xl border border-(--el-border-color-lighter)"
+        class="flex items-center justify-end space-x-3 pt-4 mt-4 border-t border-(--el-border-color-lighter)"
       >
-        <editForm ref="createEditFormRef" :formInline="formInline" />
+        <el-button :icon="useRenderIcon(CloseIcon)" @click="handleCancelPage">
+          {{ t("common.cancel", "取消") }}
+        </el-button>
+        <el-button
+          type="primary"
+          :loading="saving"
+          :icon="useRenderIcon(CheckIcon)"
+          @click="handleSaveSubmit"
+        >
+          {{ t("common.save", "保存") }}
+        </el-button>
       </div>
-    </template>
+    </div>
   </div>
 </template>

@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import { ref, reactive, watch, onMounted } from "vue";
+import { deviceDetection } from "@pureadmin/utils";
 import { useI18n } from "vue-i18n";
 import ReCol from "@/components/ReCol";
 import { message } from "@/utils/message";
@@ -12,7 +13,6 @@ const props = withDefaults(defineProps<FormProps>(), {
     name: "",
     type: "local",
     enabled: true,
-    priority: 1,
     config_json: "{}",
     remark: ""
   })
@@ -123,9 +123,9 @@ defineExpose({ getRef, handleTest });
   <el-form
     ref="ruleFormRef"
     :model="newFormInline"
+    :label-position="deviceDetection() ? 'top' : 'right'"
     label-width="140px"
-    label-position="top"
-    class="space-y-4"
+    class="method-form p-1 sm:px-2 space-y-4"
   >
     <!-- 基本设置 -->
     <el-card
@@ -144,9 +144,9 @@ defineExpose({ getRef, handleTest });
       </template>
 
       <el-row :gutter="16">
-        <re-col :value="12" :xs="24">
+        <re-col :value="24" :xs="24">
           <el-form-item
-            :label="t('identity.sourceName', '认证方式名称')"
+            :label="t('identity.sourceName', '名称')"
             prop="name"
             :rules="[
               {
@@ -169,58 +169,29 @@ defineExpose({ getRef, handleTest });
           </el-form-item>
         </re-col>
 
-        <re-col :value="12" :xs="24">
+        <re-col :value="24" :xs="24">
           <el-form-item
-            :label="t('identity.sourceType', '认证类型')"
+            :label="t('identity.sourceType', '类型')"
             prop="type"
           >
-            <el-select v-model="newFormInline.type" class="w-full">
-              <el-option
-                :label="t('identity.sourceTypeLocal', '本地用户 (Local)')"
-                value="local"
-              />
-              <el-option
-                :label="t('identity.sourceTypeCas', 'CAS 单点登录 (CAS v2/v3)')"
-                value="cas"
-              />
-              <el-option
-                :label="t('identity.sourceTypeRadius', 'RADIUS 认证')"
-                value="radius"
-              />
-            </el-select>
+            <el-radio-group v-model="newFormInline.type" class="w-full mt-1">
+              <el-radio value="local" border>{{ t('identity.sourceTypeLocal', '本地用户 (Local)') }}</el-radio>
+              <el-radio value="cas" border>{{ t('identity.sourceTypeCas', 'CAS 单点登录 (CAS v2/v3)') }}</el-radio>
+              <el-radio value="radius" border>{{ t('identity.sourceTypeRadius', 'RADIUS 认证') }}</el-radio>
+            </el-radio-group>
           </el-form-item>
         </re-col>
 
-        <re-col :value="12" :xs="24">
-          <el-form-item :label="t('identity.priority', '优先级')">
-            <el-input-number
-              v-model="newFormInline.priority"
-              :min="0"
-              :max="100"
-              class="w-full!"
-            />
-            <div class="text-xs text-(--el-text-color-secondary) mt-1">
-              {{
-                t(
-                  "identity.priorityTip",
-                  "数值越小优先级越高，用于客户端展示排序"
-                )
-              }}
-            </div>
-          </el-form-item>
-        </re-col>
-
-        <re-col :value="12" :xs="24">
+        <re-col :value="24" :xs="24">
           <el-form-item :label="t('identity.status', '启用状态')">
-            <div class="pt-1">
-              <el-switch
-                v-model="newFormInline.enabled"
-                :active-text="t('identity.statusActive', '启用')"
-                :inactive-text="t('identity.statusDisabled', '禁用')"
-              />
-            </div>
+            <el-switch
+              v-model="newFormInline.enabled"
+              :active-text="t('identity.statusActive', '启用')"
+              :inactive-text="t('identity.statusDisabled', '禁用')"
+            />
           </el-form-item>
         </re-col>
+
 
         <re-col :value="24" :xs="24">
           <el-form-item :label="t('identity.remark', '备注')">

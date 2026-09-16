@@ -246,4 +246,5 @@ require (
 	gopkg.in/yaml.v3 v3.0.1 // indirect
 	xorm.io/builder v0.3.13 // indirect
 	xorm.io/core v0.7.2-0.20190928055935-90aeac8d08eb // indirect
+	xorm.io/xorm v1.4.1 // indirect
 )

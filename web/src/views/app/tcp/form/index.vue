@@ -12,7 +12,7 @@ import Delete from "~icons/ep/delete";
 
 const props = withDefaults(defineProps<{ formInline: any }>(), {
   formInline: () => ({
-    title: "新增 TCP",
+    title: "添加 TCP",
     id: undefined,
     name: "",
     address: "",

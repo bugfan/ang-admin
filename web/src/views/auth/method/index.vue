@@ -16,6 +16,8 @@ import ConnectionIcon from "~icons/ep/connection";
 import CheckIcon from "~icons/ep/check";
 import CloseIcon from "~icons/ep/close";
 import BackIcon from "~icons/ep/back";
+import Search from "~icons/ep/search";
+import Refresh from "~icons/ep/refresh";
 
 defineOptions({
   name: "AppAuthMethod"
@@ -49,7 +51,6 @@ function getDefaultFormInline() {
     name: "",
     type: "local",
     enabled: true,
-    priority: 1,
     config_json: "{}",
     remark: ""
   };
@@ -62,7 +63,6 @@ function getFormInlineFromRow(row: any) {
     name: row?.Name ?? row?.name ?? "",
     type: row?.Type ?? row?.type ?? "local",
     enabled: Boolean(row?.Enabled ?? row?.enabled),
-    priority: row?.Priority ?? row?.priority ?? 1,
     config_json: row?.ConfigJSON ?? row?.config_json ?? "{}",
     remark: row?.Remark ?? row?.remark ?? ""
   };
@@ -96,7 +96,6 @@ async function handleSaveSubmit() {
           name: formInline.value.name,
           type: formInline.value.type,
           enabled: formInline.value.enabled,
-          priority: formInline.value.priority,
           config_json: formInline.value.config_json,
           remark: formInline.value.remark
         };
@@ -136,10 +135,10 @@ async function handleSaveSubmit() {
         ref="searchFormRef"
         :inline="true"
         :model="form"
-        class="search-form bg-bg_color w-[99/100] pl-8 pt-3 overflow-auto"
+        class="search-form bg-bg_color w-full px-3 sm:px-6 pt-3 pb-1 overflow-auto mb-3 rounded-xl border border-(--el-border-color-lighter) shadow-2xs"
       >
         <el-form-item
-          :label="t('identity.sourceName', '认证方式名称')"
+          :label="t('identity.sourceName', '名称')"
           prop="name"
         >
           <el-input
@@ -150,7 +149,7 @@ async function handleSaveSubmit() {
             @keyup.enter="onSearch"
           />
         </el-form-item>
-        <el-form-item :label="t('identity.sourceType', '认证类型')" prop="type">
+        <el-form-item :label="t('identity.sourceType', '类型')" prop="type">
           <el-select
             v-model="form.type"
             clearable
@@ -164,10 +163,10 @@ async function handleSaveSubmit() {
           </el-select>
         </el-form-item>
         <el-form-item>
-          <el-button type="primary" @click="onSearch">
+          <el-button type="primary" :icon="useRenderIcon(Search)" :loading="loading" @click="onSearch">
             {{ t("common.search", "搜索") }}
           </el-button>
-          <el-button @click="resetForm(searchFormRef)">
+          <el-button :icon="useRenderIcon(Refresh)" @click="resetForm(searchFormRef)">
             {{ t("common.reset", "重置") }}
           </el-button>
         </el-form-item>
@@ -208,7 +207,7 @@ async function handleSaveSubmit() {
             @page-size-change="onSearch"
             @page-current-change="onSearch"
           >
-            <template #operation="{ row }">
+            <template #action="{ row }">
               <el-button
                 v-if="(row.Type || row.type) !== 'local'"
                 class="reset-margin"
@@ -218,8 +217,12 @@ async function handleSaveSubmit() {
                 :icon="useRenderIcon(ConnectionIcon)"
                 @click="handleTestConnection(row)"
               >
-                {{ t("identity.testConnection", "测试") }}
+                {{ t("identity.testConnection", "测试连通性") }}
               </el-button>
+              <span v-else class="text-gray-400 text-sm">-</span>
+            </template>
+
+            <template #operation="{ row }">
               <el-button
                 class="reset-margin"
                 link

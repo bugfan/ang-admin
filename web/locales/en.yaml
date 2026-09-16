@@ -1262,7 +1262,7 @@ identity:
   authSourceDesc: "Configure identity authentication methods including Local Users, CAS SSO, and RADIUS"
   sourceName: "Method Name"
   sourceNamePlaceholder: "e.g. Local DB, Campus CAS, Enterprise RADIUS"
-  sourceType: "Auth Type"
+  sourceType: "Type"
   sourceTypeLocal: "Local User"
   sourceTypeCas: "CAS SSO (v2/v3)"
   sourceTypeRadius: "RADIUS Auth"

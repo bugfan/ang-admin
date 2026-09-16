@@ -5,6 +5,7 @@ import ReCol from "@/components/ReCol";
 import { formRules } from "../utils/rule";
 import { DomainFormProps } from "../utils/types";
 import { getCertList } from "@/api/certificate";
+import { getAuthList } from "@/api/auth-config";
 
 const props = withDefaults(defineProps<DomainFormProps>(), {
   formInline: () => ({
@@ -14,7 +15,7 @@ const props = withDefaults(defineProps<DomainFormProps>(), {
     tls: true,
     h2: true,
     certificate: "",
-    login_url: "",
+    auth_id: null,
     fallback: "404",
     status: 1,
     remark: ""
@@ -62,6 +63,7 @@ watch(
   { deep: true }
 );
 const certOptions = ref<Array<{ label: string; value: string }>>([]);
+const authOptions = ref<Array<{ name: string; id: number }>>([]);
 
 async function fetchCertificates() {
   try {
@@ -79,8 +81,21 @@ async function fetchCertificates() {
   } catch (e) {}
 }
 
+async function fetchAuthOptions() {
+  try {
+    const res = await getAuthList();
+    if (res?.code === 0 && res?.data?.list) {
+      authOptions.value = res.data.list.map((a: any) => ({
+        name: a.Name || a.name,
+        id: a.Id || a.id
+      }));
+    }
+  } catch (e) {}
+}
+
 onMounted(() => {
   fetchCertificates();
+  fetchAuthOptions();
 });
 
 function getRef() {
@@ -231,6 +246,40 @@ defineExpose({ getRef, newFormInline });
             </div>
           </el-form-item>
         </re-col>
+
+        <!-- 8. 启用 -->
+        <re-col :value="24">
+          <el-form-item
+            :label="t('webvpnDomain.status', '启用')"
+            prop="status"
+            :for="''"
+          >
+            <el-switch
+              v-model="newFormInline.status"
+              :active-value="1"
+              :inactive-value="0"
+              :active-text="t('webvpnDomain.statusEnabled', '启用')"
+              :inactive-text="t('webvpnDomain.statusDisabled', '禁用')"
+            />
+          </el-form-item>
+        </re-col>
+
+        <!-- 9. 备注 -->
+        <re-col :value="24">
+          <el-form-item :label="t('webvpnDomain.remark', '备注')" prop="remark">
+            <el-input
+              v-model="newFormInline.remark"
+              type="textarea"
+              :rows="2"
+              :placeholder="
+                t(
+                  'webvpnDomain.remarkPlaceholder',
+                  '选填，关于该 WebVPN 网关基础域的说明'
+                )
+              "
+            />
+          </el-form-item>
+        </re-col>
       </el-row>
     </el-card>
 
@@ -251,28 +300,34 @@ defineExpose({ getRef, newFormInline });
       </template>
 
       <el-row :gutter="24">
-        <!-- 6. 认证中心地址 -->
+        <!-- 6. 关联认证配置 (SSO) -->
         <re-col :value="24">
           <el-form-item
-            :label="t('webvpnDomain.loginUrl', '认证中心地址')"
-            prop="login_url"
+            :label="t('webvpnDomain.authId', '关联认证配置')"
+            prop="auth_id"
           >
             <div class="flex flex-col w-full">
-              <el-input
-                v-model="newFormInline.login_url"
+              <el-select
+                v-model="newFormInline.auth_id"
+                filterable
                 clearable
+                class="w-full"
                 :placeholder="
-                  t(
-                    'webvpnDomain.loginUrlPlaceholder',
-                    '选填，如 https://auth.example.com'
-                  )
+                  t('webvpnDomain.authIdPlaceholder', '选择已配置的统一认证策略 (SSO)')
                 "
-              />
+              >
+                <el-option
+                  v-for="a in authOptions"
+                  :key="a.id"
+                  :label="a.name"
+                  :value="a.id"
+                />
+              </el-select>
               <p class="text-xs/relaxed text-gray-400 mt-2">
                 {{
                   t(
-                    "webvpnDomain.loginUrlHint",
-                    "用户未登录时跳转的认证登录页面；留空时自动关联系统内已配置的认证中心。"
+                    "webvpnDomain.authIdHint",
+                    "选用后，基座内的全部受保护站点将自动共享该认证配置的 LoginURL 与 Cookie 参数。"
                   )
                 }}
               </p>
@@ -316,39 +371,6 @@ defineExpose({ getRef, newFormInline });
           </el-form-item>
         </re-col>
 
-        <!-- 8. 启用 -->
-        <re-col :value="24">
-          <el-form-item
-            :label="t('webvpnDomain.status', '启用')"
-            prop="status"
-            :for="''"
-          >
-            <el-switch
-              v-model="newFormInline.status"
-              :active-value="1"
-              :inactive-value="0"
-              :active-text="t('webvpnDomain.statusEnabled', '启用')"
-              :inactive-text="t('webvpnDomain.statusDisabled', '禁用')"
-            />
-          </el-form-item>
-        </re-col>
-
-        <!-- 9. 备注 -->
-        <re-col :value="24">
-          <el-form-item :label="t('webvpnDomain.remark', '备注')" prop="remark">
-            <el-input
-              v-model="newFormInline.remark"
-              type="textarea"
-              :rows="2"
-              :placeholder="
-                t(
-                  'webvpnDomain.remarkPlaceholder',
-                  '选填，关于该 WebVPN 网关基础域的说明'
-                )
-              "
-            />
-          </el-form-item>
-        </re-col>
       </el-row>
     </el-card>
   </el-form>
