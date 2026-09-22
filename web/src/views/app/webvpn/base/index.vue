@@ -18,7 +18,7 @@ import Refresh from "~icons/ep/refresh";
 import Search from "~icons/ep/search";
 
 defineOptions({
-  name: "AppWebvpnDomain"
+  name: "AppWebvpnBase"
 });
 
 const { t } = useI18n();

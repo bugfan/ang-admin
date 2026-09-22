@@ -401,7 +401,7 @@ func AsyncRoutesHandler(c *gin.Context) {
 				},
 				"children": []gin.H{
 					{
-						"path":      "/webvpn/site",
+						"path":      "/webvpn/index",
 						"name":      "AppWebvpnSite",
 						"component": "app/webvpn/site/index",
 						"meta": gin.H{
@@ -411,9 +411,9 @@ func AsyncRoutesHandler(c *gin.Context) {
 						},
 					},
 					{
-						"path":      "/webvpn/domain",
-						"name":      "AppWebvpnDomain",
-						"component": "app/webvpn/domain/index",
+						"path":      "/webvpn/base",
+						"name":      "AppWebvpnBase",
+						"component": "app/webvpn/base/index",
 						"meta": gin.H{
 							"icon":  "ri:base-station-line",
 							"title": "menus.pureWebvpnDomain",

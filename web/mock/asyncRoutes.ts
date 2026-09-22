@@ -169,9 +169,9 @@ const webvpnRouter = {
   },
   children: [
     {
-      path: "/webvpn/domain",
-      name: "AppWebvpnDomain",
-      component: "app/webvpn/domain/index",
+      path: "/webvpn/base",
+      name: "AppWebvpnBase",
+      component: "app/webvpn/base/index",
       meta: {
         icon: "ri:base-station-line",
         title: "menus.pureWebvpnDomain",
@@ -179,7 +179,7 @@ const webvpnRouter = {
       }
     },
     {
-      path: "/webvpn/site",
+      path: "/webvpn/index",
       name: "AppWebvpnSite",
       component: "app/webvpn/site/index",
       meta: {

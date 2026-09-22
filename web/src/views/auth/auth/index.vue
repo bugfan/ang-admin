@@ -39,8 +39,7 @@ const {
   pagination,
   onSearch,
   resetForm,
-  handleDelete,
-  handleTestConnection
+  handleDelete
 } = useAuthMethod(t, tableRef);
 
 function getDefaultFormInline() {
@@ -188,17 +187,6 @@ async function handleSaveSubmit() {
             @page-current-change="onSearch"
           >
             <template #operation="{ row }">
-              <el-button
-                v-if="(row.Type || row.type) !== 'local'"
-                class="reset-margin"
-                link
-                type="primary"
-                :size="size"
-                :icon="useRenderIcon(ConnectionIcon)"
-                @click="handleTestConnection(row)"
-              >
-                {{ t("identity.testConnection", "测试") }}
-              </el-button>
               <el-button
                 class="reset-margin"
                 link

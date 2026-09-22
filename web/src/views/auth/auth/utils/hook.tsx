@@ -65,7 +65,10 @@ export function useAuthMethod(t: Function, tableRef: any) {
       label: t("common.operation", "操作"),
       align: "center",
       fixed: "right",
-      width: 140,
+      width: 160,
+      headerRenderer: () => (
+        <span class="whitespace-nowrap">{t("common.operation", "操作")}</span>
+      ),
       slot: "operation"
     }
   ];

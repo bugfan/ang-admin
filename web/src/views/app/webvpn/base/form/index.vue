@@ -300,10 +300,10 @@ defineExpose({ getRef, newFormInline });
       </template>
 
       <el-row :gutter="24">
-        <!-- 6. 关联认证配置 (SSO) -->
+        <!-- 6. 认证流 (SSO) -->
         <re-col :value="24">
           <el-form-item
-            :label="t('webvpnDomain.authId', '关联认证配置')"
+            :label="t('webvpnDomain.authId', '认证流')"
             prop="auth_id"
           >
             <div class="flex flex-col w-full">
