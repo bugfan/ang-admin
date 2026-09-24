@@ -416,7 +416,7 @@ func AsyncRoutesHandler(c *gin.Context) {
 						"component": "app/webvpn/base/index",
 						"meta": gin.H{
 							"icon":  "ri:base-station-line",
-							"title": "menus.pureWebvpnDomain",
+							"title": "menus.pureWebvpnBase",
 							"roles": []string{"admin", "common"},
 						},
 					},

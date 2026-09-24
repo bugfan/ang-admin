@@ -2,19 +2,19 @@ import { reactive, ref, onMounted } from "vue";
 import type { PaginationProps } from "@pureadmin/table";
 import { message } from "@/utils/message";
 import {
-  getWebvpnDomainList,
-  createWebvpnDomain,
-  updateWebvpnDomain,
-  deleteWebvpnDomain,
-  type WebvpnDomainItem
+  getWebvpnBaseList,
+  createWebvpnBase,
+  updateWebvpnBase,
+  deleteWebvpnBase,
+  type WebvpnBaseItem
 } from "@/api/webvpn";
 
-export function useWebvpnDomain(t: Function, tableRef: any) {
+export function useWebvpnBase(t: Function, tableRef: any) {
   const form = reactive({
     name: "",
     hostname: ""
   });
-  const dataList = ref<WebvpnDomainItem[]>([]);
+  const dataList = ref<WebvpnBaseItem[]>([]);
   const loading = ref(true);
 
   const pagination = reactive<PaginationProps>({
@@ -33,13 +33,13 @@ export function useWebvpnDomain(t: Function, tableRef: any) {
       formatter: row => row.Id || row.id
     },
     {
-      label: t("webvpnDomain.name", "名称"),
+      label: t("webvpnBase.name", "名称"),
       align: "center",
       prop: "Name",
       minWidth: 140,
       headerRenderer: () => (
         <span class="whitespace-nowrap">
-          {t("webvpnDomain.name", "名称")}
+          {t("webvpnBase.name", "名称")}
         </span>
       ),
       cellRenderer: scope => {
@@ -52,13 +52,13 @@ export function useWebvpnDomain(t: Function, tableRef: any) {
       }
     },
     {
-      label: t("webvpnDomain.hostname", "泛域名"),
+      label: t("webvpnBase.hostname", "泛域名"),
       align: "center",
       prop: "Hostname",
       minWidth: 180,
       headerRenderer: () => (
         <span class="whitespace-nowrap">
-          {t("webvpnDomain.hostname", "泛域名")}
+          {t("webvpnBase.hostname", "泛域名")}
         </span>
       ),
       cellRenderer: scope => {
@@ -76,22 +76,22 @@ export function useWebvpnDomain(t: Function, tableRef: any) {
       }
     },
     {
-      label: t("webvpnDomain.port", "端口"),
+      label: t("webvpnBase.port", "端口"),
       align: "center",
       prop: "Port",
       width: 85,
       headerRenderer: () => (
-        <span class="whitespace-nowrap">{t("webvpnDomain.port", "端口")}</span>
+        <span class="whitespace-nowrap">{t("webvpnBase.port", "端口")}</span>
       ),
       formatter: row => row.Port || row.port || "443"
     },
     {
-      label: t("webvpnDomain.protocol", "安全协议"),
+      label: t("webvpnBase.protocol", "安全协议"),
       align: "center",
       width: 130,
       headerRenderer: () => (
         <span class="whitespace-nowrap">
-          {t("webvpnDomain.protocol", "安全协议")}
+          {t("webvpnBase.protocol", "安全协议")}
         </span>
       ),
       cellRenderer: scope => {
@@ -113,13 +113,13 @@ export function useWebvpnDomain(t: Function, tableRef: any) {
       }
     },
     {
-      label: t("webvpnDomain.certificate", "SSL 证书"),
+      label: t("webvpnBase.certificate", "SSL 证书"),
       align: "center",
       prop: "Certificate",
       minWidth: 140,
       headerRenderer: () => (
         <span class="whitespace-nowrap">
-          {t("webvpnDomain.certificate", "SSL 证书")}
+          {t("webvpnBase.certificate", "SSL 证书")}
         </span>
       ),
       cellRenderer: scope => {
@@ -135,13 +135,13 @@ export function useWebvpnDomain(t: Function, tableRef: any) {
       }
     },
     {
-      label: t("webvpnDomain.fallback", "未命中策略"),
+      label: t("webvpnBase.fallback", "未命中策略"),
       align: "center",
       prop: "Fallback",
       width: 120,
       headerRenderer: () => (
         <span class="whitespace-nowrap">
-          {t("webvpnDomain.fallback", "未命中策略")}
+          {t("webvpnBase.fallback", "未命中策略")}
         </span>
       ),
       cellRenderer: scope => {
@@ -149,22 +149,22 @@ export function useWebvpnDomain(t: Function, tableRef: any) {
         const fb = row.Fallback || row.fallback;
         return fb === "login" ? (
           <el-tag size="small" type="warning">
-            {t("webvpnDomain.fallbackLoginShort", "重定向登录")}
+            {t("webvpnBase.fallbackLoginShort", "重定向登录")}
           </el-tag>
         ) : (
           <el-tag size="small" type="danger">
-            {t("webvpnDomain.fallback404Short", "404 阻断")}
+            {t("webvpnBase.fallback404Short", "404 阻断")}
           </el-tag>
         );
       }
     },
     {
-      label: t("webvpnDomain.siteCount", "站点数"),
+      label: t("webvpnBase.siteCount", "站点数"),
       align: "center",
       width: 90,
       headerRenderer: () => (
         <span class="whitespace-nowrap">
-          {t("webvpnDomain.siteCount", "站点数")}
+          {t("webvpnBase.siteCount", "站点数")}
         </span>
       ),
       cellRenderer: scope => {
@@ -177,13 +177,13 @@ export function useWebvpnDomain(t: Function, tableRef: any) {
       }
     },
     {
-      label: t("webvpnDomain.status", "状态"),
+      label: t("webvpnBase.status", "状态"),
       align: "center",
       prop: "Status",
       width: 90,
       headerRenderer: () => (
         <span class="whitespace-nowrap">
-          {t("webvpnDomain.status", "状态")}
+          {t("webvpnBase.status", "状态")}
         </span>
       ),
       cellRenderer: scope => {
@@ -201,13 +201,13 @@ export function useWebvpnDomain(t: Function, tableRef: any) {
       }
     },
     {
-      label: t("webvpnDomain.remark", "备注"),
+      label: t("webvpnBase.remark", "备注"),
       align: "center",
       prop: "Remark",
       minWidth: 120,
       headerRenderer: () => (
         <span class="whitespace-nowrap">
-          {t("webvpnDomain.remark", "备注")}
+          {t("webvpnBase.remark", "备注")}
         </span>
       ),
       formatter: row => row.Remark || row.remark || "-"
@@ -227,7 +227,7 @@ export function useWebvpnDomain(t: Function, tableRef: any) {
   async function onSearch() {
     loading.value = true;
     try {
-      const res = await getWebvpnDomainList({
+      const res = await getWebvpnBaseList({
         name: form.name,
         hostname: form.hostname
       });
@@ -248,7 +248,7 @@ export function useWebvpnDomain(t: Function, tableRef: any) {
   async function handleStatusChange(row: any, status: number) {
     const id = row.Id || row.id;
     try {
-      const res = await updateWebvpnDomain(id, { ...row, status });
+      const res = await updateWebvpnBase(id, { ...row, status });
       if (res.code === 0) {
         message(t("common.updateSuccess", "状态更新成功"), { type: "success" });
         onSearch();
@@ -267,9 +267,9 @@ export function useWebvpnDomain(t: Function, tableRef: any) {
   async function handleDelete(row: any) {
     const id = row.Id || row.id;
     try {
-      const res = await deleteWebvpnDomain(id);
+      const res = await deleteWebvpnBase(id);
       if (res.code === 0) {
-        message(t("webvpnDomain.delSuccess", "删除基础域成功"), {
+        message(t("webvpnBase.delSuccess", "删除基础域成功"), {
           type: "success"
         });
         onSearch();

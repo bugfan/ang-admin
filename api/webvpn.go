@@ -16,15 +16,15 @@ import (
 )
 
 func init() {
-	rest.Register(&models.WebvpnDomain{}, &webvpnDomainHandler{}, rest.RouteTypeALL, nil, "webvpn-domain")
+	rest.Register(&models.WebvpnBase{}, &webvpnBaseHandler{}, rest.RouteTypeALL, nil, "webvpn-base")
 	rest.Register(&models.WebvpnSite{}, &webvpnSiteHandler{}, rest.RouteTypeALL, nil, "webvpn-site")
 }
 
 // -------------------------------------------------------------
-// 1. WebVPN 服务 (WebvpnDomain) Handler
+// 1. WebVPN 服务 (WebvpnBase) Handler
 // -------------------------------------------------------------
 
-type webvpnDomainHandler struct {
+type webvpnBaseHandler struct {
 	Id          int64     `json:"id"`
 	Name        string    `json:"name"`
 	Hostname    string    `json:"hostname"`
@@ -40,7 +40,7 @@ type webvpnDomainHandler struct {
 	UpdatedAt   time.Time `json:"updated_at"`
 }
 
-func (h *webvpnDomainHandler) Before(g *gin.Context, x *xorm.Engine) bool {
+func (h *webvpnBaseHandler) Before(g *gin.Context, x *xorm.Engine) bool {
 	method := g.Request.Method
 	if method == http.MethodPost || method == http.MethodPut || method == http.MethodPatch {
 		h.Name = strings.TrimSpace(h.Name)
@@ -80,15 +80,15 @@ func (h *webvpnDomainHandler) Before(g *gin.Context, x *xorm.Engine) bool {
 	return true
 }
 
-func (h *webvpnDomainHandler) After(g *gin.Context, x *xorm.Engine, args ...interface{}) {
+func (h *webvpnBaseHandler) After(g *gin.Context, x *xorm.Engine, args ...interface{}) {
 	method := g.Request.Method
 	if method == http.MethodPost || method == http.MethodPut || method == http.MethodPatch || method == http.MethodDelete {
 		service.SyncHTTPToCluster()
 	}
 }
 
-func (h *webvpnDomainHandler) List(c *gin.Context) {
-	var list []models.WebvpnDomain
+func (h *webvpnBaseHandler) List(c *gin.Context) {
+	var list []models.WebvpnBase
 	session := models.GetEngine().NewSession()
 	defer session.Close()
 
@@ -109,18 +109,18 @@ func (h *webvpnDomainHandler) List(c *gin.Context) {
 	}
 
 	// 统计关联的站点数量
-	type WebvpnDomainVO struct {
-		models.WebvpnDomain
-		RootDomain string `json:"root_domain"`
+	type WebvpnBaseVO struct {
+		models.WebvpnBase
+		RootBase string `json:"root_base"`
 		SiteCount  int64  `json:"site_count"`
 	}
 
-	resList := make([]WebvpnDomainVO, len(list))
+	resList := make([]WebvpnBaseVO, len(list))
 	for i, dom := range list {
-		count, _ := models.GetEngine().Where("domain_id = ?", dom.Id).Count(new(models.WebvpnSite))
-		resList[i] = WebvpnDomainVO{
-			WebvpnDomain: dom,
-			RootDomain:   strings.TrimPrefix(dom.Hostname, "*."),
+		count, _ := models.GetEngine().Where("base_id = ?", dom.Id).Count(new(models.WebvpnSite))
+		resList[i] = WebvpnBaseVO{
+			WebvpnBase: dom,
+			RootBase:   strings.TrimPrefix(dom.Hostname, "*."),
 			SiteCount:    count,
 		}
 	}
@@ -139,7 +139,7 @@ func (h *webvpnDomainHandler) List(c *gin.Context) {
 type webvpnSiteHandler struct {
 	Id              int64     `json:"id"`
 	Name            string    `json:"name"`
-	DomainId        int64     `json:"domain_id"`
+	BaseId        int64     `json:"base_id"`
 	TargetURL       string    `json:"target_url"`
 	Prefix          string    `json:"prefix"`
 	Hosts           string    `json:"hosts"`
@@ -167,7 +167,7 @@ func (h *webvpnSiteHandler) Before(g *gin.Context, x *xorm.Engine) bool {
 			return false
 		}
 
-		if h.DomainId <= 0 && method == http.MethodPost {
+		if h.BaseId <= 0 && method == http.MethodPost {
 			g.AbortWithStatusJSON(http.StatusOK, gin.H{
 				"code":    1,
 				"message": "必须选择所属的基础域",
@@ -264,9 +264,9 @@ func (h *webvpnSiteHandler) List(c *gin.Context) {
 	if name := strings.TrimSpace(c.Query("name")); name != "" {
 		session.Where("name LIKE ?", "%"+name+"%")
 	}
-	if domainIdStr := strings.TrimSpace(c.Query("domain_id")); domainIdStr != "" {
+	if domainIdStr := strings.TrimSpace(c.Query("base_id")); domainIdStr != "" {
 		if sid, err := strconv.ParseInt(domainIdStr, 10, 64); err == nil && sid > 0 {
-			session.Where("domain_id = ?", sid)
+			session.Where("base_id = ?", sid)
 		}
 	}
 
@@ -279,18 +279,18 @@ func (h *webvpnSiteHandler) List(c *gin.Context) {
 		return
 	}
 
-	// 预加载 WebvpnDomain 映射
-	var domains []models.WebvpnDomain
+	// 预加载 WebvpnBase 映射
+	var domains []models.WebvpnBase
 	_ = models.GetEngine().Find(&domains)
-	domainMap := make(map[int64]models.WebvpnDomain)
+	domainMap := make(map[int64]models.WebvpnBase)
 	for _, s := range domains {
 		domainMap[s.Id] = s
 	}
 
 	type WebvpnSiteItemVO struct {
 		models.WebvpnSite
-		DomainName     string `json:"domain_name"`
-		DomainHostname string `json:"domain_hostname"`
+		BaseName     string `json:"base_name"`
+		BaseHostname string `json:"base_hostname"`
 		FullAccessURL  string `json:"full_access_url"`
 	}
 
@@ -298,10 +298,10 @@ func (h *webvpnSiteHandler) List(c *gin.Context) {
 	for i, item := range list {
 		vo := WebvpnSiteItemVO{WebvpnSite: item}
 
-		// 优先从 WebvpnDomain 关联
-		if dom, ok := domainMap[item.DomainId]; ok {
-			vo.DomainName = dom.Name
-			vo.DomainHostname = dom.Hostname
+		// 优先从 WebvpnBase 关联
+		if dom, ok := domainMap[item.BaseId]; ok {
+			vo.BaseName = dom.Name
+			vo.BaseHostname = dom.Hostname
 
 			rootDomain := strings.TrimPrefix(dom.Hostname, "*.")
 			scheme := "http://"

@@ -242,7 +242,7 @@ const rules: FormRules = {
       trigger: "blur"
     }
   ],
-  domain_id: [
+  base_id: [
     {
       required: true,
       validator: (rule, value, callback) => {
@@ -291,7 +291,7 @@ const rules: FormRules = {
 // Selected WebVPN Domain details
 const selectedDomain = computed(() => {
   const sid =
-    newFormInline.value.domain_id;
+    newFormInline.value.base_id;
   if (!sid || !props.domainList) return null;
   return props.domainList.find((s: any) => (s.Id || s.id) === sid);
 });
@@ -385,10 +385,10 @@ const derivedInfo = computed(() => {
         <re-col :value="12" :xs="24" :sm="12">
           <el-form-item
             :label="t('webvpn.domain', '基础域')"
-            prop="domain_id"
+            prop="base_id"
           >
             <el-select
-              v-model="newFormInline.domain_id"
+              v-model="newFormInline.base_id"
               :placeholder="
                 t('webvpn.domainPlaceholder', '选择已配置的 基础域')
               "

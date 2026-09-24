@@ -6,7 +6,7 @@ export interface ReplaceItem {
 export interface FormItemProps {
   id?: number;
   name: string;
-  domain_id?: number;
+  base_id?: number;
   target_url: string;
   prefix: string;
   hosts: string;

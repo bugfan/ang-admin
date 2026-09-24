@@ -1,4 +1,4 @@
-export interface DomainFormItemProps {
+export interface BaseFormItemProps {
   id?: number;
   name: string;
   hostname: string;
@@ -12,6 +12,6 @@ export interface DomainFormItemProps {
   remark: string;
 }
 
-export interface DomainFormProps {
-  formInline: DomainFormItemProps;
+export interface BaseFormProps {
+  formInline: BaseFormItemProps;
 }

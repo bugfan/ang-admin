@@ -117,7 +117,7 @@ menus:
   pureWeb: "Web"
   pureHttpProxy: "HTTP Sites"
   pureWebvpn: "WebVPN"
-  pureWebvpnDomain: "Base"
+  pureWebvpnBase: "Base"
   pureWebvpnSite: "Sites"
   pureTcp: "TCP"
   pureUdp: "UDP"
@@ -1397,7 +1397,7 @@ webvpn:
   valTargetUrlRequired: "Target upstream URL is required"
   valTargetUrlInvalid: "Must be a valid URL starting with http:// or https://"
 
-webvpnDomain:
+webvpnBase:
   title: "Base"
   domain: "Base"
   addTitle: "Add Base"

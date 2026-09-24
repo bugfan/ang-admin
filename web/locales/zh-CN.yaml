@@ -117,7 +117,7 @@ menus:
   pureWeb: "Web"
   pureHttpProxy: "HTTP 站点"
   pureWebvpn: "WebVPN"
-  pureWebvpnDomain: "基座"
+  pureWebvpnBase: "基座"
   pureWebvpnSite: "站点"
   pureTcp: "TCP"
   pureUdp: "UDP"
@@ -1399,7 +1399,7 @@ webvpn:
   valTargetUrlRequired: "目标真实地址不能为空"
   valTargetUrlInvalid: "必须是以 http:// 或 https:// 开头的合法完整 URL"
 
-webvpnDomain:
+webvpnBase:
   title: "基座"
   domain: "基座"
   addTitle: "添加基座"

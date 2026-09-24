@@ -174,7 +174,7 @@ const webvpnRouter = {
       component: "app/webvpn/base/index",
       meta: {
         icon: "ri:base-station-line",
-        title: "menus.pureWebvpnDomain",
+        title: "menus.pureWebvpnBase",
         roles: ["admin", "common"]
       }
     },

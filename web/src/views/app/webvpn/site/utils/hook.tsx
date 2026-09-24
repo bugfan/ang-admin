@@ -6,21 +6,21 @@ import {
   createWebvpn,
   updateWebvpn,
   deleteWebvpn,
-  getWebvpnDomainList,
+  getWebvpnBaseList,
   type WebvpnSiteItem,
-  type WebvpnDomainItem
+  type WebvpnBaseItem
 } from "@/api/webvpn";
 import { getUserGroupList, type UserGroupItem } from "@/api/user-group";
 
 export function useWebvpnSite(t: Function, tableRef: any) {
   const form = reactive({
     name: "",
-    domain_id: ""
+    base_id: ""
   });
   const dataList = ref<WebvpnSiteItem[]>([]);
   const groupList = ref<UserGroupItem[]>([]);
   const groupMap = ref<Record<number, string>>({});
-  const domainList = ref<WebvpnDomainItem[]>([]);
+  const domainList = ref<WebvpnBaseItem[]>([]);
   const loading = ref(true);
 
   const pagination = reactive<PaginationProps>({
@@ -45,7 +45,7 @@ export function useWebvpnSite(t: Function, tableRef: any) {
 
   async function fetchDomains() {
     try {
-      const res = await getWebvpnDomainList();
+      const res = await getWebvpnBaseList();
       domainList.value = res.data.list || [];
     } catch (e) {}
   }
@@ -141,8 +141,8 @@ export function useWebvpnSite(t: Function, tableRef: any) {
       ),
       cellRenderer: scope => {
         const row = scope.row;
-        const sName = row.domain_name || row.http_proxy_name || "-";
-        const sHost = row.domain_hostname || row.http_proxy_hostname || "";
+        const sName = row.base_name || row.http_proxy_name || "-";
+        const sHost = row.base_hostname || row.http_proxy_hostname || "";
         return (
           <div class="flex flex-col items-center">
             <span class="text-xs font-medium text-(--el-text-color-primary)">
@@ -272,7 +272,7 @@ export function useWebvpnSite(t: Function, tableRef: any) {
     try {
       const res = await getWebvpnList({
         name: form.name,
-        domain_id: form.domain_id
+        base_id: form.base_id
       });
       dataList.value = res.data.list;
       pagination.total = res.data.total;

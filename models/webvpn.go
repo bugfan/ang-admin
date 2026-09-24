@@ -2,7 +2,7 @@ package models
 
 import "time"
 
-type WebvpnDomain struct {
+type WebvpnBase struct {
 	Id          int64     `xorm:"pk autoincr 'id'" json:"id"`
 	Name        string    `xorm:"varchar(255) notnull 'name'" json:"name"`                                 // 服务名称，如 "校园主网关"
 	Hostname    string    `xorm:"varchar(255) notnull 'hostname'" json:"hostname"`                         // 泛域名，如 "*.webvpn.example.com"
@@ -18,11 +18,11 @@ type WebvpnDomain struct {
 	UpdatedAt   time.Time `xorm:"updated" json:"updated_at"`
 }
 
-func (WebvpnDomain) TableName() string {
-	return "webvpn_domain"
+func (WebvpnBase) TableName() string {
+	return "webvpn_base"
 }
 
-func (w *WebvpnDomain) BeforeInsert() {
+func (w *WebvpnBase) BeforeInsert() {
 	if w.CreatedAt.IsZero() {
 		w.CreatedAt = time.Now()
 	}
@@ -31,14 +31,14 @@ func (w *WebvpnDomain) BeforeInsert() {
 	}
 }
 
-func (w *WebvpnDomain) BeforeUpdate() {
+func (w *WebvpnBase) BeforeUpdate() {
 	w.UpdatedAt = time.Now()
 }
 
 type WebvpnSite struct {
 	Id              int64     `xorm:"pk autoincr 'id'" json:"id"`
 	Name            string    `xorm:"varchar(255) notnull 'name'" json:"name"`                                 // 资源应用名称，如 "中国知网"
-	DomainId       int64     `xorm:"index 'domain_id'" json:"domain_id"`                                    // 关联的 WebVPN 服务 ID
+	BaseId       int64     `xorm:"index 'base_id'" json:"base_id"`                                    // 关联的 WebVPN 服务 ID
 	TargetURL       string    `xorm:"varchar(512) notnull 'target_url'" json:"target_url"`                     // 目标真实地址，如 https://www.cnki.net
 	Prefix          string    `xorm:"varchar(128) notnull 'prefix'" json:"prefix"`                             // 子域名前缀，如 s-cnki 或 s-www-cnki-net-443
 	Hosts           string    `xorm:"text 'hosts'" json:"hosts"`                                               // 关联地址/代理域名列表 (每行一个域名)

@@ -2,10 +2,10 @@ import { http } from "@/utils/http";
 import { formatApiError } from "@/utils/apiError";
 
 // -------------------------------------------------------------
-// WebVPN 服务 (WebvpnDomain) Types & APIs
+// WebVPN 服务 (WebvpnBase) Types & APIs
 // -------------------------------------------------------------
 
-export type WebvpnDomainItem = {
+export type WebvpnBaseItem = {
   id?: number;
   name?: string;
   hostname?: string;
@@ -17,15 +17,15 @@ export type WebvpnDomainItem = {
   fallback?: string; // "404" | "login"
   status?: number; // 1: enabled, 0: disabled
   remark?: string;
-  root_domain?: string;
+  root_base?: string;
   site_count?: number;
   created_at?: string;
   updated_at?: string;
 };
 
-export const getWebvpnDomainList = async (params?: object) => {
+export const getWebvpnBaseList = async (params?: object) => {
   try {
-    const res = await http.request<any>("get", "/api/webvpn-domain", {
+    const res = await http.request<any>("get", "/api/webvpn-base", {
       params
     });
     const list = Array.isArray(res) ? res : res?.data || res?.list || [];
@@ -48,9 +48,9 @@ export const getWebvpnDomainList = async (params?: object) => {
   }
 };
 
-export const createWebvpnDomain = async (data?: object) => {
+export const createWebvpnBase = async (data?: object) => {
   try {
-    const res = await http.request<any>("post", "/api/webvpn-domain", { data });
+    const res = await http.request<any>("post", "/api/webvpn-base", { data });
     if (res && typeof res.code === "number" && res.code !== 0) return res;
     return { code: 0, message: "success", data: res };
   } catch (err: any) {
@@ -61,9 +61,9 @@ export const createWebvpnDomain = async (data?: object) => {
   }
 };
 
-export const updateWebvpnDomain = async (id: number, data?: object) => {
+export const updateWebvpnBase = async (id: number, data?: object) => {
   try {
-    const res = await http.request<any>("put", `/api/webvpn-domain/${id}`, {
+    const res = await http.request<any>("put", `/api/webvpn-base/${id}`, {
       data
     });
     if (res && typeof res.code === "number" && res.code !== 0) return res;
@@ -76,9 +76,9 @@ export const updateWebvpnDomain = async (id: number, data?: object) => {
   }
 };
 
-export const deleteWebvpnDomain = async (id: number) => {
+export const deleteWebvpnBase = async (id: number) => {
   try {
-    const res = await http.request<any>("delete", `/api/webvpn-domain/${id}`);
+    const res = await http.request<any>("delete", `/api/webvpn-base/${id}`);
     if (res && typeof res.code === "number" && res.code !== 0) return res;
     return { code: 0, message: "success", data: res };
   } catch (err: any) {
@@ -96,9 +96,9 @@ export const deleteWebvpnDomain = async (id: number) => {
 export type WebvpnSiteItem = {
   id?: number;
   name?: string;
-  domain_id?: number;
-  domain_name?: string;
-  domain_hostname?: string;
+  base_id?: number;
+  base_name?: string;
+  base_hostname?: string;
   http_proxy_name?: string;
   http_proxy_hostname?: string;
   target_url?: string;

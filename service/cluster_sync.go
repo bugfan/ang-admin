@@ -219,10 +219,10 @@ func buildHTTPMap(rulesMap map[string]models.Rule) map[string]entity.HTTPConfig 
 		return nil
 	}
 
-	var wildcardRootDomain string
+	var wildcardRootBase string
 	for _, p := range httpList {
 		if strings.HasPrefix(p.Hostname, "*.") {
-			wildcardRootDomain = strings.TrimPrefix(p.Hostname, "*.")
+			wildcardRootBase = strings.TrimPrefix(p.Hostname, "*.")
 			break
 		}
 	}
@@ -281,9 +281,9 @@ func buildHTTPMap(rulesMap map[string]models.Rule) map[string]entity.HTTPConfig 
 											}
 										}
 
-										if cd, _ := cfgMap["cookie_domain"].(string); cd == "" && wildcardRootDomain != "" {
-											if strings.HasSuffix(item.Hostname, wildcardRootDomain) {
-												cfgMap["cookie_domain"] = "." + wildcardRootDomain
+										if cd, _ := cfgMap["cookie_domain"].(string); cd == "" && wildcardRootBase != "" {
+											if strings.HasSuffix(item.Hostname, wildcardRootBase) {
+												cfgMap["cookie_domain"] = "." + wildcardRootBase
 											}
 										}
 									}
@@ -387,14 +387,14 @@ func buildHTTPMap(rulesMap map[string]models.Rule) map[string]entity.HTTPConfig 
 	}
 
 	// Build dedicated WebVPN Gateway domains
-	var webvpnDomains []models.WebvpnDomain
-	_ = engine.Where("status = 1").Find(&webvpnDomains)
-	for _, dom := range webvpnDomains {
+	var webvpnBases []models.WebvpnBase
+	_ = engine.Where("status = 1").Find(&webvpnBases)
+	for _, dom := range webvpnBases {
 		domKeyStr := "webvpn_" + strconv.FormatInt(dom.Id, 10)
 		rootDomain := strings.TrimPrefix(dom.Hostname, "*.")
 
 		var vpnSites []models.WebvpnSite
-		_ = engine.Where("domain_id = ?", dom.Id).Find(&vpnSites)
+		_ = engine.Where("base_id = ?", dom.Id).Find(&vpnSites)
 
 		vpnActionSites := make(map[string]interface{})
 		for _, vs := range vpnSites {

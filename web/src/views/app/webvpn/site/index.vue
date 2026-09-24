@@ -51,7 +51,7 @@ function getDefaultFormInline() {
     title: t("webvpn.addTitle", "添加 WebVPN 站点"),
     id: undefined,
     name: "",
-    domain_id: domainList.value[0]?.Id || domainList.value[0]?.id || undefined,
+    base_id: domainList.value[0]?.Id || domainList.value[0]?.id || undefined,
     target_url: "",
     hosts: "",
     replaceList: [],
@@ -87,9 +87,9 @@ function getFormInlineFromRow(row: any) {
     title: `${t("webvpn.editTitle", "编辑 WebVPN 站点")} (${row.Name || row.name})`,
     id: row?.Id || row?.id,
     name: row?.Name || row?.name || "",
-    domain_id:
-      row?.DomainId ||
-      row?.domain_id ||
+    base_id:
+      row?.BaseId ||
+      row?.base_id ||
       domainList.value[0]?.Id ||
       domainList.value[0]?.id,
     target_url: row?.TargetURL || row?.target_url || "",
@@ -145,7 +145,7 @@ async function handleSaveSubmit() {
 
         const payload = {
           name: formData.name,
-          domain_id: formData.domain_id,
+          base_id: formData.base_id,
           target_url: formData.target_url,
           hosts: formData.hosts,
           replace: JSON.stringify(replaceMap),
@@ -219,10 +219,10 @@ async function handleSaveSubmit() {
 
         <el-form-item
           :label="t('webvpn.domain', '基础域')"
-          prop="domain_id"
+          prop="base_id"
         >
           <el-select
-            v-model="form.domain_id"
+            v-model="form.base_id"
             :placeholder="t('webvpn.domainPlaceholder', '选择基础域')"
             clearable
             class="w-full sm:w-56!"
