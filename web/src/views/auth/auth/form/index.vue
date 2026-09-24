@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ref, onMounted } from "vue";
+import { ref, onMounted, computed } from "vue";
 import { deviceDetection } from "@pureadmin/utils";
 import ReCol from "@/components/ReCol";
 import { FormProps } from "../utils/types";
@@ -25,7 +25,7 @@ const props = withDefaults(defineProps<FormProps>(), {
 });
 
 const { t } = useI18n();
-const formRules = {
+const formRules = computed(() => ({
   name: [
     {
       required: true,
@@ -33,7 +33,7 @@ const formRules = {
       trigger: "blur"
     }
   ]
-};
+}));
 
 const ruleFormRef = ref();
 const newFormInline = ref(props.formInline);

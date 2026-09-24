@@ -1,4 +1,4 @@
-import { reactive, ref, onMounted } from "vue";
+import { reactive, ref, onMounted, computed } from "vue";
 import type { PaginationProps } from "@pureadmin/table";
 import { message } from "@/utils/message";
 import { getAuthList, deleteAuth, updateAuth } from "@/api/auth-config";
@@ -19,7 +19,7 @@ export function useAuthMethod(t: Function, tableRef: any) {
     background: true
   });
 
-  const columns: TableColumnList = [
+  const columns = computed<TableColumnList>(() => [
     {
       label: "ID",
       prop: "Id",
@@ -71,7 +71,7 @@ export function useAuthMethod(t: Function, tableRef: any) {
       ),
       slot: "operation"
     }
-  ];
+  ]);
 
   async function onSearch() {
     loading.value = true;

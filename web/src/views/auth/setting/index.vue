@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ref, onMounted } from "vue";
+import { ref, onMounted, computed } from "vue";
 import { useI18n } from "vue-i18n";
 import { message } from "@/utils/message";
 import { getAuthSetting, updateAuthSetting } from "@/api/auth-setting";
@@ -21,14 +21,14 @@ const form = ref({
 const loading = ref(false);
 const saving = ref(false);
 
-const rules = {
+const rules = computed(() => ({
   token_name: [
-    { required: true, message: "认证Cookie名称不能为空", trigger: "blur" }
+    { required: true, message: t("authSetting.nameRequired", "认证Cookie名称不能为空"), trigger: "blur" }
   ],
   token_expire: [
-    { required: true, message: "凭证过期时间不能为空", trigger: "blur" }
+    { required: true, message: t("authSetting.expireRequired", "凭证过期时间不能为空"), trigger: "blur" }
   ]
-};
+}));
 
 async function fetchData() {
   loading.value = true;
@@ -76,7 +76,7 @@ onMounted(() => {
         <div class="flex items-center space-x-2">
           <div class="w-1.5 h-4 bg-primary rounded-full" />
           <span class="font-bold text-(--el-text-color-primary) text-base">
-            设置
+            {{ t("authSetting.title", "设置") }}
           </span>
         </div>
       </template>
@@ -90,18 +90,18 @@ onMounted(() => {
           label-width="180px"
           class="w-full mt-4"
         >
-          <el-form-item label="认证Cookie名称" prop="token_name">
+          <el-form-item :label="t('authSetting.tokenName', '认证Cookie名称')" prop="token_name">
             <el-input
               v-model="form.token_name"
-              placeholder="默认：_angt"
+              :placeholder="t('authSetting.tokenNamePlaceholder', '默认：_angt')"
               clearable
             />
             <div class="w-full text-xs text-(--el-text-color-secondary) mt-1.5">
-              网关拦截并校验用户登录凭证时读取的 HTTP Cookie Key。如无冲突，建议保持默认。
+              {{ t("authSetting.tokenNameHint", "网关拦截并校验用户登录凭证时读取的 HTTP Cookie Key。如无冲突，建议保持默认。") }}
             </div>
           </el-form-item>
 
-          <el-form-item label="会话有效期 (秒)" prop="token_expire" class="mt-8">
+          <el-form-item :label="t('authSetting.tokenExpire', '会话有效期 (秒)')" prop="token_expire" class="mt-8">
             <el-input-number
               v-model="form.token_expire"
               :min="0"
@@ -110,7 +110,7 @@ onMounted(() => {
               controls-position="right"
             />
             <div class="w-full text-xs text-(--el-text-color-secondary) mt-1.5">
-              凭证的超期时间。默认 86400 秒 (24 小时)。过期后用户将被强制重新走一遍登录流水线。
+              {{ t("authSetting.tokenExpireHint", "凭证的超期时间。默认 86400 秒 (24 小时)。过期后用户将被强制重新走一遍登录流水线。") }}
             </div>
           </el-form-item>
 
