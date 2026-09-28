@@ -39,6 +39,7 @@ tunnel里配置一些js代码动态的根据token到认证源认证
     - token认证
 第三方的这种认证的用户是否倒入自己的系统内
 本地的用户token/本地账户存本地json还是其他的服务器，还是仅仅在admin如果在admin就得支持反向查询功能，因为admin有可能在内网
+ - 支持类似frp的这种可以根据tunnel client远程打代理的功能
 
 日志
 规则
@@ -51,3 +52,4 @@ tunnel里配置一些js代码动态的根据token到认证源认证
 webvpn里面的规则是直接封装到webvpn配置项里，跟http隔离开，尽量
 webvpn里选择的base泛域代理http,如果选中了该http站点，那么该站点应该是不需要配置原本http里面的上游部分了
 bug,http站点，通配的，似乎必须配置域名解析，否则报解析错误
+
