@@ -118,7 +118,7 @@ menus:
   pureDns: "DNS"
   pureRule: "规则"
   pureWeb: "Web"
-  pureHttpProxy: "HTTP 站点"
+  pureHttpProxy: "HTTP"
   pureWebvpn: "WebVPN"
   pureWebvpnBase: "基座"
   pureWebvpnSite: "站点"

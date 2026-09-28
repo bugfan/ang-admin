@@ -118,7 +118,7 @@ menus:
   pureDns: "DNS"
   pureRule: "Rule"
   pureWeb: "Web"
-  pureHttpProxy: "HTTP Sites"
+  pureHttpProxy: "HTTP"
   pureWebvpn: "WebVPN"
   pureWebvpnBase: "Base"
   pureWebvpnSite: "Sites"

@@ -1,4 +1,4 @@
-import { reactive, ref, onMounted } from "vue";
+import { reactive, ref, onMounted, computed } from "vue";
 import type { PaginationProps } from "@pureadmin/table";
 import { message } from "@/utils/message";
 import {
@@ -25,7 +25,7 @@ export function useAuthMethod(t: Function, tableRef: any) {
     background: true
   });
 
-  const columns: TableColumnList = [
+  const columns = computed<TableColumnList>(() => [
     {
       label: "ID",
       align: "center",
@@ -145,10 +145,10 @@ export function useAuthMethod(t: Function, tableRef: any) {
       label: t("identity.operation", "操作"),
       align: "center",
       fixed: "right",
-      width: 140,
+      width: 180,
       slot: "operation"
     }
-  ];
+  ]);
 
   async function onSearch() {
     loading.value = true;
