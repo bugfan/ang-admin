@@ -34,6 +34,8 @@ common:
   status: "状态"
   createTime: "创建时间"
   all: "全部"
+  open: "开启"
+  close: "关闭"
 
 buttons:
   pureAdd: 添加
@@ -1345,6 +1347,16 @@ identity:
   resetPassword: "重置密码"
   resetPasswordTitle: "重置用户 [{username}] 的密码"
   deleteUserConfirm: "确认删除用户 [{name}] 吗？此操作不可恢复！"
+  thirdPartyBindings: "第三方身份绑定 (多源认证体系)"
+  radiusAccount: "绑定 RADIUS 账号"
+  radiusAccountPlaceholder: "请输入绑定的 RADIUS 账号/用户ID"
+  casAccount: "绑定 CAS 账号"
+  casAccountPlaceholder: "请输入绑定的 CAS 学号/工号/账号"
+  oauthOpenid: "绑定 OAuth/OIDC OpenID"
+  oauthOpenidPlaceholder: "请输入绑定的 OAuth/OIDC 唯一标识 (OpenID/Sub)"
+  boundAccounts: "身份绑定"
+  searchUserPlaceholder: "搜索用户名/姓名/手机"
+  allStatus: "全部状态"
 
 webvpn:
   title: "WebVPN"
@@ -1461,11 +1473,19 @@ webvpnBase:
 
 
 authSetting:
-  title: "设置"
+  title: "认证高级设置"
   tokenName: "认证Cookie名称"
   tokenNamePlaceholder: "默认：_angt"
   tokenNameHint: "网关拦截并校验用户登录凭证时读取的 HTTP Cookie Key。如无冲突，建议保持默认。"
+  cookieDomain: "Cookie共享域名 (Domain)"
+  cookieDomainPlaceholder: "例如：.example.com 或留空"
+  cookieDomainHint: "认证成功后下发 Cookie 的 domain 属性。若设置为根域名（如 .example.com），同一根域名下的所有子域名业务站点均能直接共享此认证凭据，实现自然免跳转单点登录。留空则仅在当前认证中心域名生效。"
   tokenExpire: "会话有效期 (秒)"
   tokenExpireHint: "凭证的超期时间。默认 86400 秒 (24 小时)。过期后用户将被强制重新走一遍登录流水线。"
+  enableTicket: "跨顶级域票据传递"
+  enableTicketHint: "仅当业务系统与认证中心处于不同的顶级域名（跨根域无法共享 Cookie Domain）时才需要开启。开启后，跳转到目标站点时将在 URL Query 中携带一次性票据。"
+  ticketParamName: "SSO重定向参数名称"
+  ticketParamPlaceholder: "留空则与认证Cookie名称一致 (默认：_angt)"
+  ticketParamHint: "跨顶级域名跳转时在 URL Query 携带的临时票据参数名。留空则自动使用上述 Cookie 名称（默认 _angt）。"
   nameRequired: "认证Cookie名称不能为空"
   expireRequired: "凭证过期时间不能为空"

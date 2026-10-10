@@ -110,11 +110,11 @@ onMounted(() => {
           <el-form-item :label="t('authSetting.cookieDomain', 'Cookie共享域名 (Domain)')" prop="cookie_domain" class="mt-8">
             <el-input
               v-model="form.cookie_domain"
-              :placeholder="t('authSetting.cookieDomainPlaceholder', '例如：.local.i443.cn 或留空')"
+              :placeholder="t('authSetting.cookieDomainPlaceholder', '例如：.example.com 或留空')"
               clearable
             />
             <div class="w-full text-xs text-(--el-text-color-secondary) mt-1.5">
-              {{ t("authSetting.cookieDomainHint", "认证成功后下发 Cookie 的 domain 属性。若设置为根域名（如 .local.i443.cn），同一根域名下的所有子域名业务站点均能直接共享此认证凭据，实现自然免跳转单点登录。留空则仅在当前认证中心域名生效。") }}
+              {{ t("authSetting.cookieDomainHint", "认证成功后下发 Cookie 的 domain 属性。若设置为根域名（如 .example.com），同一根域名下的所有子域名业务站点均能直接共享此认证凭据，实现自然免跳转单点登录。留空则仅在当前认证中心域名生效。") }}
             </div>
           </el-form-item>
 

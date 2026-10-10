@@ -163,6 +163,9 @@ async function handleSaveSubmit() {
           group_ids: JSON.stringify(formInline.value.group_ids || []),
           status: formInline.value.status,
           expire_at: formInline.value.expire_at,
+          radius_username: formInline.value.radius_username,
+          cas_username: formInline.value.cas_username,
+          oauth_openid: formInline.value.oauth_openid,
           remark: formInline.value.remark
         };
         if (formInline.value.password) {
@@ -213,7 +216,7 @@ async function handleSaveSubmit() {
         >
           <el-input
             v-model="form.query"
-            placeholder="搜索用户名/姓名/手机"
+            :placeholder="t('identity.searchUserPlaceholder', '搜索用户名/姓名/手机')"
             clearable
             class="w-50!"
             @keyup.enter="onSearch"
@@ -223,12 +226,12 @@ async function handleSaveSubmit() {
           <el-select
             v-model="form.status"
             clearable
-            placeholder="全部状态"
+            :placeholder="t('identity.allStatus', '全部状态')"
             class="w-32.5!"
             @change="onSearch"
           >
-            <el-option label="启用" value="1" />
-            <el-option label="禁用" value="0" />
+            <el-option :label="t('identity.statusActive', '启用')" value="1" />
+            <el-option :label="t('identity.statusDisabled', '禁用')" value="0" />
           </el-select>
         </el-form-item>
         <el-form-item>

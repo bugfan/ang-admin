@@ -34,6 +34,8 @@ common:
   status: "Status"
   createTime: "Create Time"
   all: "All"
+  open: "Enable"
+  close: "Disable"
 
 buttons:
   pureAdd: Add
@@ -1344,6 +1346,16 @@ identity:
   resetPassword: "Reset Password"
   resetPasswordTitle: "Reset password for [{username}]"
   deleteUserConfirm: "Are you sure you want to delete user [{name}]? This action cannot be undone!"
+  thirdPartyBindings: "Third-Party Identity Bindings (Multi-Source Auth)"
+  radiusAccount: "Bound RADIUS Account"
+  radiusAccountPlaceholder: "Enter bound RADIUS username or user ID"
+  casAccount: "Bound CAS Account"
+  casAccountPlaceholder: "Enter bound CAS student ID, employee ID or username"
+  oauthOpenid: "Bound OAuth/OIDC OpenID"
+  oauthOpenidPlaceholder: "Enter bound OAuth/OIDC unique identifier (OpenID/Sub)"
+  boundAccounts: "Identity Bindings"
+  searchUserPlaceholder: "Search username / name / mobile"
+  allStatus: "All Status"
 
 webvpn:
   title: "WebVPN"
@@ -1455,11 +1467,19 @@ webvpnBase:
   remarkPlaceholder: "Optional, notes about this WebVPN gateway base domain"
 
 authSetting:
-  title: "Settings"
+  title: "Authentication Settings"
   tokenName: "Auth Cookie Name"
   tokenNamePlaceholder: "Default: _angt"
   tokenNameHint: "HTTP Cookie key read by the gateway to verify user credentials. Keep default unless conflicting."
+  cookieDomain: "Cookie Shared Domain"
+  cookieDomainPlaceholder: "e.g., .example.com or leave empty"
+  cookieDomainHint: "The domain attribute when setting Cookie after authentication. If set to a root domain (e.g. .example.com), all subdomain sites under this root domain will share the auth credential directly for seamless SSO without URL redirections. Leave empty to apply only to the current portal host."
   tokenExpire: "Session Validity (Sec)"
-  tokenExpireHint: "Credential expiration time. Default is 86400s (24 hours). Expired users must complete the MFA pipeline again."
+  tokenExpireHint: "Credential expiration duration. Default is 86400s (24 hours). Expired users must complete the MFA authentication pipeline again."
+  enableTicket: "Cross-Root-Domain Ticket SSO"
+  enableTicketHint: "Enable only when target business sites and auth portal reside in different top-level domains (cannot share Cookie Domain). When enabled, a one-time ticket is carried in the URL Query upon redirection."
+  ticketParamName: "SSO Redirect Param Name"
+  ticketParamPlaceholder: "Leave empty to match Auth Cookie Name (default: _angt)"
+  ticketParamHint: "Temporary ticket query parameter name carried in the redirect URL when crossing root domains. Leave empty to automatically use the Cookie Name above (default: _angt)."
   nameRequired: "Auth Cookie Name is required"
   expireRequired: "Session Validity is required"
