@@ -16,6 +16,9 @@ const props = withDefaults(defineProps<FormProps>(), {
     group_ids: [],
     status: 1,
     expire_at: "",
+    radius_username: "",
+    cas_username: "",
+    oauth_openid: "",
     remark: ""
   })
 });
@@ -216,6 +219,54 @@ defineExpose({ getRef });
               type="textarea"
               :rows="2"
               :placeholder="t('identity.remarkPlaceholder', '请输入备注信息')"
+            />
+          </el-form-item>
+        </re-col>
+      </el-row>
+    </el-card>
+
+    <el-card
+      shadow="never"
+      class="border-(--el-border-color-lighter)! rounded-xl"
+    >
+      <template #header>
+        <div class="flex items-center space-x-2">
+          <div class="w-1.5 h-4 bg-indigo-500 rounded-full" />
+          <span
+            class="font-bold text-(--el-text-color-primary) text-sm sm:text-base"
+          >
+            {{ t("identity.thirdPartyBindings", "第三方身份绑定 (多源认证体系)") }}
+          </span>
+        </div>
+      </template>
+
+      <el-row :gutter="16">
+        <re-col :value="12" :xs="24">
+          <el-form-item :label="t('identity.radiusAccount', '绑定 RADIUS 账号')">
+            <el-input
+              v-model="newFormInline.radius_username"
+              :placeholder="t('identity.radiusAccountPlaceholder', '请输入绑定的 RADIUS 账号/用户ID')"
+              clearable
+            />
+          </el-form-item>
+        </re-col>
+
+        <re-col :value="12" :xs="24">
+          <el-form-item :label="t('identity.casAccount', '绑定 CAS 账号')">
+            <el-input
+              v-model="newFormInline.cas_username"
+              :placeholder="t('identity.casAccountPlaceholder', '请输入绑定的 CAS 学号/工号/账号')"
+              clearable
+            />
+          </el-form-item>
+        </re-col>
+
+        <re-col :value="24" :xs="24">
+          <el-form-item :label="t('identity.oauthOpenid', '绑定 OAuth/OIDC OpenID')">
+            <el-input
+              v-model="newFormInline.oauth_openid"
+              :placeholder="t('identity.oauthOpenidPlaceholder', '请输入绑定的 OAuth/OIDC 唯一标识 (OpenID/Sub)')"
+              clearable
             />
           </el-form-item>
         </re-col>

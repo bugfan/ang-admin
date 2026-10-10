@@ -10,6 +10,10 @@ export interface FormItemProps {
   group_ids: number[];
   status: number;
   expire_at: string;
+  radius_username?: string;
+  cas_username?: string;
+  oauth_openid?: string;
+  identities?: string;
   remark: string;
 }
 

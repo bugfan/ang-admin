@@ -229,8 +229,12 @@ type UserConfig struct {
 	SourceType string  `json:"source_type"` // local, cas, radius
 	SourceId   int64   `json:"source_id,omitempty"`
 	GroupIds   []int64 `json:"group_ids"`
-	Status     int     `json:"status"` // 1: active, 0: disabled
-	ExpireAt   string  `json:"expire_at,omitempty"`
+	Status         int               `json:"status"` // 1: active, 0: disabled
+	ExpireAt       string            `json:"expire_at,omitempty"`
+	RadiusUsername string            `json:"radius_username,omitempty"`
+	CasUsername    string            `json:"cas_username,omitempty"`
+	OAuthOpenID    string            `json:"oauth_openid,omitempty"`
+	Identities     map[string]string `json:"identities,omitempty"`
 }
 
 // UserFileConfig represents user.json content (keyed by username)

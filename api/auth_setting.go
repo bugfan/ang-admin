@@ -15,11 +15,14 @@ func init() {
 }
 
 type authSettingHandler struct {
-	Id          int64     `json:"id"`
-	TokenName   string    `json:"token_name"`
-	TokenExpire int       `json:"token_expire"`
-	CreatedAt   time.Time `json:"created_at"`
-	UpdatedAt   time.Time `json:"updated_at"`
+	Id              int64     `json:"id"`
+	TokenName       string    `json:"token_name"`
+	TokenExpire     int       `json:"token_expire"`
+	CookieDomain    string    `json:"cookie_domain"`
+	EnableTicket    bool      `json:"enable_ticket"`
+	TicketParamName string    `json:"ticket_param_name"`
+	CreatedAt       time.Time `json:"created_at"`
+	UpdatedAt       time.Time `json:"updated_at"`
 }
 
 func (h *authSettingHandler) Before(g *gin.Context, x *xorm.Engine) bool {

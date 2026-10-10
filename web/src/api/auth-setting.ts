@@ -4,6 +4,9 @@ export interface AuthSettingItem {
   id?: number;
   token_name?: string;
   token_expire?: number;
+  cookie_domain?: string;
+  enable_ticket?: boolean;
+  ticket_param_name?: string;
   created_at?: string;
   updated_at?: string;
 }

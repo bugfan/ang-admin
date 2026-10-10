@@ -118,6 +118,10 @@ export type UserItem = {
   group_ids?: string; // JSON array string e.g. [1, 2]
   status?: number; // 1: 启用, 0: 禁用
   expire_at?: string;
+  radius_username?: string;
+  cas_username?: string;
+  oauth_openid?: string;
+  identities?: string;
   remark?: string;
   created_at?: string;
   updated_at?: string;

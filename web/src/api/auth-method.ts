@@ -95,3 +95,23 @@ export const testAuthMethodConnection = async (data: {
     };
   }
 };
+
+export const authenticateWithMethod = async (data: {
+  method_id?: number;
+  type?: string;
+  config_json?: string;
+  username: string;
+  password: string;
+}) => {
+  try {
+    const res = await http.request<any>("post", "/api/auth-method/authenticate", {
+      data
+    });
+    return res;
+  } catch (err: any) {
+    return {
+      code: 1,
+      message: formatApiError(err, "authMethod", "认证请求失败")
+    };
+  }
+};

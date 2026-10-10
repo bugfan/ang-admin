@@ -59,6 +59,9 @@ function getDefaultFormInline() {
     group_ids: [],
     status: 1,
     expire_at: "",
+    radius_username: "",
+    cas_username: "",
+    oauth_openid: "",
     remark: ""
   };
 }
@@ -81,6 +84,9 @@ function getFormInlineFromRow(row: any) {
     group_ids: Array.isArray(gIds) ? gIds : [],
     status: row?.Status ?? row?.status ?? 1,
     expire_at: row?.ExpireAt ?? row?.expire_at ?? "",
+    radius_username: row?.RadiusUsername ?? row?.radius_username ?? "",
+    cas_username: row?.CasUsername ?? row?.cas_username ?? "",
+    oauth_openid: row?.OAuthOpenID ?? row?.oauth_openid ?? "",
     remark: row?.Remark ?? row?.remark ?? ""
   };
 }

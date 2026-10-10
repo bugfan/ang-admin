@@ -50,6 +50,18 @@ func InitDB(dsn string) {
 		})
 	}
 
+	// Ensure default AuthSetting exists
+	if count, err := engine.Count(new(AuthSetting)); err == nil && count == 0 {
+		_, _ = engine.Insert(&AuthSetting{
+			Id:              1,
+			TokenName:       "_angt",
+			TokenExpire:     86400,
+			CookieDomain:    "",
+			EnableTicket:    false,
+			TicketParamName: "",
+		})
+	}
+
 	// Initialize default admin user
 	admin := &AdminUser{Username: "admin"}
 	has, err := engine.Get(admin)

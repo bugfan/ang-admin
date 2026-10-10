@@ -1,0 +1,13 @@
+services:
+  freeradius:
+    image: freeradius/freeradius-server:latest
+    container_name: ang-freeradius-test
+    ports:
+      - "1812:1812/udp"   # RADIUS 认证端口
+      - "1813:1813/udp"   # RADIUS 计费端口
+    volumes:
+      - ./config/clients.conf:/etc/freeradius/clients.conf:ro
+      - ./config/users:/etc/freeradius/mods-config/files/authorize:ro
+    command: freeradius -X
+    restart: unless-stopped
+    platform: linux/amd64   # Mac arm64 通过 Rosetta 运行

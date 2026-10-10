@@ -1,0 +1,9 @@
+services:
+  cas-server:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: ang-cas-test
+    ports:
+      - "8082:8082"       # CAS HTTP 服务端口
+    restart: unless-stopped

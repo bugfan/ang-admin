@@ -1,0 +1,26 @@
+#
+# FreeRADIUS users file (authorize file)
+# 格式: username  Cleartext-Password := "password"
+#       [可选的 Reply 属性]
+#
+# 此文件用于测试环境，生产环境应对接 SQL/LDAP 后端
+#
+
+# 测试用户1: 正常用户
+testuser    Cleartext-Password := "testpass"
+            Reply-Message = "Welcome, testuser!",
+            Session-Timeout = 3600
+
+# 测试用户2: 管理员用户
+admin       Cleartext-Password := "admin123"
+            Reply-Message = "Welcome, Administrator!"
+
+# 测试用户3: 普通员工
+alice       Cleartext-Password := "alice@2024"
+            Reply-Message = "Hello Alice!"
+
+bob         Cleartext-Password := "bob@2024"
+            Reply-Message = "Hello Bob!"
+
+# 连通性探针账号（会被 ang-admin 的 test 接口用于探测，总是返回 Reject 是正常的）
+# __ang_connectivity_probe__ 不在此文件中，FreeRADIUS 会直接 Reject，这就是我们需要的行为

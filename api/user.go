@@ -30,11 +30,15 @@ type userHandler struct {
 	SourceType string    `json:"source_type"`
 	SourceId   int64     `json:"source_id"`
 	GroupIds   string    `json:"group_ids"`
-	Status     int       `json:"status"`
-	ExpireAt   string    `json:"expire_at"`
-	Remark     string    `json:"remark"`
-	CreatedAt  time.Time `json:"created_at"`
-	UpdatedAt  time.Time `json:"updated_at"`
+	Status         int       `json:"status"`
+	ExpireAt       string    `json:"expire_at"`
+	RadiusUsername string    `json:"radius_username"`
+	CasUsername    string    `json:"cas_username"`
+	OAuthOpenID    string    `json:"oauth_openid"`
+	Identities     string    `json:"identities"`
+	Remark         string    `json:"remark"`
+	CreatedAt      time.Time `json:"created_at"`
+	UpdatedAt      time.Time `json:"updated_at"`
 }
 
 func (h *userHandler) Before(g *gin.Context, x *xorm.Engine) bool {

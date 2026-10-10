@@ -227,6 +227,9 @@ func buildHTTPMap(rulesMap map[string]models.Rule) map[string]entity.HTTPConfig 
 		}
 	}
 
+	var globalAuthSetting models.AuthSetting
+	_, _ = engine.ID(1).Get(&globalAuthSetting)
+
 	httpMap := make(map[string]entity.HTTPConfig)
 	for _, item := range httpList {
 		keyStr := strconv.FormatInt(item.Id, 10)
@@ -251,6 +254,15 @@ func buildHTTPMap(rulesMap map[string]models.Rule) map[string]entity.HTTPConfig 
 							for i := range items {
 								if items[i].Action.Name == "auth_portal_action" {
 									if cfgMap, ok := items[i].Action.Config.(map[string]interface{}); ok {
+										if globalAuthSetting.TokenName != "" {
+											cfgMap["token_name"] = globalAuthSetting.TokenName
+										}
+										if globalAuthSetting.TokenExpire > 0 {
+											cfgMap["token_expire"] = globalAuthSetting.TokenExpire
+										}
+										cfgMap["enable_ticket"] = globalAuthSetting.EnableTicket
+										cfgMap["ticket_param"] = globalAuthSetting.GetTicketParamName()
+
 										var authConfig models.Auth
 										hasAuth, errAuth := engine.Where("portal_url LIKE ?", "%"+item.Hostname+"%").Get(&authConfig)
 										if errAuth == nil && hasAuth {
@@ -281,11 +293,23 @@ func buildHTTPMap(rulesMap map[string]models.Rule) map[string]entity.HTTPConfig 
 											}
 										}
 
-										if cd, _ := cfgMap["cookie_domain"].(string); cd == "" && wildcardRootBase != "" {
+										cookieDomain := strings.TrimSpace(globalAuthSetting.CookieDomain)
+										if cookieDomain == "" && wildcardRootBase != "" {
 											if strings.HasSuffix(item.Hostname, wildcardRootBase) {
-												cfgMap["cookie_domain"] = "." + wildcardRootBase
+												cookieDomain = "." + wildcardRootBase
 											}
 										}
+										if cookieDomain != "" {
+											cfgMap["cookie_domain"] = cookieDomain
+										}
+									}
+								} else if items[i].Action.Name == "auth_guard_action" {
+									if cfgMap, ok := items[i].Action.Config.(map[string]interface{}); ok {
+										if globalAuthSetting.TokenName != "" {
+											cfgMap["token_name"] = globalAuthSetting.TokenName
+										}
+										cfgMap["enable_ticket"] = globalAuthSetting.EnableTicket
+										cfgMap["ticket_param"] = globalAuthSetting.GetTicketParamName()
 									}
 								}
 							}
@@ -810,18 +834,39 @@ func BuildFullUserConfig() entity.UserFileConfig {
 		if gids == nil {
 			gids = []int64{}
 		}
+		var identities map[string]string
+		if u.Identities != "" && u.Identities != "{}" {
+			_ = json.Unmarshal([]byte(u.Identities), &identities)
+		}
+		if identities == nil {
+			identities = make(map[string]string)
+		}
+		if rAcc := u.GetRadiusAccount(); rAcc != "" {
+			identities["radius"] = rAcc
+		}
+		if cAcc := u.GetCasAccount(); cAcc != "" {
+			identities["cas"] = cAcc
+		}
+		if oAcc := u.GetOAuthAccount(); oAcc != "" {
+			identities["oauth"] = oAcc
+		}
+
 		res[u.Username] = entity.UserConfig{
-			Id:         u.Id,
-			Username:   u.Username,
-			Password:   u.Password,
-			FullName:   u.FullName,
-			Email:      u.Email,
-			Mobile:     u.Mobile,
-			SourceType: u.SourceType,
-			SourceId:   u.SourceId,
-			GroupIds:   gids,
-			Status:     u.Status,
-			ExpireAt:   u.ExpireAt,
+			Id:             u.Id,
+			Username:       u.Username,
+			Password:       u.Password,
+			FullName:       u.FullName,
+			Email:          u.Email,
+			Mobile:         u.Mobile,
+			SourceType:     u.SourceType,
+			SourceId:       u.SourceId,
+			GroupIds:       gids,
+			Status:         u.Status,
+			ExpireAt:       u.ExpireAt,
+			RadiusUsername: u.GetRadiusAccount(),
+			CasUsername:    u.GetCasAccount(),
+			OAuthOpenID:    u.GetOAuthAccount(),
+			Identities:     identities,
 		}
 	}
 	return res

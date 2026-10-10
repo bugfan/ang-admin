@@ -65,6 +65,39 @@ export function useUser(t: Function, tableRef: any) {
       formatter: row => row.FullName || row.full_name || "-"
     },
     {
+      label: t("identity.boundAccounts", "身份绑定"),
+      align: "center",
+      minWidth: 140,
+      cellRenderer: scope => {
+        const row = scope.row;
+        const rad = row.RadiusUsername || row.radius_username;
+        const cas = row.CasUsername || row.cas_username;
+        const oauth = row.OAuthOpenID || row.oauth_openid;
+        if (!rad && !cas && !oauth) {
+          return <span class="text-gray-400 text-xs">-</span>;
+        }
+        return (
+          <div class="flex flex-col items-center gap-1">
+            {rad && (
+              <el-tag size="small" type="primary" effect="plain">
+                RADIUS: {rad}
+              </el-tag>
+            )}
+            {cas && (
+              <el-tag size="small" type="success" effect="plain">
+                CAS: {cas}
+              </el-tag>
+            )}
+            {oauth && (
+              <el-tag size="small" type="warning" effect="plain">
+                OAuth: {oauth}
+              </el-tag>
+            )}
+          </div>
+        );
+      }
+    },
+    {
       label: t("identity.belongGroups", "所属用户组"),
       align: "center",
       prop: "GroupIds",
