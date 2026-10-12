@@ -5,7 +5,9 @@ import PageHeader from "@/components/PageHeader/index.vue";
 import { PureTableBar } from "@/components/RePureTableBar";
 import { useRenderIcon } from "@/components/ReIcon/src/hooks";
 import { message } from "@/utils/message";
+import type { PaginationProps } from "@pureadmin/table";
 import { deviceDetection } from "@pureadmin/utils";
+import dayjs from "dayjs";
 import editForm from "./form/index.vue";
 
 import {
@@ -35,10 +37,30 @@ defineOptions({
 
 const { t } = useI18n();
 
+const tableRef = ref();
 const loading = ref(false);
 const dataList = ref<ClusterNodeItem[]>([]);
 const selectedNum = ref(0);
 const selectedRows = ref<ClusterNodeItem[]>([]);
+
+// Pagination configuration matching standard views
+const pagination = reactive<PaginationProps>({
+  total: 0,
+  pageSize: 10,
+  currentPage: 1,
+  background: true,
+  size: deviceDetection() ? "small" : "default",
+  layout: deviceDetection()
+    ? "prev, pager, next"
+    : "total, sizes, prev, pager, next, jumper"
+});
+
+// Client-side sliced data for the current page
+const pagedDataList = computed(() => {
+  const start = (pagination.currentPage - 1) * pagination.pageSize;
+  const end = start + pagination.pageSize;
+  return dataList.value.slice(start, end);
+});
 
 // View Mode: 'list' | 'new' | 'edit'
 const showView = ref<"list" | "new" | "edit">("list");
@@ -54,7 +76,7 @@ const searchForm = reactive({
 
 // Table Columns
 const columns = computed(() => [
-  { type: "selection", width: 55 },
+  { type: "selection", width: 55, fixed: "left", reserveSelection: true },
   { label: "ID", prop: "id", width: 80, align: "center" },
   {
     label: t("cluster.nodeName", "节点名称"),
@@ -82,7 +104,7 @@ const columns = computed(() => [
   },
   { label: t("cluster.remark", "备注"), prop: "remark", minWidth: 140 },
   {
-    label: t("rule.operation", "操作"),
+    label: t("common.operation", "操作"),
     slot: "operation",
     fixed: "right",
     minWidth: 300
@@ -92,7 +114,8 @@ const columns = computed(() => [
 function formatTime(val?: string) {
   if (!val) return "-";
   try {
-    return new Date(val).toLocaleString();
+    const d = dayjs(val);
+    return d.isValid() && d.year() > 1 ? d.format("YYYY-MM-DD HH:mm:ss") : "-";
   } catch (e) {
     return val;
   }
@@ -104,6 +127,11 @@ async function fetchData() {
     const res = await getClusterNodeList({ name: searchForm.name });
     if (res.code === 0 && res.data) {
       dataList.value = res.data.list || [];
+      pagination.total = dataList.value.length;
+      const maxPage = Math.max(1, Math.ceil(pagination.total / pagination.pageSize));
+      if (pagination.currentPage > maxPage) {
+        pagination.currentPage = maxPage;
+      }
     } else {
       message(res.message || t("cluster.pingError", "获取节点列表失败"), {
         type: "error"
@@ -115,18 +143,38 @@ async function fetchData() {
 }
 
 function onSearch() {
+  pagination.currentPage = 1;
   fetchData();
 }
 
 function resetSearchForm(formEl: any) {
   if (!formEl) return;
   formEl.resetFields();
+  searchForm.name = "";
+  pagination.currentPage = 1;
   fetchData();
+}
+
+function handleSizeChange(val: number) {
+  pagination.pageSize = val;
+  pagination.currentPage = 1;
+}
+
+function handleCurrentChange(val: number) {
+  pagination.currentPage = val;
 }
 
 function handleSelectionChange(rows: ClusterNodeItem[]) {
   selectedRows.value = rows;
   selectedNum.value = rows.length;
+}
+
+function onSelectionCancel() {
+  selectedNum.value = 0;
+  selectedRows.value = [];
+  if (tableRef.value?.getTableRef) {
+    tableRef.value.getTableRef().clearSelection();
+  }
 }
 
 function getDefaultFormInline() {
@@ -303,10 +351,10 @@ onMounted(() => {
         ref="searchFormRef"
         :inline="true"
         :model="searchForm"
-        class="search-form bg-bg_color w-full px-3 sm:px-6 pt-3 pb-1 overflow-auto mb-3 rounded-xl border border-(--el-border-color-lighter) shadow-2xs"
+        class="search-form bg-bg_color w-[99/100] pl-8 pt-3 overflow-auto"
       >
         <el-form-item
-          :label="t('cluster.nodeName', '节点名称') + '：'"
+          :label="t('cluster.nodeName', '节点名称')"
           prop="name"
         >
           <el-input
@@ -327,13 +375,13 @@ onMounted(() => {
             :loading="loading"
             @click="onSearch"
           >
-            {{ t("rule.search", "搜索") }}
+            {{ t("common.search", "搜索") }}
           </el-button>
           <el-button
             :icon="useRenderIcon(RefreshIcon)"
             @click="resetSearchForm(searchFormRef)"
           >
-            {{ t("rule.reset", "重置") }}
+            {{ t("common.reset", "重置") }}
           </el-button>
         </el-form-item>
       </el-form>
@@ -341,7 +389,7 @@ onMounted(() => {
       <PureTableBar
         :title="t('cluster.title', '集群管理')"
         :columns="columns"
-        @refresh="fetchData"
+        @refresh="onSearch"
       >
         <template #buttons>
           <el-button
@@ -370,34 +418,51 @@ onMounted(() => {
               {{ t("rule.selected", "已选择") }} {{ selectedNum }}
               {{ t("rule.items", "项") }}
             </span>
-            <el-popconfirm
-              :title="
-                t('cluster.batchDeleteConfirm', '确认批量删除选中的集群节点？')
-              "
-              @confirm="handleBatchDelete"
-            >
-              <template #reference>
-                <el-button
-                  type="danger"
-                  size="small"
-                  link
-                  :icon="useRenderIcon(Delete)"
-                >
-                  {{ t("rule.batchDelete", "批量删除") }}
-                </el-button>
-              </template>
-            </el-popconfirm>
+            <div class="flex items-center space-x-2">
+              <el-button type="primary" link size="small" @click="onSelectionCancel">
+                {{ t("common.cancel", "取消选择") }}
+              </el-button>
+              <el-popconfirm
+                :title="
+                  t('cluster.batchDeleteConfirm', '确认批量删除选中的集群节点？')
+                "
+                @confirm="handleBatchDelete"
+              >
+                <template #reference>
+                  <el-button
+                    type="danger"
+                    size="small"
+                    link
+                    :icon="useRenderIcon(Delete)"
+                  >
+                    {{ t("rule.batchDelete", "批量删除") }}
+                  </el-button>
+                </template>
+              </el-popconfirm>
+            </div>
           </div>
 
           <pure-table
-            v-loading="loading"
+            ref="tableRef"
             row-key="id"
             adaptive
-            :data="dataList"
-            :columns="dynamicColumns"
+            :adaptiveConfig="{ offsetBottom: 108 }"
+            align-whole="center"
+            table-layout="auto"
+            :loading="loading"
             :size="size"
-            border
+            :data="pagedDataList"
+            :columns="dynamicColumns"
+            :pagination="pagination"
+            :paginationSmall="size === 'small'"
+            :header-cell-style="{
+              background: 'var(--el-fill-color-light)',
+              color: 'var(--el-text-color-primary)',
+              fontWeight: 'bold'
+            }"
             @selection-change="handleSelectionChange"
+            @page-size-change="handleSizeChange"
+            @page-current-change="handleCurrentChange"
           >
             <template #name="{ row }">
               <span class="font-bold text-(--el-text-color-primary)">{{
@@ -406,7 +471,7 @@ onMounted(() => {
             </template>
 
             <template #addr="{ row }">
-              <code class="font-mono text-xs text-(--el-color-primary)">{{
+              <code class="font-mono text-xs text-(--el-color-primary) bg-(--el-fill-color-light) px-2 py-0.5 rounded">{{
                 row.addr
               }}</code>
             </template>
@@ -415,20 +480,20 @@ onMounted(() => {
               <el-tag
                 v-if="row.status === 1"
                 type="success"
-                effect="dark"
-                class="font-mono"
+                effect="plain"
+                class="font-mono font-medium"
               >
                 {{ t("cluster.online", "🟢 在线") }}
               </el-tag>
               <el-tag
                 v-else-if="row.status === 2"
                 type="warning"
-                effect="dark"
-                class="font-mono"
+                effect="plain"
+                class="font-mono font-medium"
               >
                 {{ t("cluster.unauthorized", "🟠 鉴权失败") }}
               </el-tag>
-              <el-tag v-else type="danger" effect="dark" class="font-mono">
+              <el-tag v-else type="danger" effect="plain" class="font-mono font-medium">
                 {{ t("cluster.offline", "🔴 离线") }}
               </el-tag>
             </template>
@@ -441,6 +506,7 @@ onMounted(() => {
 
             <template #operation="{ row }">
               <el-button
+                class="reset-margin"
                 size="small"
                 type="primary"
                 link
@@ -450,6 +516,7 @@ onMounted(() => {
                 {{ t("cluster.ping", "测试 (Ping)") }}
               </el-button>
               <el-button
+                class="reset-margin"
                 size="small"
                 type="success"
                 link
@@ -459,13 +526,14 @@ onMounted(() => {
                 {{ t("cluster.pushConfig", "下发配置") }}
               </el-button>
               <el-button
+                class="reset-margin"
                 size="small"
                 type="primary"
                 link
                 :icon="useRenderIcon(EditPen)"
                 @click="handleEditPage(row)"
               >
-                {{ t("rule.edit", "编辑") }}
+                {{ t("common.edit", "编辑") }}
               </el-button>
               <el-popconfirm
                 :title="
@@ -475,12 +543,13 @@ onMounted(() => {
               >
                 <template #reference>
                   <el-button
+                    class="reset-margin"
                     size="small"
                     type="danger"
                     link
                     :icon="useRenderIcon(Delete)"
                   >
-                    {{ t("rule.delete", "删除") }}
+                    {{ t("common.delete", "删除") }}
                   </el-button>
                 </template>
               </el-popconfirm>
@@ -504,7 +573,7 @@ onMounted(() => {
       >
         <template #actions>
           <el-button :icon="useRenderIcon(CloseIcon)" @click="handleCancelPage">
-            {{ t("rule.cancel", "取消") }}
+            {{ t("common.cancel", "取消") }}
           </el-button>
           <el-button
             type="primary"
@@ -512,7 +581,7 @@ onMounted(() => {
             :icon="useRenderIcon(CheckIcon)"
             @click="handleSaveSubmit"
           >
-            {{ t("rule.save", "保存") }}
+            {{ t("common.save", "保存") }}
           </el-button>
         </template>
       </PageHeader>

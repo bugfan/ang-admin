@@ -67,7 +67,7 @@ func (h *clusterNodeHandler) List(c *gin.Context) {
 	defer session.Close()
 
 	if name := c.Query("name"); name != "" {
-		session.Where("name LIKE ?", "%"+name+"%")
+		session.Where("name LIKE ? OR addr LIKE ?", "%"+name+"%", "%"+name+"%")
 	}
 
 	err := session.Desc("id").Find(&list)
