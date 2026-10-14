@@ -68,6 +68,29 @@ function removeReplaceRule(index: number) {
 const tunnelNodeGroups = ref<TunnelGroup[]>([]);
 const selectedTunnelNodeKey = ref<string>("");
 
+const selectedBaseHasAuth = computed(() => {
+  if (!newFormInline.value.base_id) return true;
+  const base = props.domainList?.find(
+    (d: any) => (d.id || d.Id) === newFormInline.value.base_id
+  );
+  if (!base) return true;
+  if (base.has_auth !== undefined) return Boolean(base.has_auth);
+  if (base.rules) {
+    try {
+      const parsed =
+        typeof base.rules === "string" ? JSON.parse(base.rules) : base.rules;
+      if (Array.isArray(parsed)) {
+        return parsed.some(
+          (p: any) =>
+            p.type === "auth" ||
+            (typeof p === "string" && p.startsWith("auth:"))
+        );
+      }
+    } catch (e) {}
+  }
+  return Boolean(base.auth_id);
+});
+
 onMounted(() => {
   fetchTunnels();
 });
@@ -487,7 +510,7 @@ const derivedInfo = computed(() => {
             prop="is_protected"
             :for="''"
           >
-            <div class="flex flex-col items-start">
+            <div class="flex flex-col items-start w-full">
               <el-switch
                 v-model="newFormInline.is_protected"
                 :active-value="0"
@@ -503,6 +526,20 @@ const derivedInfo = computed(() => {
                   )
                 }}
               </p>
+              <el-alert
+                v-if="newFormInline.is_protected === 1 && !selectedBaseHasAuth"
+                type="warning"
+                show-icon
+                :closable="false"
+                class="mt-2 w-full"
+                :title="t('webvpn.baseNoAuthAlertTitle', '所属基座未配置认证流')"
+                :description="
+                  t(
+                    'webvpn.baseNoAuthAlertDesc',
+                    '当前站点设置为“不公开（需认证）”，但所选基座未在规则流水线中添加认证流，访客访问此站点时将无法跳转登录（显示 401 阻断）。建议前往【基座】为该基座添加认证流，或将本站点设为“公开”。'
+                  )
+                "
+              />
             </div>
           </el-form-item>
         </re-col>

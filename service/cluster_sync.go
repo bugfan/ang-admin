@@ -535,8 +535,6 @@ func buildHTTPMap(rulesMap map[string]models.Rule) map[string]entity.HTTPConfig 
 			}
 		}
 
-		loginURL := ""
-		
 		// 统一使用全局认证设置中的凭证名称
 		var authSetting models.AuthSetting
 		engine.ID(1).Get(&authSetting)
@@ -545,21 +543,21 @@ func buildHTTPMap(rulesMap map[string]models.Rule) map[string]entity.HTTPConfig 
 			tokenName = authSetting.TokenName
 		}
 
-		if dom.AuthId > 0 {
-			var auth models.Auth
-			has, err := engine.ID(dom.AuthId).Get(&auth)
-			if err == nil && has {
-				loginURL = auth.PortalUrl
-			}
-		}
-
 		fallbackPolicy := dom.Fallback
 		if fallbackPolicy == "" {
 			fallbackPolicy = "404"
 		}
 
-		ruleConfigs := []entity.RuleConfig{
-			{
+		buildSubdomainWebvpnAction := func(authId int64) entity.RuleConfig {
+			lURL := ""
+			if authId > 0 {
+				var auth models.Auth
+				has, err := engine.ID(authId).Get(&auth)
+				if err == nil && has {
+					lURL = auth.PortalUrl
+				}
+			}
+			return entity.RuleConfig{
 				Matcher: entity.MatcherConfig{
 					Name:   "always_true_matcher",
 					Config: map[string]interface{}{},
@@ -568,13 +566,81 @@ func buildHTTPMap(rulesMap map[string]models.Rule) map[string]entity.HTTPConfig 
 					Name: "subdomain_webvpn_action",
 					Config: map[string]interface{}{
 						"Sites":        vpnActionSites,
-						"LoginURL":     loginURL,
+						"LoginURL":     lURL,
 						"TokenName":    tokenName,
 						"CookieDomain": "." + rootDomain,
 						"Fallback":     fallbackPolicy,
 					},
 				},
-			},
+			}
+		}
+
+		var ruleConfigs []entity.RuleConfig
+		webvpnActionInserted := false
+
+		if dom.Rules != "" {
+			type PipelineItem struct {
+				Type string      `json:"type"` // "auth" or "rule"
+				Id   interface{} `json:"id"`
+			}
+			var pipeline []PipelineItem
+			if err := json.Unmarshal([]byte(dom.Rules), &pipeline); err == nil && len(pipeline) > 0 {
+				for _, pItem := range pipeline {
+					if pItem.Type == "auth" {
+						var aid int64
+						switch v := pItem.Id.(type) {
+						case float64:
+							aid = int64(v)
+						case string:
+							aid, _ = strconv.ParseInt(v, 10, 64)
+						case int64:
+							aid = v
+						}
+						ruleConfigs = append(ruleConfigs, buildSubdomainWebvpnAction(aid))
+						webvpnActionInserted = true
+					} else if pItem.Type == "rule" {
+						rName := fmt.Sprintf("%v", pItem.Id)
+						rName = strings.TrimSpace(rName)
+						if dbRule, exists := rulesMap[rName]; exists {
+							if dbRule.Items != "" {
+								var items []entity.RuleConfig
+								if err := json.Unmarshal([]byte(dbRule.Items), &items); err == nil {
+									for i := range items {
+										if items[i].Action.Name == "auth_portal_action" {
+											if cfgMap, ok := items[i].Action.Config.(map[string]interface{}); ok {
+												if authSetting.TokenName != "" {
+													cfgMap["token_name"] = authSetting.TokenName
+												}
+												if authSetting.TokenExpire > 0 {
+													cfgMap["token_expire"] = authSetting.TokenExpire
+												}
+												cfgMap["enable_ticket"] = authSetting.EnableTicket
+												cfgMap["ticket_param"] = authSetting.GetTicketParamName()
+												if authSetting.CookieDomain != "" {
+													cfgMap["cookie_domain"] = authSetting.CookieDomain
+												}
+											}
+										} else if items[i].Action.Name == "auth_guard_action" {
+											if cfgMap, ok := items[i].Action.Config.(map[string]interface{}); ok {
+												if authSetting.TokenName != "" {
+													cfgMap["token_name"] = authSetting.TokenName
+												}
+												cfgMap["enable_ticket"] = authSetting.EnableTicket
+												cfgMap["ticket_param"] = authSetting.GetTicketParamName()
+											}
+										}
+									}
+									ruleConfigs = append(ruleConfigs, items...)
+								}
+							}
+						}
+					}
+				}
+			}
+		}
+
+		if !webvpnActionInserted {
+			ruleConfigs = append(ruleConfigs, buildSubdomainWebvpnAction(dom.AuthId))
 		}
 
 		httpMap[domKeyStr] = entity.HTTPConfig{

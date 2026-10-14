@@ -11,6 +11,7 @@ type WebvpnBase struct {
 	H2          bool      `xorm:"bool default true 'h2'" json:"h2"`                                        // 是否启用 HTTP/2
 	Certificate string    `xorm:"varchar(255) 'certificate'" json:"certificate"`                           // 关联证书
 	AuthId      int64     `xorm:"bigint default 0 'auth_id'" json:"auth_id"`                               // 绑定的认证中心 ID (关联 Auth 表)
+	Rules       string    `xorm:"text 'rules'" json:"rules"`                                               // 挂载的规则流水线 JSON，如 [{"type":"rule","id":"ip_limit"},{"type":"auth","id":1}]
 	Fallback    string    `xorm:"varchar(32) default '404' 'fallback'" json:"fallback"`                    // 未匹配兜底策略: "404" 或 "login"
 	Status      int       `xorm:"tinyint default 1 'status'" json:"status"`                                // 1: 启用, 0: 禁用
 	Remark      string    `xorm:"varchar(255) 'remark'" json:"remark"`                                     // 备注

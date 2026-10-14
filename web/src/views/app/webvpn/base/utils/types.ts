@@ -7,8 +7,11 @@ export interface BaseFormItemProps {
   h2: boolean;
   certificate: string;
   auth_id: number | null;
+  rules?: string;
   fallback: string;
   status: number;
+  site_count?: number;
+  protected_site_count?: number;
   remark: string;
 }
 

@@ -7,6 +7,7 @@ import PageHeader from "@/components/PageHeader/index.vue";
 import { PureTableBar } from "@/components/RePureTableBar";
 import { useRenderIcon } from "@/components/ReIcon/src/hooks";
 import { message } from "@/utils/message";
+import { ElMessageBox } from "element-plus";
 import { createWebvpnBase, updateWebvpnBase } from "@/api/webvpn";
 
 import Delete from "~icons/ep/delete";
@@ -53,8 +54,11 @@ function getDefaultFormInline() {
     h2: true,
     certificate: "",
     auth_id: null,
+    rules: "[]",
     fallback: "404",
     status: 1,
+    site_count: 0,
+    protected_site_count: 0,
     remark: ""
   };
 }
@@ -70,8 +74,11 @@ function getFormInlineFromRow(row: any) {
     h2: (row.H2 ?? row.h2 ?? true) !== false,
     certificate: row.Certificate || row.certificate || "",
     auth_id: row.auth_id || null,
+    rules: row.Rules || row.rules || "[]",
     fallback: row.Fallback || row.fallback || "404",
     status: row.Status ?? row.status ?? 1,
+    site_count: Number(row.SiteCount ?? row.site_count ?? 0),
+    protected_site_count: Number(row.ProtectedSiteCount ?? row.protected_site_count ?? 0),
     remark: row.Remark || row.remark || ""
   };
 }
@@ -97,9 +104,27 @@ async function handleSaveSubmit() {
 
   FormRef.validate(async (valid: boolean) => {
     if (valid) {
+      const formData = createEditFormRef.value.newFormInline;
+      const hasAuth = !!formData.auth_id;
+      const pCount = Number(formData.protected_site_count || 0);
+      if (!hasAuth && pCount > 0) {
+        try {
+          await ElMessageBox.confirm(
+            t("webvpnBase.noAuthConfirmMsg", { count: pCount }),
+            t("webvpnBase.noAuthConfirmTitle", "未配置认证流预警"),
+            {
+              confirmButtonText: t("webvpnBase.continueSave", "仍要保存"),
+              cancelButtonText: t("common.cancel", "取消"),
+              type: "warning"
+            }
+          );
+        } catch {
+          return;
+        }
+      }
+
       saving.value = true;
       try {
-        const formData = createEditFormRef.value.newFormInline;
         const payload = {
           name: formData.name,
           hostname: formData.hostname,
@@ -108,6 +133,7 @@ async function handleSaveSubmit() {
           h2: formData.h2,
           certificate: formData.certificate,
           auth_id: formData.auth_id,
+          rules: formData.rules || "[]",
           fallback: formData.fallback,
           status: formData.status,
           remark: formData.remark

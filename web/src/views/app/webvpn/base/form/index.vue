@@ -1,11 +1,17 @@
 <script setup lang="ts">
-import { ref, onMounted, watch } from "vue";
+import { ref, onMounted, watch, nextTick, computed } from "vue";
 import { useI18n } from "vue-i18n";
 import ReCol from "@/components/ReCol";
 import { formRules } from "../utils/rule";
 import { BaseFormProps } from "../utils/types";
 import { getCertList } from "@/api/certificate";
 import { getAuthList } from "@/api/auth-config";
+import { getRuleList } from "@/api/rule";
+import { useRenderIcon } from "@/components/ReIcon/src/hooks";
+import Rank from "~icons/ep/rank";
+import Delete from "~icons/ep/delete";
+import Sortable from "sortablejs";
+import { message } from "@/utils/message";
 
 const props = withDefaults(defineProps<BaseFormProps>(), {
   formInline: () => ({
@@ -16,6 +22,7 @@ const props = withDefaults(defineProps<BaseFormProps>(), {
     h2: true,
     certificate: "",
     auth_id: null,
+    rules: "[]",
     fallback: "404",
     status: 1,
     remark: ""
@@ -34,7 +41,6 @@ function handleTlsChange(val: boolean) {
     ruleFormRef.value.validateField("certificate");
   }
 }
-
 
 const validateCertificate = (_rule: any, _value: any, callback: any) => {
   if (newFormInline.value.tls && !newFormInline.value.certificate) {
@@ -55,15 +61,23 @@ const localRules = {
 
 const newFormInline = ref(props.formInline);
 
-watch(
-  () => props.formInline,
-  val => {
-    newFormInline.value = val;
-  },
-  { deep: true }
+interface PipelineRuleItem {
+  id: string | number;
+  type: "rule" | "auth";
+  name: string;
+}
+
+const pipelineList = ref<PipelineRuleItem[]>([]);
+const pipelineGroupRef = ref<HTMLElement | null>(null);
+const selectedCandidate = ref<string>("");
+
+const hasAuthInPipeline = computed(() =>
+  pipelineList.value.some(p => p.type === "auth")
 );
+
 const certOptions = ref<Array<{ label: string; value: string }>>([]);
 const authOptions = ref<Array<{ name: string; id: number }>>([]);
+const availableRules = ref<Array<{ name: string; id: string }>>([]);
 
 async function fetchCertificates() {
   try {
@@ -93,9 +107,169 @@ async function fetchAuthOptions() {
   } catch (e) {}
 }
 
-onMounted(() => {
+async function fetchRules() {
+  try {
+    const res = await getRuleList();
+    if (res?.code === 0 && res?.data?.list) {
+      availableRules.value = res.data.list.map((r: any) => ({
+        name: r.name || r.Name,
+        id: r.name || r.Name
+      }));
+    }
+  } catch (e) {}
+}
+
+function initPipeline() {
+  pipelineList.value = [];
+  try {
+    if (newFormInline.value.rules) {
+      const parsed =
+        typeof newFormInline.value.rules === "string"
+          ? JSON.parse(newFormInline.value.rules)
+          : newFormInline.value.rules;
+      if (Array.isArray(parsed)) {
+        pipelineList.value = parsed.map((item: any) => {
+          if (typeof item === "string") {
+            if (item.startsWith("auth:")) {
+              const aid = Number(item.replace("auth:", ""));
+              const aObj = authOptions.value.find(a => a.id === aid);
+              return {
+                type: "auth",
+                id: aid,
+                name: aObj ? aObj.name : `${t("webvpnBase.typeAuth", "认证流")} #${aid}`
+              };
+            } else {
+              const rName = item.replace("rule:", "");
+              return {
+                type: "rule",
+                id: rName,
+                name: rName
+              };
+            }
+          }
+          let name = item.name;
+          if (!name) {
+            if (item.type === "auth") {
+              const aObj = authOptions.value.find(a => a.id === Number(item.id));
+              name = aObj ? aObj.name : `${t("webvpnBase.typeAuth", "认证流")} #${item.id}`;
+            } else {
+              name = String(item.id);
+            }
+          }
+          return {
+            type: item.type || "rule",
+            id: item.id,
+            name: name
+          };
+        });
+      }
+    }
+  } catch (e) {}
+
+  // 兼容逻辑：若历史数据未配 rules 但有 auth_id，自动补全为认证流节点
+  if (!pipelineList.value.some(p => p.type === "auth") && newFormInline.value.auth_id) {
+    const aid = Number(newFormInline.value.auth_id);
+    const aObj = authOptions.value.find(a => a.id === aid);
+    pipelineList.value.push({
+      type: "auth",
+      id: aid,
+      name: aObj ? aObj.name : `${t("webvpnBase.typeAuth", "认证流")} #${aid}`
+    });
+  }
+
+  syncPipelineToForm();
+}
+
+function syncPipelineToForm() {
+  newFormInline.value.rules = JSON.stringify(
+    pipelineList.value.map(item => ({
+      type: item.type,
+      id: item.id,
+      name: item.name
+    }))
+  );
+  const authItem = pipelineList.value.find(item => item.type === "auth");
+  newFormInline.value.auth_id = authItem ? Number(authItem.id) : null;
+}
+
+function initSortablePipeline() {
+  if (pipelineGroupRef.value) {
+    Sortable.create(pipelineGroupRef.value, {
+      handle: ".drag-handle",
+      animation: 150,
+      onEnd: (evt: any) => {
+        const { oldIndex, newIndex } = evt;
+        if (
+          oldIndex !== undefined &&
+          newIndex !== undefined &&
+          oldIndex !== newIndex
+        ) {
+          const item = pipelineList.value.splice(oldIndex, 1)[0];
+          pipelineList.value.splice(newIndex, 0, item);
+          syncPipelineToForm();
+        }
+      }
+    });
+  }
+}
+
+function handleAddCandidate(val: string) {
+  if (!val) return;
+  if (val.startsWith("auth:")) {
+    const aid = Number(val.replace("auth:", ""));
+    if (pipelineList.value.some(p => p.type === "auth" && Number(p.id) === aid)) {
+      message(t("webvpnBase.authAlreadyAdded", "该认证流已在流水线中"), {
+        type: "warning"
+      });
+      selectedCandidate.value = "";
+      return;
+    }
+    const aObj = authOptions.value.find(a => a.id === aid);
+    pipelineList.value.push({
+      type: "auth",
+      id: aid,
+      name: aObj ? aObj.name : `${t("webvpnBase.typeAuth", "认证流")} #${aid}`
+    });
+  } else if (val.startsWith("rule:")) {
+    const rName = val.replace("rule:", "");
+    if (pipelineList.value.some(p => p.type === "rule" && String(p.id) === rName)) {
+      message(t("webvpnBase.ruleAlreadyAdded", "该规则已在流水线中"), {
+        type: "warning"
+      });
+      selectedCandidate.value = "";
+      return;
+    }
+    pipelineList.value.push({
+      type: "rule",
+      id: rName,
+      name: rName
+    });
+  }
+  selectedCandidate.value = "";
+  syncPipelineToForm();
+}
+
+function removePipelineItem(index: number) {
+  pipelineList.value.splice(index, 1);
+  syncPipelineToForm();
+}
+
+watch(
+  () => props.formInline,
+  val => {
+    newFormInline.value = val;
+    initPipeline();
+  },
+  { deep: true }
+);
+
+onMounted(async () => {
   fetchCertificates();
-  fetchAuthOptions();
+  await Promise.all([fetchAuthOptions(), fetchRules()]);
+  initPipeline();
+  nextTick(() => {
+    initSortablePipeline();
+  });
 });
 
 function getRef() {
@@ -283,54 +457,178 @@ defineExpose({ getRef, newFormInline });
       </el-row>
     </el-card>
 
-    <!-- Section 2: 访问与安全策略 -->
+    <!-- Section 2: 访问与安全策略 (规则流水线) -->
     <el-card
       shadow="never"
       class="border-(--el-border-color-lighter)! rounded-xl"
     >
       <template #header>
-        <div class="flex items-center space-x-2">
-          <div class="w-1.5 h-4 bg-primary rounded-full" />
-          <span
-            class="font-bold text-(--el-text-color-primary) text-sm sm:text-base"
-          >
-            {{ t("webvpnBase.policySection", "访问与安全策略") }}
+        <div class="flex items-center justify-between">
+          <div class="flex items-center space-x-2">
+            <div class="w-1.5 h-4 bg-primary rounded-full" />
+            <span
+              class="font-bold text-(--el-text-color-primary) text-sm sm:text-base"
+            >
+              {{ t("webvpnBase.policySection", "访问与安全策略") }}
+            </span>
+          </div>
+          <span class="text-xs text-gray-400">
+            {{
+              t(
+                "webvpnBase.pipelineDesc",
+                "自上而下依次执行，可按住左侧 ☰ 拖拽调整顺序"
+              )
+            }}
           </span>
         </div>
       </template>
 
       <el-row :gutter="24">
-        <!-- 6. 认证流 (SSO) -->
+        <!-- 规则流水线 -->
         <re-col :value="24">
-          <el-form-item
-            :label="t('webvpnBase.authId', '认证流')"
-            prop="auth_id"
-          >
-            <div class="flex flex-col w-full">
-              <el-select
-                v-model="newFormInline.auth_id"
-                filterable
-                clearable
-                class="w-full"
-                :placeholder="
-                  t('webvpnBase.authIdPlaceholder', '选择已配置的统一认证策略 (SSO)')
-                "
+          <el-form-item :label="t('webvpnBase.pipelineTitle', '规则流水线')">
+            <div class="w-full flex flex-col space-y-3">
+              <!-- 添加操作栏 -->
+              <div class="flex items-center space-x-2">
+                <el-select
+                  v-model="selectedCandidate"
+                  filterable
+                  clearable
+                  class="flex-1"
+                  :placeholder="
+                    t(
+                      'webvpnBase.selectRuleOrAuthPlaceholder',
+                      '选择要加入流水线的规则或认证流...'
+                    )
+                  "
+                  @change="handleAddCandidate"
+                >
+                  <el-option-group
+                    :label="t('webvpnBase.groupAuth', '🔐 认证流 (SSO 鉴权)')"
+                  >
+                    <el-option
+                      v-for="a in authOptions"
+                      :key="'auth:' + a.id"
+                      :label="a.name"
+                      :value="'auth:' + a.id"
+                      :disabled="
+                        pipelineList.some(
+                          p => p.type === 'auth' && Number(p.id) === a.id
+                        )
+                      "
+                    />
+                  </el-option-group>
+                  <el-option-group
+                    :label="t('webvpnBase.groupRule', '🛡️ 规则管理 (中间件)')"
+                  >
+                    <el-option
+                      v-for="r in availableRules"
+                      :key="'rule:' + r.name"
+                      :label="r.name"
+                      :value="'rule:' + r.name"
+                      :disabled="
+                        pipelineList.some(
+                          p => p.type === 'rule' && String(p.id) === r.name
+                        )
+                      "
+                    />
+                  </el-option-group>
+                </el-select>
+              </div>
+
+              <!-- 拖拽列表容器 -->
+              <div
+                ref="pipelineGroupRef"
+                class="min-h-[64px] border border-dashed border-(--el-border-color) rounded-xl p-2.5 bg-(--el-fill-color-blank) flex flex-col space-y-2"
               >
-                <el-option
-                  v-for="a in authOptions"
-                  :key="a.id"
-                  :label="a.name"
-                  :value="a.id"
-                />
-              </el-select>
-              <p class="text-xs/relaxed text-gray-400 mt-2">
+                <div
+                  v-for="(item, idx) in pipelineList"
+                  :key="item.type + ':' + item.id"
+                  class="flex items-center justify-between p-2.5 bg-(--el-fill-color-light) border border-(--el-border-color-lighter) rounded-lg hover:border-primary transition-all shadow-2xs select-none"
+                >
+                  <div class="flex items-center space-x-2.5">
+                    <div
+                      class="drag-handle cursor-grab active:cursor-grabbing text-gray-400 hover:text-primary p-1"
+                    >
+                      <component :is="useRenderIcon(Rank)" class="w-4 h-4" />
+                    </div>
+                    <el-tag
+                      :type="item.type === 'auth' ? 'warning' : 'primary'"
+                      size="small"
+                      effect="plain"
+                      class="font-mono font-medium"
+                    >
+                      {{
+                        item.type === "auth"
+                          ? t("webvpnBase.typeAuth", "认证流")
+                          : t("webvpnBase.typeRule", "规则中间件")
+                      }}
+                    </el-tag>
+                    <span
+                      class="font-bold text-sm text-(--el-text-color-primary)"
+                      >{{ item.name }}</span
+                    >
+                    <span
+                      v-if="item.type === 'auth'"
+                      class="text-xs text-gray-400 hidden sm:inline"
+                    >
+                      ({{
+                        t(
+                          "webvpnBase.authFlowItemHint",
+                          "WebVPN 访问凭证核验与 SSO 门户"
+                        )
+                      }})
+                    </span>
+                  </div>
+                  <div class="flex items-center space-x-1">
+                    <el-button
+                      link
+                      type="danger"
+                      size="small"
+                      :icon="useRenderIcon(Delete)"
+                      @click="removePipelineItem(idx)"
+                    >
+                      {{ t("common.delete", "删除") }}
+                    </el-button>
+                  </div>
+                </div>
+
+                <div
+                  v-if="pipelineList.length === 0"
+                  class="py-6 text-center text-gray-400 text-xs flex flex-col items-center justify-center space-y-1"
+                >
+                  <span>{{
+                    t(
+                      "webvpnBase.emptyPipeline",
+                      "暂无规则流水线，请在上方选择并添加规则或认证流"
+                    )
+                  }}</span>
+                </div>
+              </div>
+
+              <p class="text-xs/relaxed text-gray-400 mt-1">
                 {{
                   t(
-                    "webvpnBase.authIdHint",
-                    "选用后，基座内的全部受保护站点将自动共享该认证配置的 LoginURL 与 Cookie 参数。"
+                    "webvpnBase.pipelineHint",
+                    "请求到达基座后将自上而下依次执行挂载的中间件。如需身份验证，请在流水线中添加认证流；认证流之前的规则将在鉴权前执行（如 IP黑名单、DDoS限流防刷），之后的规则将在鉴权通过后执行。"
                   )
                 }}
               </p>
+
+              <el-alert
+                v-if="!hasAuthInPipeline && (Number(newFormInline.protected_site_count || 0) > 0 || Number(newFormInline.site_count || 0) > 0)"
+                type="warning"
+                show-icon
+                :closable="false"
+                class="mt-2"
+                :title="t('webvpnBase.noAuthWarningTitle', '提示：当前基座未配置认证流')"
+                :description="
+                  t(
+                    'webvpnBase.noAuthWarningDesc',
+                    '检测到该基座下已有受保护的站点。若规则流水线中未添加认证流，这些站点将因缺少登录入口而无法正常登录访问（显示 401 阻断）。'
+                  )
+                "
+              />
             </div>
           </el-form-item>
         </re-col>
@@ -370,7 +668,6 @@ defineExpose({ getRef, newFormInline });
             </div>
           </el-form-item>
         </re-col>
-
       </el-row>
     </el-card>
   </el-form>

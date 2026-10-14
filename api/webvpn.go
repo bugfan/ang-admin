@@ -33,6 +33,7 @@ type webvpnBaseHandler struct {
 	H2          bool      `json:"h2"`
 	Certificate string    `json:"certificate"`
 	AuthId      int64     `json:"auth_id"`
+	Rules       string    `json:"rules"`
 	Fallback    string    `json:"fallback"`
 	Status      int       `json:"status"`
 	Remark      string    `json:"remark"`
@@ -111,17 +112,26 @@ func (h *webvpnBaseHandler) List(c *gin.Context) {
 	// 统计关联的站点数量
 	type WebvpnBaseVO struct {
 		models.WebvpnBase
-		RootBase string `json:"root_base"`
-		SiteCount  int64  `json:"site_count"`
+		RootBase           string `json:"root_base"`
+		SiteCount          int64  `json:"site_count"`
+		ProtectedSiteCount int64  `json:"protected_site_count"`
+		HasAuth            bool   `json:"has_auth"`
 	}
 
 	resList := make([]WebvpnBaseVO, len(list))
 	for i, dom := range list {
 		count, _ := models.GetEngine().Where("base_id = ?", dom.Id).Count(new(models.WebvpnSite))
+		pCount, _ := models.GetEngine().Where("base_id = ? AND is_protected = 1", dom.Id).Count(new(models.WebvpnSite))
+		hasAuth := dom.AuthId > 0
+		if dom.Rules != "" {
+			hasAuth = strings.Contains(dom.Rules, `"auth"`) || strings.Contains(dom.Rules, `auth:`)
+		}
 		resList[i] = WebvpnBaseVO{
-			WebvpnBase: dom,
-			RootBase:   strings.TrimPrefix(dom.Hostname, "*."),
-			SiteCount:    count,
+			WebvpnBase:         dom,
+			RootBase:           strings.TrimPrefix(dom.Hostname, "*."),
+			SiteCount:          count,
+			ProtectedSiteCount: pCount,
+			HasAuth:            hasAuth,
 		}
 	}
 

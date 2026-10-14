@@ -14,11 +14,15 @@ export type WebvpnBaseItem = {
   h2?: boolean;
   certificate?: string;
   login_url?: string;
+  auth_id?: number | null;
+  rules?: string;
   fallback?: string; // "404" | "login"
   status?: number; // 1: enabled, 0: disabled
   remark?: string;
   root_base?: string;
   site_count?: number;
+  protected_site_count?: number;
+  has_auth?: boolean;
   created_at?: string;
   updated_at?: string;
 };
