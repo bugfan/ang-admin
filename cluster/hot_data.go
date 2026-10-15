@@ -18,7 +18,7 @@ func PrintFullServerConfig(cfg interface{}) {
 	}
 	fmt.Println("\n=================== OVERALL ANG SERVER.JSON CONFIG ===================")
 	fmt.Println(string(data))
-	fmt.Println("======================================================================\n")
+	fmt.Println("======================================================================")
 }
 
 func PrintFullTunnelConfig(cfg interface{}) {
@@ -29,7 +29,7 @@ func PrintFullTunnelConfig(cfg interface{}) {
 	}
 	fmt.Println("\n=================== OVERALL ANG TUNNEL.JSON CONFIG ===================")
 	fmt.Println(string(data))
-	fmt.Println("======================================================================\n")
+	fmt.Println("======================================================================")
 }
 
 func PrintFullCertificateConfig(cfg interface{}) {
@@ -40,7 +40,7 @@ func PrintFullCertificateConfig(cfg interface{}) {
 	}
 	fmt.Println("\n=================== OVERALL ANG CERTIFICATE.JSON CONFIG ===================")
 	fmt.Println(string(data))
-	fmt.Println("===========================================================================\n")
+	fmt.Println("===========================================================================")
 }
 
 func PrintFullUserConfig(cfg interface{}) {
@@ -51,7 +51,7 @@ func PrintFullUserConfig(cfg interface{}) {
 	}
 	fmt.Println("\n=================== OVERALL ANG USER.JSON CONFIG ===================")
 	fmt.Println(string(data))
-	fmt.Println("====================================================================\n")
+	fmt.Println("====================================================================")
 }
 
 func PrintFullGroupConfig(cfg interface{}) {
@@ -62,6 +62,6 @@ func PrintFullGroupConfig(cfg interface{}) {
 	}
 	fmt.Println("\n=================== OVERALL ANG GROUP.JSON CONFIG ===================")
 	fmt.Println(string(data))
-	fmt.Println("=====================================================================\n")
+	fmt.Println("=====================================================================")
 }
 

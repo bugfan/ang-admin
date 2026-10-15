@@ -16,7 +16,6 @@ import CheckIcon from "~icons/ep/check";
 import CloseIcon from "~icons/ep/close";
 import Search from "~icons/ep/search";
 import Refresh from "~icons/ep/refresh";
-import BackIcon from "~icons/ep/back";
 
 defineOptions({
   name: "AppAuthMethod"

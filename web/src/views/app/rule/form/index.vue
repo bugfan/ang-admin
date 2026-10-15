@@ -914,12 +914,6 @@ function getActionSummary(item: RuleItemConfig) {
     case "subdomain_webvpn_action":
       summary = `WebVPN (${item.webvpnSites.length})`;
       break;
-    case "auth_portal_action":
-      summary = "统一身份认证";
-      break;
-    case "auth_guard_action":
-      summary = "认证拦截";
-      break;
     default:
       summary = item.actionName;
   }

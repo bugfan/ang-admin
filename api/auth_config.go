@@ -32,6 +32,8 @@ func (h *authHandler) Before(g *gin.Context, x *xorm.Engine) bool {
 	method := g.Request.Method
 	if method == http.MethodPost || method == http.MethodPut || method == http.MethodPatch {
 		h.Name = strings.TrimSpace(h.Name)
+		h.Title = strings.TrimSpace(h.Title)
+		h.PortalUrl = strings.TrimSpace(h.PortalUrl)
 		if h.Name == "" {
 			g.AbortWithStatusJSON(http.StatusOK, gin.H{
 				"code":      1,

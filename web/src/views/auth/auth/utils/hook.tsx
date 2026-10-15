@@ -1,7 +1,7 @@
 import { reactive, ref, onMounted, computed } from "vue";
 import type { PaginationProps } from "@pureadmin/table";
 import { message } from "@/utils/message";
-import { getAuthList, deleteAuth, updateAuth } from "@/api/auth-config";
+import { getAuthList, deleteAuth } from "@/api/auth-config";
 
 export function useAuthMethod(t: Function, tableRef: any) {
   const form = reactive({

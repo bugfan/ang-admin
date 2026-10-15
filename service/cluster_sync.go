@@ -261,16 +261,19 @@ func buildHTTPMap(rulesMap map[string]models.Rule) map[string]entity.HTTPConfig 
 			if pURL == "" {
 				continue
 			}
-			matched := false
-			if u, err := url.Parse(pURL); err == nil && u.Hostname() != "" {
-				if strings.EqualFold(u.Hostname(), item.Hostname) {
-					matched = true
+			portalHost := pURL
+			if strings.Contains(portalHost, "://") {
+				if u, err := url.Parse(portalHost); err == nil && u.Hostname() != "" {
+					portalHost = u.Hostname()
+				}
+			} else {
+				if h, _, err := net.SplitHostPort(portalHost); err == nil {
+					portalHost = h
+				} else if idx := strings.Index(portalHost, "/"); idx != -1 {
+					portalHost = portalHost[:idx]
 				}
 			}
-			if !matched && (strings.Contains(pURL, item.Hostname) || strings.EqualFold(pURL, item.Hostname)) {
-				matched = true
-			}
-			if matched {
+			if strings.EqualFold(strings.TrimSpace(portalHost), strings.TrimSpace(item.Hostname)) {
 				matchedPortalAuth = &a
 				break
 			}
@@ -355,75 +358,13 @@ func buildHTTPMap(rulesMap map[string]models.Rule) map[string]entity.HTTPConfig 
 					if dbRule.Items != "" {
 						var items []entity.RuleConfig
 						if err := json.Unmarshal([]byte(dbRule.Items), &items); err == nil {
-							var filteredItems []entity.RuleConfig
-							for i := range items {
-								if items[i].Action.Name == "auth_portal_action" {
-									if matchedPortalAuth != nil {
-										// 已由认证管理自动托管挂载，跳过旧规则库中的 auth_portal_action 避免重复
-										continue
-									}
-									if cfgMap, ok := items[i].Action.Config.(map[string]interface{}); ok {
-										if globalAuthSetting.TokenName != "" {
-											cfgMap["token_name"] = globalAuthSetting.TokenName
-										}
-										if globalAuthSetting.TokenExpire > 0 {
-											cfgMap["token_expire"] = globalAuthSetting.TokenExpire
-										}
-										cfgMap["enable_ticket"] = globalAuthSetting.EnableTicket
-										cfgMap["ticket_param"] = globalAuthSetting.GetTicketParamName()
-
-										var authConfig models.Auth
-										hasAuth, errAuth := engine.Where("portal_url LIKE ?", "%"+item.Hostname+"%").Get(&authConfig)
-										if errAuth == nil && hasAuth {
-											cfgMap["auth_id"] = authConfig.Id
-											if authConfig.AuthMethodIds != "" && authConfig.AuthMethodIds != "[]" {
-												var methodIds []int64
-												if err := json.Unmarshal([]byte(authConfig.AuthMethodIds), &methodIds); err == nil && len(methodIds) > 0 {
-													var methods []models.AuthMethod
-													if err := engine.In("id", methodIds).Find(&methods); err == nil {
-														methodMap := make(map[int64]models.AuthMethod)
-														for _, m := range methods {
-															methodMap[m.Id] = m
-														}
-														var orderedMethods []map[string]interface{}
-														for _, mid := range methodIds {
-															if m, ok := methodMap[mid]; ok && m.Enabled {
-																orderedMethods = append(orderedMethods, map[string]interface{}{
-																	"id":          m.Id,
-																	"name":        m.Name,
-																	"type":        m.Type,
-																	"config_json": m.ConfigJSON,
-																})
-															}
-														}
-														cfgMap["methods"] = orderedMethods
-													}
-												}
-											}
-										}
-
-										cookieDomain := strings.TrimSpace(globalAuthSetting.CookieDomain)
-										if cookieDomain == "" && wildcardRootBase != "" {
-											if strings.HasSuffix(item.Hostname, wildcardRootBase) {
-												cookieDomain = "." + wildcardRootBase
-											}
-										}
-										if cookieDomain != "" {
-											cfgMap["cookie_domain"] = cookieDomain
-										}
-									}
-								} else if items[i].Action.Name == "auth_guard_action" {
-									if cfgMap, ok := items[i].Action.Config.(map[string]interface{}); ok {
-										if globalAuthSetting.TokenName != "" {
-											cfgMap["token_name"] = globalAuthSetting.TokenName
-										}
-										cfgMap["enable_ticket"] = globalAuthSetting.EnableTicket
-										cfgMap["ticket_param"] = globalAuthSetting.GetTicketParamName()
-									}
+							for _, it := range items {
+								// 规则管理已不再承载认证相关动作，若有历史残留规则直接过滤，避免与认证管理冲突
+								if it.Action.Name == "auth_portal_action" || it.Action.Name == "auth_guard_action" {
+									continue
 								}
-								filteredItems = append(filteredItems, items[i])
+								ruleConfigs = append(ruleConfigs, it)
 							}
-							ruleConfigs = append(ruleConfigs, filteredItems...)
 						}
 					}
 				}
@@ -715,31 +656,6 @@ func buildHTTPMap(rulesMap map[string]models.Rule) map[string]entity.HTTPConfig 
 							if dbRule.Items != "" {
 								var items []entity.RuleConfig
 								if err := json.Unmarshal([]byte(dbRule.Items), &items); err == nil {
-									for i := range items {
-										if items[i].Action.Name == "auth_portal_action" {
-											if cfgMap, ok := items[i].Action.Config.(map[string]interface{}); ok {
-												if authSetting.TokenName != "" {
-													cfgMap["token_name"] = authSetting.TokenName
-												}
-												if authSetting.TokenExpire > 0 {
-													cfgMap["token_expire"] = authSetting.TokenExpire
-												}
-												cfgMap["enable_ticket"] = authSetting.EnableTicket
-												cfgMap["ticket_param"] = authSetting.GetTicketParamName()
-												if authSetting.CookieDomain != "" {
-													cfgMap["cookie_domain"] = authSetting.CookieDomain
-												}
-											}
-										} else if items[i].Action.Name == "auth_guard_action" {
-											if cfgMap, ok := items[i].Action.Config.(map[string]interface{}); ok {
-												if authSetting.TokenName != "" {
-													cfgMap["token_name"] = authSetting.TokenName
-												}
-												cfgMap["enable_ticket"] = authSetting.EnableTicket
-												cfgMap["ticket_param"] = authSetting.GetTicketParamName()
-											}
-										}
-									}
 									ruleConfigs = append(ruleConfigs, items...)
 								}
 							}
@@ -787,46 +703,6 @@ func buildHTTPMap(rulesMap map[string]models.Rule) map[string]entity.HTTPConfig 
 	}
 
 	return httpMap
-}
-
-func discoverAuthLoginURL(httpList []models.HttpProxy, rulesMap map[string]models.Rule) string {
-	for _, p := range httpList {
-		if p.Rules != "" {
-			var rNames []string
-			_ = json.Unmarshal([]byte(p.Rules), &rNames)
-			for _, rn := range rNames {
-				if r, ok := rulesMap[rn]; ok && strings.Contains(r.Items, "auth_portal_action") {
-					scheme := "http://"
-					if p.TLS || p.H2 {
-						scheme = "https://"
-					}
-					portPart := ""
-					if p.Port != "80" && p.Port != "443" && p.Port != "" {
-						portPart = ":" + p.Port
-					}
-					return scheme + p.Hostname + portPart
-				}
-			}
-		}
-	}
-
-	for _, r := range rulesMap {
-		if strings.Contains(r.Items, "auth_guard_action") {
-			var items []entity.RuleConfig
-			if err := json.Unmarshal([]byte(r.Items), &items); err == nil {
-				for _, it := range items {
-					if it.Action.Name == "auth_guard_action" {
-						if cfgMap, ok := it.Action.Config.(map[string]interface{}); ok {
-							if pu, ok := cfgMap["portal_url"].(string); ok && pu != "" {
-								return pu
-							}
-						}
-					}
-				}
-			}
-		}
-	}
-	return ""
 }
 
 func buildTunnelClientMap() map[string]string {
