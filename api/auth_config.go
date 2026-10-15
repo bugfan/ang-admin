@@ -20,6 +20,7 @@ func init() {
 type authHandler struct {
 	Id            int64     `json:"id"`
 	Name          string    `json:"name"`
+	Title         string    `json:"title"`
 	AuthMethodIds string    `json:"auth_method_ids"`
 	PortalUrl     string    `json:"portal_url"`
 	Remark        string    `json:"remark"`

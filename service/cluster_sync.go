@@ -230,6 +230,16 @@ func buildHTTPMap(rulesMap map[string]models.Rule) map[string]entity.HTTPConfig 
 	var globalAuthSetting models.AuthSetting
 	_, _ = engine.ID(1).Get(&globalAuthSetting)
 
+	var allAuthList []models.Auth
+	_ = engine.Find(&allAuthList)
+
+	var allMethods []models.AuthMethod
+	_ = engine.Find(&allMethods)
+	methodMap := make(map[int64]models.AuthMethod)
+	for _, m := range allMethods {
+		methodMap[m.Id] = m
+	}
+
 	httpMap := make(map[string]entity.HTTPConfig)
 	for _, item := range httpList {
 		keyStr := strconv.FormatInt(item.Id, 10)
@@ -242,6 +252,100 @@ func buildHTTPMap(rulesMap map[string]models.Rule) map[string]entity.HTTPConfig 
 
 		// Parse Rules
 		var ruleConfigs []entity.RuleConfig
+
+		// 核心架构升级：所有认证相关的门户站点由「认证管理」的认证流直接驱动
+		// 若当前 HTTP 站点被某个认证流配置为登录入口 (PortalUrl)，自动为其挂载统一认证中心 Action
+		var matchedPortalAuth *models.Auth
+		for _, a := range allAuthList {
+			pURL := strings.TrimSpace(a.PortalUrl)
+			if pURL == "" {
+				continue
+			}
+			matched := false
+			if u, err := url.Parse(pURL); err == nil && u.Hostname() != "" {
+				if strings.EqualFold(u.Hostname(), item.Hostname) {
+					matched = true
+				}
+			}
+			if !matched && (strings.Contains(pURL, item.Hostname) || strings.EqualFold(pURL, item.Hostname)) {
+				matched = true
+			}
+			if matched {
+				matchedPortalAuth = &a
+				break
+			}
+		}
+
+		if matchedPortalAuth != nil {
+			title := strings.TrimSpace(matchedPortalAuth.Title)
+			if title == "" {
+				title = strings.TrimSpace(matchedPortalAuth.Name)
+			}
+			if title == "" {
+				title = "统一身份认证"
+			}
+
+			var orderedMethods []map[string]interface{}
+			if matchedPortalAuth.AuthMethodIds != "" && matchedPortalAuth.AuthMethodIds != "[]" {
+				var methodIds []int64
+				if err := json.Unmarshal([]byte(matchedPortalAuth.AuthMethodIds), &methodIds); err == nil {
+					for _, mid := range methodIds {
+						if m, ok := methodMap[mid]; ok && m.Enabled {
+							orderedMethods = append(orderedMethods, map[string]interface{}{
+								"id":          m.Id,
+								"name":        m.Name,
+								"type":        m.Type,
+								"config_json": m.ConfigJSON,
+							})
+						}
+					}
+				}
+			}
+			if len(orderedMethods) == 0 {
+				orderedMethods = []map[string]interface{}{
+					{"type": "local", "name": "本地认证"},
+				}
+			}
+
+			cookieDomain := strings.TrimSpace(globalAuthSetting.CookieDomain)
+			if cookieDomain == "" && wildcardRootBase != "" {
+				if strings.HasSuffix(item.Hostname, wildcardRootBase) {
+					cookieDomain = "." + wildcardRootBase
+				}
+			}
+
+			tokenName := strings.TrimSpace(globalAuthSetting.TokenName)
+			if tokenName == "" {
+				tokenName = "_angt"
+			}
+			tokenExpire := globalAuthSetting.TokenExpire
+			if tokenExpire <= 0 {
+				tokenExpire = 86400
+			}
+
+			portalCfgMap := map[string]interface{}{
+				"title":         title,
+				"auth_id":       matchedPortalAuth.Id,
+				"token_name":    tokenName,
+				"token_expire":  tokenExpire,
+				"cookie_domain": cookieDomain,
+				"enable_ticket": globalAuthSetting.EnableTicket,
+				"ticket_param":  globalAuthSetting.GetTicketParamName(),
+				"methods":       orderedMethods,
+			}
+
+			ruleConfigs = append(ruleConfigs, entity.RuleConfig{
+				Matcher: entity.MatcherConfig{
+					Name:   "always_true_matcher",
+					Config: map[string]interface{}{},
+				},
+				Action: entity.ActionConfig{
+					Name:   "auth_portal_action",
+					Config: portalCfgMap,
+				},
+			})
+		}
+
 		if item.Rules != "" {
 			var ruleNames []string
 			_ = json.Unmarshal([]byte(item.Rules), &ruleNames)
@@ -251,8 +355,13 @@ func buildHTTPMap(rulesMap map[string]models.Rule) map[string]entity.HTTPConfig 
 					if dbRule.Items != "" {
 						var items []entity.RuleConfig
 						if err := json.Unmarshal([]byte(dbRule.Items), &items); err == nil {
+							var filteredItems []entity.RuleConfig
 							for i := range items {
 								if items[i].Action.Name == "auth_portal_action" {
+									if matchedPortalAuth != nil {
+										// 已由认证管理自动托管挂载，跳过旧规则库中的 auth_portal_action 避免重复
+										continue
+									}
 									if cfgMap, ok := items[i].Action.Config.(map[string]interface{}); ok {
 										if globalAuthSetting.TokenName != "" {
 											cfgMap["token_name"] = globalAuthSetting.TokenName
@@ -312,8 +421,9 @@ func buildHTTPMap(rulesMap map[string]models.Rule) map[string]entity.HTTPConfig 
 										cfgMap["ticket_param"] = globalAuthSetting.GetTicketParamName()
 									}
 								}
+								filteredItems = append(filteredItems, items[i])
 							}
-							ruleConfigs = append(ruleConfigs, items...)
+							ruleConfigs = append(ruleConfigs, filteredItems...)
 						}
 					}
 				}

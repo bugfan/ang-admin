@@ -5,21 +5,22 @@ import ReCol from "@/components/ReCol";
 import { FormProps } from "../utils/types";
 import { useI18n } from "vue-i18n";
 import { getAuthMethodList, type AuthMethodItem } from "@/api/auth-method";
+import { getHttpProxyList } from "@/api/http_proxy";
 import draggable from "vuedraggable";
 import { Rank } from "@element-plus/icons-vue";
 import Delete from "~icons/ep/delete";
 import Plus from "~icons/ep/plus";
+import LinkIcon from "~icons/ep/link";
 import { useRenderIcon } from "@/components/ReIcon/src/hooks";
 
 const props = withDefaults(defineProps<FormProps>(), {
   formInline: () => ({
-    title: "添加认证配置",
+    pageTitle: "添加认证流",
     id: 0,
     name: "",
+    title: "",
     auth_method_ids: "[]",
-    token_name: "_angt",
     portal_url: "",
-    token_expire: 86400,
     remark: ""
   })
 });
@@ -39,6 +40,7 @@ const ruleFormRef = ref();
 const newFormInline = ref(props.formInline);
 const authMethodOptions = ref<AuthMethodItem[]>([]);
 const selectedMethods = ref<number[]>([]);
+const httpProxyList = ref<any[]>([]);
 
 onMounted(async () => {
   try {
@@ -51,6 +53,15 @@ onMounted(async () => {
     );
   } catch (e) {
     selectedMethods.value = [];
+  }
+
+  try {
+    const resHttp = await getHttpProxyList();
+    if (resHttp && resHttp.code === 0 && resHttp.data && resHttp.data.list) {
+      httpProxyList.value = resHttp.data.list;
+    }
+  } catch (e) {
+    // ignore
   }
 });
 
@@ -66,6 +77,22 @@ function handleAddMethod() {
 function handleRemoveMethod(index: number) {
   selectedMethods.value.splice(index, 1);
   syncMethodChange();
+}
+
+function quickFillPortalUrl(item: any) {
+  const host = item.Hostname || item.hostname || "";
+  if (!host) return;
+  const isTls = item.TLS ?? item.tls ?? true;
+  const port = item.Port ?? item.port ?? (isTls ? 443 : 80);
+  const scheme = isTls ? "https" : "http";
+  let url = `${scheme}://${host}`;
+  if ((isTls && port !== 443) || (!isTls && port !== 80)) {
+    url += `:${port}`;
+  }
+  newFormInline.value.portal_url = url;
+  if (!newFormInline.value.title) {
+    newFormInline.value.title = "统一身份认证";
+  }
 }
 
 function getRef() {
@@ -110,12 +137,15 @@ defineExpose({ getRef });
         </re-col>
         
         <re-col :value="12" :xs="24">
-          <el-form-item :label="t('identity.remark', '备注')" prop="remark">
+          <el-form-item :label="t('identity.portalTitle', '登录页标题')" prop="title">
             <el-input
-              v-model="newFormInline.remark"
+              v-model="newFormInline.title"
               clearable
-              :placeholder="t('identity.remarkPlaceholder', '请输入备注信息')"
+              :placeholder="t('identity.portalTitlePlaceholder', '如：统一身份认证中心')"
             />
+            <div class="w-full text-xs text-(--el-text-color-secondary) mt-1">
+              {{ t("identity.portalTitleTip", "展示在统一认证登录页卡片顶部的标题与网页标签页名称") }}
+            </div>
           </el-form-item>
         </re-col>
 
@@ -126,9 +156,52 @@ defineExpose({ getRef });
               clearable
               :placeholder="t('identity.portalUrlPlaceholder', '输入 Portal 跳转地址，如：https://auth.example.com/login')"
             />
-            <div class="w-full text-xs text-(--el-text-color-secondary) mt-1.5">
-              提示：未登录用户访问受保护站点时，将 302 重定向至此登录入口进行拦截。
+            
+            <!-- Quick Fill from existing HTTP Proxies -->
+            <div v-if="httpProxyList.length > 0" class="w-full flex items-center flex-wrap gap-1.5 mt-2">
+              <span class="text-xs text-(--el-text-color-secondary) mr-1">
+                {{ t("identity.quickPickHttpProxy", "从已有 HTTP 站点快速填入") }}:
+              </span>
+              <el-tag
+                v-for="hp in httpProxyList"
+                :key="hp.Id || hp.id"
+                size="small"
+                class="cursor-pointer transition hover:opacity-80"
+                effect="plain"
+                type="info"
+                @click="quickFillPortalUrl(hp)"
+              >
+                <el-icon class="mr-1"><LinkIcon /></el-icon>
+                {{ hp.Hostname || hp.hostname }}
+              </el-tag>
             </div>
+
+            <!-- Auto Host Guidance Card -->
+            <el-alert
+              type="success"
+              :closable="false"
+              show-icon
+              class="w-full mt-3 rounded-lg"
+            >
+              <template #title>
+                <span class="font-semibold text-xs sm:text-sm">
+                  {{ t("identity.portalAutoHostNotice", "统一认证门户自动托管") }}
+                </span>
+              </template>
+              <div class="text-xs leading-relaxed mt-1 text-(--el-text-color-regular)">
+                {{ t("identity.portalAutoHostTip", "当在此处配置了登录入口（如 https://auth.local.i443.cn）后，ANG 网关会自动在此域名的 HTTP 站点上托管并渲染内置的多因子登录门户页面，自动装配下方所编排的认证方式流程与安全凭证，无需在规则管理中手动配置规则或反向代理。未登录用户访问 WebVPN 受保护应用时，网关将自动重定向至此入口完成认证。") }}
+              </div>
+            </el-alert>
+          </el-form-item>
+        </re-col>
+
+        <re-col :value="24" :xs="24">
+          <el-form-item :label="t('identity.remark', '备注')" prop="remark">
+            <el-input
+              v-model="newFormInline.remark"
+              clearable
+              :placeholder="t('identity.remarkPlaceholder', '请输入备注信息')"
+            />
           </el-form-item>
         </re-col>
       </el-row>

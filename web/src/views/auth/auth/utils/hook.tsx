@@ -31,13 +31,25 @@ export function useAuthMethod(t: Function, tableRef: any) {
       label: t("identity.authConfigName", "名称"),
       align: "center",
       prop: "Name",
-      minWidth: 160,
+      minWidth: 150,
       cellRenderer: scope => (
         <span class="font-semibold text-sm text-(--el-text-color-primary)">
           {scope.row.Name || scope.row.name}
         </span>
       )
-    },    {
+    },
+    {
+      label: t("identity.portalTitle", "门户标题"),
+      align: "center",
+      prop: "Title",
+      minWidth: 150,
+      cellRenderer: scope => (
+        <span class="text-sm text-(--el-text-color-regular)">
+          {scope.row.Title || scope.row.title || "-"}
+        </span>
+      )
+    },
+    {
       label: t("identity.portalUrl", "登录入口(Portal)"),
       align: "center",
       prop: "PortalUrl",

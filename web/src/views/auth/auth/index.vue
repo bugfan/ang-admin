@@ -44,23 +44,25 @@ const {
 
 function getDefaultFormInline() {
   return {
-    title: t("identity.addAuthConfig", "添加认证配置"),
+    pageTitle: t("identity.addAuthConfig", "添加认证流"),
     id: 0,
     name: "",
+    title: "",
     auth_method_ids: "[]",
-        portal_url: "",
-        remark: ""
+    portal_url: "",
+    remark: ""
   };
 }
 
 function getFormInlineFromRow(row: any) {
   return {
-    title: `${t("identity.editAuthConfig", "编辑认证配置")} [ID: ${row?.Id || row?.id}]`,
+    pageTitle: `${t("identity.editAuthConfig", "编辑认证流")} [ID: ${row?.Id || row?.id}]`,
     id: row?.Id ?? row?.id,
     name: row?.Name ?? row?.name ?? "",
+    title: row?.Title ?? row?.title ?? "",
     auth_method_ids: row?.AuthMethodIds ?? row?.auth_method_ids ?? "[]",
-        portal_url: row?.PortalUrl ?? row?.portal_url ?? "",
-        remark: row?.Remark ?? row?.remark ?? ""
+    portal_url: row?.PortalUrl ?? row?.portal_url ?? "",
+    remark: row?.Remark ?? row?.remark ?? ""
   };
 }
 
@@ -90,9 +92,10 @@ async function handleSaveSubmit() {
         const payload: any = {
           id: formInline.value.id,
           name: formInline.value.name,
+          title: formInline.value.title,
           auth_method_ids: formInline.value.auth_method_ids,
-                    portal_url: formInline.value.portal_url,
-                    remark: formInline.value.remark
+          portal_url: formInline.value.portal_url,
+          remark: formInline.value.remark
         };
         let res;
         if (showView.value === "new") {
@@ -231,7 +234,7 @@ async function handleSaveSubmit() {
       class="p-3 sm:p-5 bg-bg_color rounded-xl border border-(--el-border-color-lighter) shadow-2xs"
     >
       <PageHeader
-        :title="formInline.title"
+        :title="formInline.pageTitle"
         :description="
           t(
             'identity.authSourceDesc',
