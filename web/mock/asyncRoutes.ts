@@ -35,7 +35,7 @@ const certRouter = {
   meta: {
     icon: "ri:lock-line",
     title: "menus.pureCertManagement",
-    rank: 2
+    rank: 5
   },
   children: [
     {
@@ -68,7 +68,7 @@ const tunnelRouter = {
   meta: {
     icon: "ri:route-line",
     title: "menus.pureTunnel",
-    rank: 3,
+    rank: 6,
     roles: ["admin", "common"]
   },
   children: [
@@ -89,6 +89,82 @@ const tunnelRouter = {
       meta: {
         icon: "ri:terminal-box-line",
         title: "menus.pureTunnelClient",
+        roles: ["admin", "common"]
+      }
+    }
+  ]
+};
+
+const userRouter = {
+  path: "/user",
+  name: "AppUserParent",
+  meta: {
+    icon: "ri:user-shared-line",
+    title: "menus.pureUserParent",
+    rank: 2,
+    roles: ["admin", "common"]
+  },
+  children: [
+    {
+      path: "/user/index",
+      name: "AppUser",
+      component: "user/user/index",
+      meta: {
+        icon: "ri:user-3-line",
+        title: "menus.pureUser",
+        roles: ["admin", "common"]
+      }
+    },
+    {
+      path: "/user/group",
+      name: "AppUserGroup",
+      component: "user/group/index",
+      meta: {
+        icon: "ri:team-line",
+        title: "menus.pureUserGroup",
+        roles: ["admin", "common"]
+      }
+    }
+  ]
+};
+
+const authRouter = {
+  path: "/auth",
+  name: "AppAuthParent",
+  meta: {
+    icon: "ri:shield-keyhole-line",
+    title: "menus.pureAuthParent",
+    rank: 3,
+    roles: ["admin", "common"]
+  },
+  children: [
+    {
+      path: "/auth/index",
+      name: "AppAuth",
+      component: "auth/auth/index",
+      meta: {
+        icon: "ri:shield-user-line",
+        title: "menus.pureAuth",
+        roles: ["admin", "common"]
+      }
+    },
+    {
+      path: "/auth/method",
+      name: "AppAuthMethod",
+      component: "auth/method/index",
+      meta: {
+        icon: "ri:key-2-line",
+        title: "menus.pureAuthMethod",
+        roles: ["admin", "common"]
+      }
+    },
+    {
+      path: "/auth/setting",
+      name: "AppAuthSetting",
+      component: "auth/setting/index",
+      meta: {
+        icon: "ri:settings-3-line",
+        title: "menus.pureAuthSetting",
         roles: ["admin", "common"]
       }
     }
@@ -116,33 +192,12 @@ const ruleRouter = {
   ]
 };
 
-const dnsRouter = {
-  path: "/dns",
-  meta: {
-    icon: "ri:earth-line",
-    title: "menus.pureDns",
-    rank: 8
-  },
-  children: [
-    {
-      path: "/dns/index",
-      name: "AppDns",
-      component: "app/dns/index",
-      meta: {
-        icon: "ri:earth-line",
-        title: "menus.pureDns",
-        roles: ["admin", "common"]
-      }
-    }
-  ]
-};
-
 const httpRouter = {
   path: "/http",
   meta: {
     icon: "ri:global-line",
     title: "menus.pureHttpProxy",
-    rank: 5
+    rank: 7
   },
   children: [
     {
@@ -164,7 +219,7 @@ const webvpnRouter = {
   meta: {
     icon: "ri:shield-user-line",
     title: "menus.pureWebvpn",
-    rank: 6,
+    rank: 8,
     roles: ["admin", "common"]
   },
   children: [
@@ -196,7 +251,7 @@ const sniRouter = {
   meta: {
     icon: "ri:key-2-line",
     title: "menus.pureSni",
-    rank: 6
+    rank: 9
   },
   children: [
     {
@@ -211,33 +266,12 @@ const sniRouter = {
   ]
 };
 
-const udpRouter = {
-  path: "/udp",
-  meta: {
-    icon: "ri:send-plane-line",
-    title: "menus.pureUdp",
-    rank: 9
-  },
-  children: [
-    {
-      path: "/udp/index",
-      name: "AppUdpProxy",
-      component: "app/udp/index",
-      meta: {
-        icon: "ri:send-plane-line",
-        title: "menus.pureUdp",
-        roles: ["admin", "common"]
-      }
-    }
-  ]
-};
-
 const tcpRouter = {
   path: "/tcp",
   meta: {
     icon: "ri:exchange-line",
     title: "menus.pureTcp",
-    rank: 7
+    rank: 10
   },
   children: [
     {
@@ -253,12 +287,54 @@ const tcpRouter = {
   ]
 };
 
+const dnsRouter = {
+  path: "/dns",
+  meta: {
+    icon: "ri:earth-line",
+    title: "menus.pureDns",
+    rank: 11
+  },
+  children: [
+    {
+      path: "/dns/index",
+      name: "AppDns",
+      component: "app/dns/index",
+      meta: {
+        icon: "ri:earth-line",
+        title: "menus.pureDns",
+        roles: ["admin", "common"]
+      }
+    }
+  ]
+};
+
+const udpRouter = {
+  path: "/udp",
+  meta: {
+    icon: "ri:send-plane-line",
+    title: "menus.pureUdp",
+    rank: 12
+  },
+  children: [
+    {
+      path: "/udp/index",
+      name: "AppUdpProxy",
+      component: "app/udp/index",
+      meta: {
+        icon: "ri:send-plane-line",
+        title: "menus.pureUdp",
+        roles: ["admin", "common"]
+      }
+    }
+  ]
+};
+
 const clusterRouter = {
   path: "/cluster",
   meta: {
     icon: "ri:server-line",
     title: "menus.pureCluster",
-    rank: 10
+    rank: 13
   },
   children: [
     {
@@ -279,7 +355,7 @@ const accountManagementRouter = {
   meta: {
     icon: "ri:admin-line",
     title: "menus.pureAdminManagement",
-    rank: system
+    rank: 14
   },
   children: [
     {
@@ -305,14 +381,16 @@ export default defineFakeRoute([
         message: "操作成功",
         data: [
           appRouter,
+          userRouter,
+          authRouter,
+          ruleRouter,
           certRouter,
           tunnelRouter,
-          ruleRouter,
-          dnsRouter,
           httpRouter,
           webvpnRouter,
-          tcpRouter,
           sniRouter,
+          tcpRouter,
+          dnsRouter,
           udpRouter,
           clusterRouter,
           accountManagementRouter

@@ -287,228 +287,12 @@ func AsyncRoutesHandler(c *gin.Context) {
 				},
 			},
 			{
-				"path": "/cert",
-				"name": "AppCertManagement",
-				"meta": gin.H{
-					"icon":  "ri:lock-line",
-					"title": "menus.pureCertManagement",
-					"rank":  2,
-				},
-				"children": []gin.H{
-					{
-						"path":      "/cert/index",
-						"name":      "AppCert",
-						"component": "app/cert/index",
-						"meta": gin.H{
-							"icon":  "ri:file-list-line",
-							"title": "menus.pureCert",
-							"roles": []string{"admin", "common"},
-						},
-					},
-
-					{
-						"path":      "/cert/acme",
-						"name":      "AppAcme",
-						"component": "app/cert/acme/index",
-						"meta": gin.H{
-							"icon":  "ri:cloud-line",
-							"title": "menus.pureAcme",
-							"roles": []string{"admin", "common"},
-						},
-					},
-				},
-			},
-			{
-				"path": "/tunnel",
-				"name": "AppTunnelParent",
-				"meta": gin.H{
-					"icon":  "ri:route-line",
-					"title": "menus.pureTunnel",
-					"rank":  3,
-					"roles": []string{"admin", "common"},
-				},
-				"children": []gin.H{
-					{
-						"path":      "/tunnel/server",
-						"name":      "AppTunnel",
-						"component": "app/tunnel/index",
-						"meta": gin.H{
-							"icon":  "ri:server-line",
-							"title": "menus.pureTunnelServer",
-							"roles": []string{"admin", "common"},
-						},
-					},
-					{
-						"path":      "/tunnel/client",
-						"name":      "AppTunnelClient",
-						"component": "app/tunnel-client/index",
-						"meta": gin.H{
-							"icon":  "ri:terminal-box-line",
-							"title": "menus.pureTunnelClient",
-							"roles": []string{"admin", "common"},
-						},
-					},
-				},
-			},
-			{
-				"path": "/rule",
-				"meta": gin.H{
-					"icon":  "ri:filter-3-line",
-					"title": "menus.pureRule",
-					"rank":  4,
-				},
-				"children": []gin.H{
-					{
-						"path":      "/rule/index",
-						"name":      "AppRule",
-						"component": "app/rule/index",
-						"meta": gin.H{
-							"icon":  "ri:filter-3-line",
-							"title": "menus.pureRule",
-							"roles": []string{"admin", "common"},
-						},
-					},
-				},
-			},
-			{
-				"path": "/http",
-				"meta": gin.H{
-					"icon":  "ri:global-line",
-					"title": "menus.pureHttpProxy",
-					"rank":  5,
-				},
-				"children": []gin.H{
-					{
-						"path":      "/http/index",
-						"name":      "AppHttpProxy",
-						"component": "app/http/index",
-						"meta": gin.H{
-							"icon":  "ri:global-line",
-							"title": "menus.pureHttpProxy",
-							"roles": []string{"admin", "common"},
-						},
-					},
-				},
-			},
-			{
-				"path": "/webvpn",
-				"name": "AppWebvpnParent",
-				"meta": gin.H{
-					"icon":  "ri:shield-user-line",
-					"title": "menus.pureWebvpn",
-					"rank":  6,
-					"roles": []string{"admin", "common"},
-				},
-				"children": []gin.H{
-					{
-						"path":      "/webvpn/index",
-						"name":      "AppWebvpnSite",
-						"component": "app/webvpn/site/index",
-						"meta": gin.H{
-							"icon":  "ri:links-line",
-							"title": "menus.pureWebvpnSite",
-							"roles": []string{"admin", "common"},
-						},
-					},
-					{
-						"path":      "/webvpn/base",
-						"name":      "AppWebvpnBase",
-						"component": "app/webvpn/base/index",
-						"meta": gin.H{
-							"icon":  "ri:base-station-line",
-							"title": "menus.pureWebvpnBase",
-							"roles": []string{"admin", "common"},
-						},
-					},
-				},
-			},
-			{
-				"path": "/sni",
-				"meta": gin.H{
-					"icon":  "ri:key-2-line",
-					"title": "menus.pureSni",
-					"rank":  7,
-				},
-				"children": []gin.H{
-					{
-						"path":      "/sni/index",
-						"name":      "AppSniProxy",
-						"component": "app/sni/index",
-						"meta": gin.H{
-							"icon":  "ri:key-2-line",
-							"title": "menus.pureSni",
-							"roles": []string{"admin", "common"},
-						},
-					},
-				},
-			},
-			{
-				"path": "/tcp",
-				"meta": gin.H{
-					"icon":  "ri:exchange-line",
-					"title": "menus.pureTcp",
-					"rank":  8,
-				},
-				"children": []gin.H{
-					{
-						"path":      "/tcp/index",
-						"name":      "AppTcpProxy",
-						"component": "app/tcp/index",
-						"meta": gin.H{
-							"icon":  "ri:exchange-line",
-							"title": "menus.pureTcp",
-							"roles": []string{"admin", "common"},
-						},
-					},
-				},
-			},
-			{
-				"path": "/dns",
-				"meta": gin.H{
-					"icon":  "ri:earth-line",
-					"title": "menus.pureDns",
-					"rank":  9,
-				},
-				"children": []gin.H{
-					{
-						"path":      "/dns/index",
-						"name":      "AppDns",
-						"component": "app/dns/index",
-						"meta": gin.H{
-							"icon":  "ri:earth-line",
-							"title": "menus.pureDns",
-							"roles": []string{"admin", "common"},
-						},
-					},
-				},
-			},
-			{
-				"path": "/udp",
-				"meta": gin.H{
-					"icon":  "ri:send-plane-line",
-					"title": "menus.pureUdp",
-					"rank":  10,
-				},
-				"children": []gin.H{
-					{
-						"path":      "/udp/index",
-						"name":      "AppUdpProxy",
-						"component": "app/udp/index",
-						"meta": gin.H{
-							"icon":  "ri:send-plane-line",
-							"title": "menus.pureUdp",
-							"roles": []string{"admin", "common"},
-						},
-					},
-				},
-			},
-			{
 				"path": "/user",
 				"name": "AppUserParent",
 				"meta": gin.H{
 					"icon":  "ri:user-shared-line",
 					"title": "menus.pureUserParent",
-					"rank":  11,
+					"rank":  2,
 					"roles": []string{"admin", "common"},
 				},
 				"children": []gin.H{
@@ -540,7 +324,7 @@ func AsyncRoutesHandler(c *gin.Context) {
 				"meta": gin.H{
 					"icon":  "ri:shield-keyhole-line",
 					"title": "menus.pureAuthParent",
-					"rank":  12,
+					"rank":  3,
 					"roles": []string{"admin", "common"},
 				},
 				"children": []gin.H{
@@ -571,6 +355,222 @@ func AsyncRoutesHandler(c *gin.Context) {
 						"meta": gin.H{
 							"icon":  "ri:settings-3-line",
 							"title": "menus.pureAuthSetting",
+							"roles": []string{"admin", "common"},
+						},
+					},
+				},
+			},
+			{
+				"path": "/rule",
+				"meta": gin.H{
+					"icon":  "ri:filter-3-line",
+					"title": "menus.pureRule",
+					"rank":  4,
+				},
+				"children": []gin.H{
+					{
+						"path":      "/rule/index",
+						"name":      "AppRule",
+						"component": "app/rule/index",
+						"meta": gin.H{
+							"icon":  "ri:filter-3-line",
+							"title": "menus.pureRule",
+							"roles": []string{"admin", "common"},
+						},
+					},
+				},
+			},
+			{
+				"path": "/cert",
+				"name": "AppCertManagement",
+				"meta": gin.H{
+					"icon":  "ri:lock-line",
+					"title": "menus.pureCertManagement",
+					"rank":  5,
+				},
+				"children": []gin.H{
+					{
+						"path":      "/cert/index",
+						"name":      "AppCert",
+						"component": "app/cert/index",
+						"meta": gin.H{
+							"icon":  "ri:file-list-line",
+							"title": "menus.pureCert",
+							"roles": []string{"admin", "common"},
+						},
+					},
+
+					{
+						"path":      "/cert/acme",
+						"name":      "AppAcme",
+						"component": "app/cert/acme/index",
+						"meta": gin.H{
+							"icon":  "ri:cloud-line",
+							"title": "menus.pureAcme",
+							"roles": []string{"admin", "common"},
+						},
+					},
+				},
+			},
+			{
+				"path": "/tunnel",
+				"name": "AppTunnelParent",
+				"meta": gin.H{
+					"icon":  "ri:route-line",
+					"title": "menus.pureTunnel",
+					"rank":  6,
+					"roles": []string{"admin", "common"},
+				},
+				"children": []gin.H{
+					{
+						"path":      "/tunnel/server",
+						"name":      "AppTunnel",
+						"component": "app/tunnel/index",
+						"meta": gin.H{
+							"icon":  "ri:server-line",
+							"title": "menus.pureTunnelServer",
+							"roles": []string{"admin", "common"},
+						},
+					},
+					{
+						"path":      "/tunnel/client",
+						"name":      "AppTunnelClient",
+						"component": "app/tunnel-client/index",
+						"meta": gin.H{
+							"icon":  "ri:terminal-box-line",
+							"title": "menus.pureTunnelClient",
+							"roles": []string{"admin", "common"},
+						},
+					},
+				},
+			},
+			{
+				"path": "/http",
+				"meta": gin.H{
+					"icon":  "ri:global-line",
+					"title": "menus.pureHttpProxy",
+					"rank":  7,
+				},
+				"children": []gin.H{
+					{
+						"path":      "/http/index",
+						"name":      "AppHttpProxy",
+						"component": "app/http/index",
+						"meta": gin.H{
+							"icon":  "ri:global-line",
+							"title": "menus.pureHttpProxy",
+							"roles": []string{"admin", "common"},
+						},
+					},
+				},
+			},
+			{
+				"path": "/webvpn",
+				"name": "AppWebvpnParent",
+				"meta": gin.H{
+					"icon":  "ri:shield-user-line",
+					"title": "menus.pureWebvpn",
+					"rank":  8,
+					"roles": []string{"admin", "common"},
+				},
+				"children": []gin.H{
+					{
+						"path":      "/webvpn/index",
+						"name":      "AppWebvpnSite",
+						"component": "app/webvpn/site/index",
+						"meta": gin.H{
+							"icon":  "ri:links-line",
+							"title": "menus.pureWebvpnSite",
+							"roles": []string{"admin", "common"},
+						},
+					},
+					{
+						"path":      "/webvpn/base",
+						"name":      "AppWebvpnBase",
+						"component": "app/webvpn/base/index",
+						"meta": gin.H{
+							"icon":  "ri:base-station-line",
+							"title": "menus.pureWebvpnBase",
+							"roles": []string{"admin", "common"},
+						},
+					},
+				},
+			},
+			{
+				"path": "/sni",
+				"meta": gin.H{
+					"icon":  "ri:key-2-line",
+					"title": "menus.pureSni",
+					"rank":  9,
+				},
+				"children": []gin.H{
+					{
+						"path":      "/sni/index",
+						"name":      "AppSniProxy",
+						"component": "app/sni/index",
+						"meta": gin.H{
+							"icon":  "ri:key-2-line",
+							"title": "menus.pureSni",
+							"roles": []string{"admin", "common"},
+						},
+					},
+				},
+			},
+			{
+				"path": "/tcp",
+				"meta": gin.H{
+					"icon":  "ri:exchange-line",
+					"title": "menus.pureTcp",
+					"rank":  10,
+				},
+				"children": []gin.H{
+					{
+						"path":      "/tcp/index",
+						"name":      "AppTcpProxy",
+						"component": "app/tcp/index",
+						"meta": gin.H{
+							"icon":  "ri:exchange-line",
+							"title": "menus.pureTcp",
+							"roles": []string{"admin", "common"},
+						},
+					},
+				},
+			},
+			{
+				"path": "/dns",
+				"meta": gin.H{
+					"icon":  "ri:earth-line",
+					"title": "menus.pureDns",
+					"rank":  11,
+				},
+				"children": []gin.H{
+					{
+						"path":      "/dns/index",
+						"name":      "AppDns",
+						"component": "app/dns/index",
+						"meta": gin.H{
+							"icon":  "ri:earth-line",
+							"title": "menus.pureDns",
+							"roles": []string{"admin", "common"},
+						},
+					},
+				},
+			},
+			{
+				"path": "/udp",
+				"meta": gin.H{
+					"icon":  "ri:send-plane-line",
+					"title": "menus.pureUdp",
+					"rank":  12,
+				},
+				"children": []gin.H{
+					{
+						"path":      "/udp/index",
+						"name":      "AppUdpProxy",
+						"component": "app/udp/index",
+						"meta": gin.H{
+							"icon":  "ri:send-plane-line",
+							"title": "menus.pureUdp",
 							"roles": []string{"admin", "common"},
 						},
 					},
