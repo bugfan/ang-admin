@@ -131,7 +131,7 @@ const dnsResolverList = ref<DnsItem[]>([]);
 const dnsResolverGroupRef = ref();
 
 function initSortableDns() {
-  if (dnsResolverGroupRef.value) {
+  if (dnsResolverGroupRef.value && !(dnsResolverGroupRef.value as any)._sortableInit) {
     Sortable.create(dnsResolverGroupRef.value, {
       handle: ".drag-handle",
       animation: 150,
@@ -148,12 +148,13 @@ function initSortableDns() {
         }
       }
     });
+    (dnsResolverGroupRef.value as any)._sortableInit = true;
   }
 }
 
 function addDnsResolver() {
   if (dnsResolverList.value.some(item => item.value.trim() === "")) {
-    message(t("common.dnsEmptyExists", "已存在默认解析(空项)，无需重复添加"), {
+    message(t("http.dnsEmptyWarning", "请先填写已有 DNS 服务器地址"), {
       type: "warning"
     });
     return;
@@ -162,7 +163,9 @@ function addDnsResolver() {
     id: Math.random().toString(36).substring(2, 9),
     value: ""
   });
-  syncDnsResolver();
+  nextTick(() => {
+    initSortableDns();
+  });
 }
 
 function removeDnsResolver(idx: number) {
@@ -173,25 +176,18 @@ function removeDnsResolver(idx: number) {
 const dnsError = ref("");
 
 function syncDnsResolver() {
-  let hasEmpty = false;
-  const activeList = [];
-  const nonEmpties: string[] = [];
+  const activeList: string[] = [];
   for (const item of dnsResolverList.value) {
     const val = item.value.trim();
-    if (val === "") {
-      if (!hasEmpty) {
-        hasEmpty = true;
-        activeList.push(val);
-      }
-    } else {
+    if (val !== "") {
       activeList.push(val);
-      nonEmpties.push(val);
     }
   }
-  newFormInline.value.dns_resolver = JSON.stringify(activeList);
+  newFormInline.value.dns_resolver =
+    activeList.length > 0 ? JSON.stringify(activeList) : "";
 
-  const duplicates = nonEmpties.filter(
-    (item, idx) => nonEmpties.indexOf(item) !== idx
+  const duplicates = activeList.filter(
+    (item, idx) => activeList.indexOf(item) !== idx
   );
   if (duplicates.length > 0) {
     dnsError.value = t(
@@ -244,27 +240,27 @@ function initFormState() {
         }
       }
       if (Array.isArray(parsed)) {
-        dnsResolverList.value = parsed.map((v: string) => ({
-          id: Math.random().toString(36).substring(2, 9),
-          value: v
-        }));
+        dnsResolverList.value = parsed
+          .map((v: string) => (typeof v === "string" ? v.trim() : ""))
+          .filter(Boolean)
+          .map((v: string) => ({
+            id: Math.random().toString(36).substring(2, 9),
+            value: v
+          }));
       }
     }
   } catch (e) {
     if (newFormInline.value.dns_resolver) {
-      dnsResolverList.value = [
-        {
-          id: Math.random().toString(36).substring(2, 9),
-          value: newFormInline.value.dns_resolver
-        }
-      ];
+      const v = String(newFormInline.value.dns_resolver).trim();
+      if (v) {
+        dnsResolverList.value = [
+          {
+            id: Math.random().toString(36).substring(2, 9),
+            value: v
+          }
+        ];
+      }
     }
-  }
-  if (dnsResolverList.value.length === 0) {
-    dnsResolverList.value.push({
-      id: Math.random().toString(36).substring(2, 9),
-      value: ""
-    });
   }
 
   try {
@@ -1246,7 +1242,13 @@ defineExpose({ getRef, syncLocationJSON });
             <re-col :value="24" :xs="24">
               <el-form-item :label="t('http.dnsResolver', 'DNS')">
                 <div class="w-full flex flex-col space-y-2">
-                  <div ref="dnsResolverGroupRef" class="w-full space-y-2">
+                  <div
+                    v-if="dnsResolverList.length === 0"
+                    class="text-xs text-(--el-text-color-secondary) py-1.5 flex items-center space-x-1.5"
+                  >
+                    <span>{{ t("http.defaultDnsTip", "默认使用系统 DNS 解析上游域名") }}</span>
+                  </div>
+                  <div v-else ref="dnsResolverGroupRef" class="w-full space-y-2">
                     <div
                       v-for="(dns, dIdx) in dnsResolverList"
                       :key="dns.id"
@@ -1257,7 +1259,7 @@ defineExpose({ getRef, syncLocationJSON });
                         :placeholder="
                           t(
                             'http.dnsResolverPlaceholder',
-                            '支持标准 DNS 与 DoH，如 8.8.8.8:53 或 https://dns.google/dns-query (留空使用系统默认 DNS)'
+                            '支持标准 DNS 与 DoH，如 8.8.8.8:53 或 https://dns.google/dns-query'
                           )
                         "
                         clearable

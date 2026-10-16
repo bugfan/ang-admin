@@ -167,7 +167,7 @@ async function fetchCustomRules() {
 
 function addDnsResolver() {
   if (dnsResolverList.value.some(item => item.value.trim() === "")) {
-    message(t("common.dnsEmptyExists", "已存在默认解析(空项)，无需重复添加"), {
+    message(t("sni.dnsEmptyWarning", "请先填写已有 DNS 服务器地址"), {
       type: "warning"
     });
     return;
@@ -176,7 +176,9 @@ function addDnsResolver() {
     id: ++nextDnsId,
     value: ""
   });
-  syncDnsResolver();
+  nextTick(() => {
+    initSortableDns();
+  });
 }
 
 function removeDnsResolver(idx: number) {
@@ -187,25 +189,18 @@ function removeDnsResolver(idx: number) {
 const dnsError = ref("");
 
 function syncDnsResolver() {
-  let hasEmpty = false;
-  const activeList = [];
-  const nonEmpties: string[] = [];
+  const activeList: string[] = [];
   for (const item of dnsResolverList.value) {
     const val = item.value.trim();
-    if (val === "") {
-      if (!hasEmpty) {
-        hasEmpty = true;
-        activeList.push(val);
-      }
-    } else {
+    if (val !== "") {
       activeList.push(val);
-      nonEmpties.push(val);
     }
   }
-  newFormInline.value.dns_resolver = JSON.stringify(activeList);
+  newFormInline.value.dns_resolver =
+    activeList.length > 0 ? JSON.stringify(activeList) : "";
 
-  const duplicates = nonEmpties.filter(
-    (item, idx) => nonEmpties.indexOf(item) !== idx
+  const duplicates = activeList.filter(
+    (item, idx) => activeList.indexOf(item) !== idx
   );
   if (duplicates.length > 0) {
     dnsError.value = t(
@@ -233,22 +228,20 @@ function initDnsResolverFromProps() {
         }
       }
       if (Array.isArray(parsed) && parsed.length > 0) {
-        dnsResolverList.value = parsed.map((v: string) => ({
-          id: ++nextDnsId,
-          value: v
-        }));
+        dnsResolverList.value = parsed
+          .map((v: string) => (typeof v === "string" ? v.trim() : ""))
+          .filter(Boolean)
+          .map((v: string) => ({
+            id: ++nextDnsId,
+            value: v
+          }));
         syncDnsResolver();
         return;
       }
     }
   } catch (e) {}
 
-  dnsResolverList.value = [
-    {
-      id: ++nextDnsId,
-      value: ""
-    }
-  ];
+  dnsResolverList.value = [];
   syncDnsResolver();
 }
 
@@ -296,7 +289,7 @@ onMounted(() => {
 });
 
 function initSortableDns() {
-  if (dnsResolverGroupRef.value) {
+  if (dnsResolverGroupRef.value && !(dnsResolverGroupRef.value as any)._sortableInit) {
     Sortable.create(dnsResolverGroupRef.value, {
       handle: ".drag-handle",
       animation: 150,
@@ -313,6 +306,7 @@ function initSortableDns() {
         }
       }
     });
+    (dnsResolverGroupRef.value as any)._sortableInit = true;
   }
 }
 
@@ -764,7 +758,13 @@ const formRules = computed(() => ({
           <re-col :value="24" :xs="24">
             <el-form-item :label="t('sni.dnsResolver', 'DNS')">
               <div class="w-full flex flex-col space-y-2">
-                <div ref="dnsResolverGroupRef" class="w-full space-y-2">
+                <div
+                  v-if="dnsResolverList.length === 0"
+                  class="text-xs text-(--el-text-color-secondary) py-1.5 flex items-center space-x-1.5"
+                >
+                  <span>{{ t("sni.defaultDnsTip", "默认使用系统 DNS 解析上游域名") }}</span>
+                </div>
+                <div v-else ref="dnsResolverGroupRef" class="w-full space-y-2">
                   <div
                     v-for="(dns, dIdx) in dnsResolverList"
                     :key="dns.id"
@@ -775,7 +775,7 @@ const formRules = computed(() => ({
                       :placeholder="
                         t(
                           'sni.dnsResolverPlaceholder',
-                          '支持标准 DNS 与 DoH，如 8.8.8.8:53 或 https://dns.google/dns-query (留空使用系统默认 DNS)'
+                          '支持标准 DNS 与 DoH，如 8.8.8.8:53 或 https://dns.google/dns-query'
                         )
                       "
                       clearable

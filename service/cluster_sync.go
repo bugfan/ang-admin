@@ -428,13 +428,7 @@ func buildHTTPMap(rulesMap map[string]models.Rule) map[string]entity.HTTPConfig 
 			}
 		}
 
-		var dnsResolver []string
-		if item.DNSResolver != "" {
-			if err := json.Unmarshal([]byte(item.DNSResolver), &dnsResolver); err != nil {
-				// Fallback for old single string data
-				dnsResolver = []string{item.DNSResolver}
-			}
-		}
+		dnsResolver := parseAndCleanDNSResolvers(item.DNSResolver)
 
 		httpMap[keyStr] = entity.HTTPConfig{
 			Front: entity.HTTPFront{
@@ -1361,20 +1355,9 @@ func buildSNIMap(rulesMap map[string]models.Rule) map[string]entity.SNIConfig {
 				}
 			}
 			if hasDnsResolver {
-				var dnsResolvers []string
-				if err := json.Unmarshal([]byte(item.DNSResolver), &dnsResolvers); err == nil {
+				dnsResolvers := parseAndCleanDNSResolvers(item.DNSResolver)
+				if len(dnsResolvers) > 0 {
 					backend.DNSResolver = dnsResolvers
-				} else {
-					// Fallback for comma separated or single string
-					parts := strings.Split(item.DNSResolver, ",")
-					var cleaned []string
-					for _, p := range parts {
-						p = strings.TrimSpace(p)
-						if p != "" {
-							cleaned = append(cleaned, p)
-						}
-					}
-					backend.DNSResolver = cleaned
 				}
 			}
 		}
@@ -1394,6 +1377,35 @@ func buildSNIMap(rulesMap map[string]models.Rule) map[string]entity.SNIConfig {
 		}
 	}
 	return sniMap
+}
+
+func parseAndCleanDNSResolvers(raw string) []string {
+	raw = strings.TrimSpace(raw)
+	if raw == "" {
+		return nil
+	}
+	var resolvers []string
+	if err := json.Unmarshal([]byte(raw), &resolvers); err != nil {
+		// Fallback for comma separated or single string
+		parts := strings.Split(raw, ",")
+		for _, p := range parts {
+			p = strings.TrimSpace(p)
+			if p != "" {
+				resolvers = append(resolvers, p)
+			}
+		}
+	}
+	var cleaned []string
+	for _, r := range resolvers {
+		r = strings.TrimSpace(r)
+		if r != "" {
+			cleaned = append(cleaned, r)
+		}
+	}
+	if len(cleaned) == 0 {
+		return nil
+	}
+	return cleaned
 }
 
 // SyncSNIToCluster syncs SNI proxy changes. Only the SNI section of server_config is pushed.
