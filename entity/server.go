@@ -109,7 +109,7 @@ type SNIConfig struct {
 	ExtraSNI []string     `json:"ExtraSNI,omitempty"` // extra SNI patterns (exact or wildcard, e.g. *.example.com)
 	Port     string       `json:"Port"`
 	Rule     []RuleConfig `json:"Rule,omitempty"`
-	Backend  *SNIBackend  `json:"Backend,omitempty"`
+	Backend  SNIBackend   `json:"Backend"`
 }
 
 // TCPBackend represents TCP backend config

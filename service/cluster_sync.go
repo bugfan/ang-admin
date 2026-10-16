@@ -1320,6 +1320,14 @@ func buildSNIMap(rulesMap map[string]models.Rule) map[string]entity.SNIConfig {
 
 	sniMap := make(map[string]entity.SNIConfig)
 	for _, item := range sniList {
+		sni := strings.TrimSpace(item.SNI)
+		if sni == "" {
+			continue
+		}
+		port := strings.TrimSpace(item.Port)
+		if port == "" {
+			port = "443"
+		}
 		keyStr := strconv.FormatInt(item.Id, 10)
 
 		// Parse Rules (Rule Set expansion)
@@ -1341,37 +1349,40 @@ func buildSNIMap(rulesMap map[string]models.Rule) map[string]entity.SNIConfig {
 		}
 
 		// Parse Backend
-		var backend *entity.SNIBackend
-		hasTunnel := item.TunnelId != ""
-		hasDnsResolver := item.DNSResolver != ""
-
-		if hasTunnel || hasDnsResolver {
-			backend = &entity.SNIBackend{}
-			if hasTunnel {
-				backend.Tunnel = &entity.BackendTunnel{
-					Type:  item.TunnelType,
-					ID:    item.TunnelId,
-					Token: item.TunnelToken,
-				}
+		backend := entity.SNIBackend{}
+		tunnelId := strings.TrimSpace(item.TunnelId)
+		if tunnelId != "" {
+			backend.Tunnel = &entity.BackendTunnel{
+				Type:  strings.TrimSpace(item.TunnelType),
+				ID:    tunnelId,
+				Token: strings.TrimSpace(item.TunnelToken),
 			}
-			if hasDnsResolver {
-				dnsResolvers := parseAndCleanDNSResolvers(item.DNSResolver)
-				if len(dnsResolvers) > 0 {
-					backend.DNSResolver = dnsResolvers
-				}
+		}
+		if item.DNSResolver != "" {
+			dnsResolvers := parseAndCleanDNSResolvers(item.DNSResolver)
+			if len(dnsResolvers) > 0 {
+				backend.DNSResolver = dnsResolvers
 			}
 		}
 
 		// Parse ExtraSNI patterns
 		var extraSNI []string
 		if item.ExtraSNI != "" {
-			_ = json.Unmarshal([]byte(item.ExtraSNI), &extraSNI)
+			var rawExtra []string
+			if err := json.Unmarshal([]byte(item.ExtraSNI), &rawExtra); err == nil {
+				for _, ext := range rawExtra {
+					ext = strings.TrimSpace(ext)
+					if ext != "" && ext != sni {
+						extraSNI = append(extraSNI, ext)
+					}
+				}
+			}
 		}
 
 		sniMap[keyStr] = entity.SNIConfig{
-			SNI:      item.SNI,
+			SNI:      sni,
 			ExtraSNI: extraSNI,
-			Port:     item.Port,
+			Port:     port,
 			Rule:     ruleConfigs,
 			Backend:  backend,
 		}
